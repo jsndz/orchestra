@@ -1,0 +1,333 @@
+Good — now we do this **clean like a senior engineer**, not incremental hacks.
+
+First fix the **structure (source of truth)** → then TODO.
+
+---
+
+# 🧠 FINAL CORRECT STRUCTURE (target)
+
+You currently have duplication + TS runtime issue.
+This is the **correct production-ready structure**:
+
+```text
+orchestra/
+├── client/                     # React (UI only)
+│   ├── dist/                  # built UI
+│   └── src/
+│       └── api/               # IPC wrappers (NOT axios)
+│
+├── electron/                  # Backend (single source of truth)
+│   ├── src/                   # ✅ ALL TS source here
+│   │   ├── services/          # execution, graph, parser
+│   │   ├── lib/               # os, process, queue
+│   │   ├── store/             # in-memory state
+│   │   ├── ipc/               # 🔥 ALL IPC handlers here
+│   │   │   ├── tasks.ts
+│   │   │   ├── graph.ts
+│   │   │   ├── execution.ts
+│   │   │   └── system.ts
+│   │   └── index.ts           # optional bootstrap
+│   │
+│   ├── dist/                  # compiled JS (runtime)
+│   ├── preload.js             # IPC bridge
+│   └── tsconfig.json
+│
+├── main.js                    # Electron entry (ONLY glue)
+├── package.json
+└── server/                    # ❗ REFERENCE ONLY (temporary)
+```
+
+---
+
+# 🔥 Key principles (don’t violate these)
+
+### ✅ 1. Single source of truth
+
+```text
+electron/src = REAL backend
+server/ = reference only
+```
+
+---
+
+### ✅ 2. No TS in runtime
+
+```text
+Electron runs JS → electron/dist
+```
+
+---
+
+### ✅ 3. IPC layer separated
+
+```text
+electron/src/ipc/*
+```
+
+👉 Don’t mix IPC + logic
+
+---
+
+### ✅ 4. main.js is thin
+
+```text
+main.js = wiring only (no business logic)
+```
+
+---
+
+# ❌ WHAT’S WRONG IN YOUR CURRENT STRUCTURE
+
+* `electron/*.ts` directly → ❌ not compiled
+* no `src/` vs `dist/` separation → ❌
+* no IPC layer separation → ❌
+* duplicated logic in `server/` + `electron/` → ❌
+
+---
+
+# ✅ NOW TODO LIST (in correct order)
+
+---
+
+# 🚀 PHASE 1 — Fix structure
+
+### ✅ TODO
+
+* [x] Create:
+
+```bash
+mkdir -p electron/src/ipc
+```
+
+* [x] Move:
+
+```text
+electron/services → electron/src/services
+electron/lib → electron/src/lib
+electron/store → electron/src/store
+```
+
+---
+
+* [x] Add `electron/src/ipc/` (empty for now)
+
+---
+
+* [ ] Update `electron/tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "rootDir": "src",
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true
+  },
+  "include": ["src"]
+}
+```
+
+---
+
+* [ ] Build:
+
+```bash
+npx tsc -p electron
+```
+
+---
+
+# 🚀 PHASE 2 — Wire Electron runtime
+
+### ✅ TODO
+
+Update `main.js`:
+
+```js
+const path = require("path");
+
+const servicesPath = path.join(__dirname, "electron/dist");
+
+require(path.join(servicesPath, "ipc/tasks.js"));
+require(path.join(servicesPath, "ipc/graph.js"));
+```
+
+---
+
+# 🚀 PHASE 3 — Implement FIRST IPC (tasks only)
+
+👉 Start small
+
+### create:
+
+```text
+electron/src/ipc/tasks.ts
+```
+
+---
+
+### ✅ TODO
+
+* [ ] Import:
+
+```ts
+import { tasks, dependencies } from "../store";
+```
+
+* [ ] Implement:
+
+```ts
+import { ipcMain } from "electron";
+
+ipcMain.handle("tasks:get", () => {
+  return { tasks, dependencies };
+});
+```
+
+---
+
+* [ ] Build again:
+
+```bash
+npx tsc -p electron
+```
+
+---
+
+# 🚀 PHASE 4 — Connect preload
+
+### ✅ TODO
+
+```js
+contextBridge.exposeInMainWorld("api", {
+  getTasks: () => ipcRenderer.invoke("tasks:get"),
+});
+```
+
+---
+
+# 🚀 PHASE 5 — Update client (ONLY tasks)
+
+### ❌ REMOVE
+
+```ts
+axios.get(...)
+```
+
+---
+
+### ✅ REPLACE
+
+```ts
+window.api.getTasks()
+```
+
+---
+
+# 🚀 PHASE 6 — Expand APIs (incrementally)
+
+### Next:
+
+* [ ] dependency:add
+* [ ] dependency:remove
+
+---
+
+Then:
+
+* [ ] graph:order
+* [ ] graph:path
+* [ ] graph:cycle
+* [ ] graph:parallel
+
+---
+
+# 🚀 PHASE 7 — Execution (hard part)
+
+### ✅ TODO
+
+* [ ] Convert execute()
+
+---
+
+### Replace:
+
+```ts
+res.write(...)
+```
+
+---
+
+### With:
+
+```ts
+mainWindow.webContents.send("execution:log", data);
+```
+
+---
+
+* [ ] Add:
+
+  * execution:start
+  * execution:stop
+  * task:stop
+
+---
+
+# 🚀 PHASE 8 — Logs
+
+* [ ] Add `"logs:get"`
+* [ ] Add `onLog` listener in preload
+* [ ] Update frontend
+
+---
+
+# 🚀 PHASE 9 — Cleanup
+
+ONLY after everything works:
+
+* [ ] Remove HTTP usage
+* [ ] Delete `server/`
+
+---
+
+# ⚡ Execution order (CRITICAL)
+
+Do NOT jump around.
+
+1. Structure
+2. Build electron TS
+3. tasks IPC
+4. client integration
+5. graph APIs
+6. execution engine
+7. logs
+8. cleanup
+
+---
+
+# 🧠 Final insight (important)
+
+Right now you're doing:
+
+> Turning a web app → native orchestration engine
+
+This is **not trivial refactor**
+It’s basically:
+
+* removing transport layer (HTTP)
+* redesigning communication (IPC)
+
+---
+
+# 💬 If you want next
+
+I can:
+
+* write your **first IPC file (tasks.ts)** correctly
+* or convert your **execution.ts → event-driven version**
+
+Just tell me 👍
