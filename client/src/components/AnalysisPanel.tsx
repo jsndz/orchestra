@@ -38,26 +38,22 @@ export default function AnalysisPanel({ tasks }: { tasks: Task[] }) {
     queryKey: ["parallel"],
     queryFn: () => analyze("parallel"),
   });
-  console.log("parallel", parallelData);
 
   const { data: terminalData } = useQuery<string[]>({
     queryKey: ["terminal"],
     queryFn: () => analyze("terminal"),
   });
-  console.log("terminal", terminalData);
 
   const { data: unreachableData } = useQuery<string[]>({
     queryKey: ["unreachable"],
     queryFn: () => analyze("unreachable"),
   });
-  console.log("unreachable", unreachableData);
 
 
   const { data: cycleData } = useQuery<string[]>({
     queryKey: ["cycle"],
     queryFn: () => analyze("cycle"),
   });
-  console.log("cycle", cycleData);
 
   const levels: Task[][] = parallelData?.ok ? parallelData.levels : [];
   const depth = levels.length;

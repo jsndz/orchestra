@@ -21,7 +21,6 @@ export function useTerminals() {
       if (!term) {
         return;
       }
-      console.log(msg);
 
       switch (msg.type) {
         case "task_stdout":

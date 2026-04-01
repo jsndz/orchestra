@@ -47,7 +47,8 @@ export const analyze = async (
 };
 
 export const execute = async () => {
-  window.api.startExecution();
+  
+  return window.api.startExecution();
 };
 
 export const stats = async () => {

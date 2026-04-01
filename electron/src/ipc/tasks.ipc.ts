@@ -1,8 +1,8 @@
 import { ipcMain, BrowserWindow } from "electron";
 import crypto from "crypto";
 import type { Task, Dependency } from "../store/index.js";
-import { tasks, dependencies, taskLogs } from "../store/index.js";
-import { execute, stopExecution, stopProcess } from "../services/execution.js";
+import { tasks, dependencies } from "../store/index.js";
+import {  stopExecution, stopProcess } from "../lib/process.js";
 import {
   yamlToDag,
   dagToWorkflow,
@@ -10,9 +10,11 @@ import {
   WorkFlowToDAG,
 } from "../services/parser.js";
 import { getSystemStats } from "../lib/os.js";
+import { execute } from "../services/execution.js";
 
 export function registerTaskIPC() {
   ipcMain.handle("tasks:get", () => {
+    
     return { tasks, dependencies };
   });
 
@@ -98,17 +100,17 @@ export function registerTaskIPC() {
     },
   );
 
-  ipcMain.on("execution:start", async (event) => {
+  ipcMain.handle("execution:start", async (event) => {
+    
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return;
-    console.log("execution");
 
     const send = (data: any) => {
       win.webContents.send("execution:event", data);
     };
 
     try {
-      const result = await execute(send);
+      const result = await execute();
 
       send({ type: "execution_finished", result });
 
@@ -157,7 +159,7 @@ export function registerTaskIPC() {
     return getSystemStats();
   });
 
-  ipcMain.handle("task:logs", (_, taskId: string) => {
-    return taskLogs.get(taskId) ?? [];
-  });
+  // ipcMain.handle("task:logs", (_, taskId: string) => {
+  //   return taskLogs.get(taskId) ?? [];
+  // });
 }

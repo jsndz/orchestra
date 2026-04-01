@@ -10,7 +10,7 @@ tasksIPC.registerTaskIPC();
 graphIPC.registerGraphIPC();
 
 let mainWindow;
-let isDev =true;
+let isDev =false;
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -24,8 +24,7 @@ function createWindow() {
 
   const indexPath = path.join(__dirname, "client/dist/index.html");
 
-  mainWindow.webContents.openDevTools();
-
+mainWindow.webContents.openDevTools();
   if (isDev) {
     mainWindow.loadURL("http://localhost:6080");
   } else {

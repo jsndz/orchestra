@@ -1,6 +1,6 @@
 import type { ChildProcess } from "child_process";
 
-type StepState =
+type TaskState =
   | "idle"
   | "starting"
   | "ready"// service is ready
@@ -21,16 +21,9 @@ export type Task = {
   folder: string;
   dependency: string[];
   type: "job" | "service";
-  state: StepState;
+  state: TaskState;
   ready?: ReadyWhen;
 };
 export type Dependency = { from: string; to: string };
-export type SendEvent = (event: any) => void;
-
-export const terminal: Map<string, { terminalId: string; taken: boolean }> =
-  new Map<string, { terminalId: string; taken: boolean }>();
-
 export const tasks: Task[] = [];
 export const dependencies: Dependency[] = [];
-export const runningProcesses = new Map<string, ChildProcess>();
-export const taskLogs = new Map<string, string[]>();

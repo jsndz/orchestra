@@ -3,11 +3,11 @@ import {
   tasks,
   dependencies,
   type Task,
-  runningProcesses,
-  SendEvent,
+
 } from "../store/index.js";
 import { runCommand } from "../lib/process.js";
 
+// only if all the dependencies are satisfied, we can run the task
 function canRun(task: Task): boolean {
   const result = task.dependency.every((depId:string) => {
     const dep = tasks.find((t:Task) => t.id == depId);
@@ -32,8 +32,7 @@ function canRun(task: Task): boolean {
   return result;
 }
 
-
-export async function execute(send: SendEvent) {
+export async function execute() {
   const { ok, order } = resolveDependencies(dependencies, tasks);
 
   if (!ok) {
@@ -57,7 +56,7 @@ export async function execute(send: SendEvent) {
     const results = await Promise.allSettled(
       runnable.map((task) => {
         task.state = "starting";
-        return runCommand(task, send);
+        return runCommand(task)
       }),
     );
 
@@ -77,49 +76,4 @@ export async function execute(send: SendEvent) {
   };
 }
 
-export const stopExecution = () => {
-  for (const [taskId, child] of runningProcesses) {
-    if (!child.pid) {
-      continue;
-    }
 
-    try {
-      process.kill(-child.pid, "SIGTERM");
-    } catch (err) {
-      continue;
-    }
-
-    setTimeout(() => {
-      try {
-        process.kill(-child.pid!, 0);
-        process.kill(-child.pid!, "SIGKILL");
-      } catch {}
-    }, 3000);
-  }
-
-  runningProcesses.clear();
-  return true;
-};
-
-export const stopProcess = (id: string) => {
-  const child = runningProcesses.get(id);
-
-  if (!child || !child.pid) {
-    return false;
-  }
-
-  try {
-    process.kill(-child.pid, "SIGTERM");
-  } catch (err) {
-    return false;
-  }
-
-  setTimeout(() => {
-    try {
-      process.kill(-child.pid!, 0);
-      process.kill(-child.pid!, "SIGKILL");
-    } catch {}
-  }, 3000);
-
-  return true;
-};

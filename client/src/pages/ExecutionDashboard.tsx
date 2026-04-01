@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TerminalPage } from "../components/TerminalView";
 import LogPage from "../components/GraphView";
 import { useSystemStats } from "../hooks/useTasks";
 import ExecutionNavbar from "../components/ExecutionNavbar";
-import { downloadYaml, stopExecution } from "../api/tasks";
+import { downloadYaml, execute, stopExecution } from "../api/tasks";
 
 type ViewMode = "terminal" | "graph";
 
@@ -11,7 +11,10 @@ export default function ExecutionDashboard() {
   const [view, setView] = useState<ViewMode>("terminal");
   const { data: systemStats } = useSystemStats();
   const [status, setStatus] = useState<"idle" | "loading" | "stopped">("idle");
-
+ 
+  useEffect(() => {
+    execute();
+  }, []);
   const handleStop = async () => {
     if (status !== "idle") return;
 

@@ -26,7 +26,7 @@ contextBridge.exposeInMainWorld("api", {
 
   getUnreachable: () => ipcRenderer.invoke("graph:unreachable"),
 
- startExecution: () => ipcRenderer.invoke("execution:start"),
+  startExecution: () => ipcRenderer.invoke("execution:start"),
 
   stopExecution: () => ipcRenderer.invoke("execution:stop"),
 
