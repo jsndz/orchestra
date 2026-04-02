@@ -3,10 +3,10 @@ import { Task } from "../store";
 
 const terminalManager = new TerminalManager();
 
-  export async function runCommand(task: Task) {
+  export async function runCommand(task: Task,wc:Electron.WebContents) {
     const termId = terminalManager.create(task.folder);
     terminalManager.run(task.command, termId);
-    terminalManager.view(termId);
+    terminalManager.view(termId,wc);
   }
 
 export function stopExecution() {

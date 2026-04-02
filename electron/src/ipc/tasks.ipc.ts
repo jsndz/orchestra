@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from "electron";
+import { ipcMain, BrowserWindow,ipcRenderer } from "electron";
 import crypto from "crypto";
 import type { Task, Dependency } from "../store/index.js";
 import { tasks, dependencies } from "../store/index.js";
@@ -101,28 +101,9 @@ export function registerTaskIPC() {
   );
 
   ipcMain.handle("execution:start", async (event) => {
-    
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (!win) return;
+    const wc = event.sender;
+    execute(wc);
 
-    const send = (data: any) => {
-      win.webContents.send("execution:event", data);
-    };
-
-    try {
-      const result = await execute();
-
-      send({ type: "execution_finished", result });
-
-      return { ok: true };
-    } catch (err) {
-      send({
-        type: "execution_error",
-        error: err instanceof Error ? err.message : String(err),
-      });
-
-      throw err;
-    }
   });
 
   ipcMain.handle("execution:stop", async () => {

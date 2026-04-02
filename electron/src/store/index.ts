@@ -1,13 +1,11 @@
-import type { ChildProcess } from "child_process";
-
 type TaskState =
   | "idle"
   | "starting"
-  | "ready"// service is ready
+  | "ready" // service is ready
   | "running" 
   | "completed" // job completed
   | "failed"
-  | "stopped"; //manually stop
+  | "stopped"; // manually stop
 
 type ReadyWhen =
   | { kind: "exit" }

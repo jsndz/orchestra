@@ -32,7 +32,7 @@ function canRun(task: Task): boolean {
   return result;
 }
 
-export async function execute() {
+export async function execute(wc: Electron.WebContents) {
   const { ok, order } = resolveDependencies(dependencies, tasks);
 
   if (!ok) {
@@ -56,7 +56,7 @@ export async function execute() {
     const results = await Promise.allSettled(
       runnable.map((task) => {
         task.state = "starting";
-        return runCommand(task)
+        return runCommand(task,wc)
       }),
     );
 

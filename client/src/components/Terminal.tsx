@@ -1,50 +1,24 @@
 import { useEffect, useRef } from "react";
-import { Terminal as XTerm } from "@xterm/xterm";
-import { FitAddon } from "@xterm/addon-fit";
-import "@xterm/xterm/css/xterm.css";
+import { terminalService } from "../lib/terminalService";
+import { useTerminalStore } from "../store/useTerminalStore";
+
 type Props = {
   terminalId: string;
-  status: "running" | "success" | "failed";
   name: string;
-  register: (id: string, term: XTerm) => void;
+  status: "running" | "success" | "failed";
 };
 
-export default function Terminal({
-  terminalId,
-  status,
-  name,
-  register,
-}: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
+export default function Terminal({ terminalId, name, status }: Props) {
 
+  const containerRef = useRef<HTMLDivElement>(null); 
   useEffect(() => {
     if (!containerRef.current) return;
-
-    const term = new XTerm({
-      cursorBlink: true,
-      scrollback: 2000,
-      convertEol: true,
-      theme: {
-        background: "#000000",
-      },
-    });
-
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-
-    term.open(containerRef.current);
-    fitAddon.fit();
-
-    register(terminalId, term);
-
-    const resize = () => fitAddon.fit();
-    window.addEventListener("resize", resize);
-
+    terminalService.create(terminalId,containerRef.current);
+    
     return () => {
-      window.removeEventListener("resize", resize);
-      term.dispose();
+      terminalService.dispose(terminalId);
     };
-  }, []);
+  },[]);
 
   return (
     <div className="flex flex-col rounded-lg overflow-hidden bg-black border border-zinc-700">

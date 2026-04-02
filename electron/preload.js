@@ -43,10 +43,10 @@ contextBridge.exposeInMainWorld("api", {
 
   onExecutionEvent: (callback) => {
     const listener = (_, data) => callback(data);
-    ipcRenderer.on("execution:event", listener);
+    ipcRenderer.on("terminal:data", listener);
 
     return () => {
-      ipcRenderer.removeListener("execution:event", listener);
+      ipcRenderer.removeListener("terminal:data", listener);
     };
   },
 

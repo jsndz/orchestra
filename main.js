@@ -10,7 +10,7 @@ tasksIPC.registerTaskIPC();
 graphIPC.registerGraphIPC();
 
 let mainWindow;
-let isDev =false;
+let isDev =true;
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
