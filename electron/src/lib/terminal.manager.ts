@@ -48,11 +48,15 @@ export class TerminalManager {
     }
   }
 
-  view(id: string,wc:Electron.WebContents) {
+  view(id: string, wc: Electron.WebContents) {
     const terminal = this.terminals.get(id);
     if (!terminal) return;
     terminal.process.onData((data) => {
-      wc.send("terminal:data",{id,data})
+      wc.send("terminal:data", {
+        type: "task_stdout", // Crucial for your terminalsReducer switch statement
+        terminalId: id,
+        data: data,
+      });
     });
   }
 }

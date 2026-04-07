@@ -1,4 +1,4 @@
-export interface Task  {
+export interface Task {
   id: string;
   task: string;
   command: string;
@@ -7,18 +7,18 @@ export interface Task  {
   type: "job" | "service";
   state: StepState;
   ready?: ReadyWhen;
-};
+}
 export type StepState =
   | "idle"
   | "starting"
-  | "ready"// service is ready
-  | "running" 
+  | "ready" // service is ready
+  | "running"
   | "completed" // job completed
   | "failed"
   | "stopped"; //manually stop
 
 export type StateCounts = Record<StepState, number>;
-  
+
 type ReadyWhen =
   | { kind: "exit" }
   | { kind: "port"; port: number }
@@ -68,7 +68,7 @@ export type TaskStartedEvent = {
   type: "task_started";
   terminalId: string;
   taskId: string;
-    name: string;
+  name: string;
   folder: string;
   command: string;
 };
@@ -96,7 +96,7 @@ export type TaskFinishedEvent = {
 
 export type TaskStateEvent = {
   type: "task_state";
-terminalId: string;
+  terminalId: string;
   taskId: string;
   state: StepState;
 };
@@ -106,16 +106,14 @@ export type Events =
   | TaskStartedEvent
   | TaskStdoutEvent
   | TaskStderrEvent
-  | TaskFinishedEvent|
-  TaskStateEvent
-  ;
+  | TaskFinishedEvent
+  | TaskStateEvent;
 
 export type TerminalUIState = {
   terminalId: string;
   taskId: string;
   status: "running" | "success" | "failed";
   name?: string;
-   logs: string[]; 
   folder?: string;
 };
 

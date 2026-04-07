@@ -1,4 +1,3 @@
-// useTerminalStore.ts
 import { create } from "zustand";
 
 type TerminalMeta = {
@@ -20,6 +19,7 @@ export const useTerminalStore = create<Store>((set, get) => ({
 
   createTerminal: () => {
     const id = crypto.randomUUID();
+    console.log("terminal created");
 
     set((state) => ({
       terminals: {
@@ -48,7 +48,7 @@ export const useTerminalStore = create<Store>((set, get) => ({
         Object.entries(state.terminals).map(([key, t]) => [
           key,
           { ...t, isActive: key === id },
-        ])
+        ]),
       ),
     })),
 }));

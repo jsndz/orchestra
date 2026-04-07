@@ -1,24 +1,46 @@
 import { useEffect, useRef } from "react";
-import { terminalService } from "../lib/terminalService";
-import { useTerminalStore } from "../store/useTerminalStore";
-
+import { Terminal as XTerm } from "@xterm/xterm";
+import { FitAddon } from "@xterm/addon-fit";
+import "@xterm/xterm/css/xterm.css";
 type Props = {
   terminalId: string;
-  name: string;
   status: "running" | "success" | "failed";
+  name: string;
 };
 
-export default function Terminal({ terminalId, name, status }: Props) {
-
-  const containerRef = useRef<HTMLDivElement>(null); 
+export default function Terminal({
+  status,
+  name,
+}: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+const termRef = useRef<XTerm | null>(null);
   useEffect(() => {
     if (!containerRef.current) return;
-    terminalService.create(terminalId,containerRef.current);
+
+    const term = new XTerm({
+      cursorBlink: true,
+      scrollback: 2000,
+      convertEol: true,
+      theme: {
+        background: "#000000",
+      },
+    });
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+term.open(containerRef.current);
+    fitAddon.fit();
     
+    termRef.current = term;
+   window.api.onExecutionEvent((msg)=>{
+    console.log(msg);
+    
+    term.write(msg.data)
+   })
+
     return () => {
-      terminalService.dispose(terminalId);
+      term.dispose();
     };
-  },[]);
+  }, []);
 
   return (
     <div className="flex flex-col rounded-lg overflow-hidden bg-black border border-zinc-700">
