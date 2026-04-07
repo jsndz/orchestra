@@ -8,12 +8,9 @@ type Props = {
   name: string;
 };
 
-export default function Terminal({
-  status,
-  name,
-}: Props) {
+export default function Terminal({ status, name, terminalId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-const termRef = useRef<XTerm | null>(null);
+  const termRef = useRef<XTerm | null>(null);
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -27,15 +24,16 @@ const termRef = useRef<XTerm | null>(null);
     });
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
-term.open(containerRef.current);
+    term.open(containerRef.current);
     fitAddon.fit();
-    
+    window.api.onExecutionEvent((msg) => {
+      console.log(msg);
+      if (terminalId == msg.terminalId) {
+        term.write(msg.data);
+      }
+    });
     termRef.current = term;
-   window.api.onExecutionEvent((msg)=>{
-    console.log(msg);
-    
-    term.write(msg.data)
-   })
+    window.api.terminalReady(terminalId);
 
     return () => {
       term.dispose();
@@ -51,8 +49,8 @@ term.open(containerRef.current);
               status === "running"
                 ? "bg-yellow-400"
                 : status === "success"
-                ? "bg-green-400"
-                : "bg-red-400"
+                  ? "bg-green-400"
+                  : "bg-red-400"
             }`}
           />
           <span>{name}</span>

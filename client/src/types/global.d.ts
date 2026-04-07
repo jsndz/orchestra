@@ -1,4 +1,4 @@
-import type { Task } from "../path/to/your/store"; // adjust path
+import { Task } from ".";
 
 export {};
 
@@ -28,13 +28,16 @@ declare global {
       stopExecution: () => Promise<any>;
       stopTask: (id: string) => Promise<any>;
       onExecutionEvent: (cb: (data: any) => void) => () => void;
-
+      onTerminalCreated: (cb: (config: any) => void) => () => void;
+      terminalReady: (id: string) => void;
       // YAML
       importYaml: (yaml: string) => Promise<{ ok: true }>;
       exportYaml: (workflow: string) => Promise<string>;
 
       // SYSTEM
       getSystemStats: () => Promise<any>;
+
+
 
       // LOGS
       getTaskLogs: (taskId: string) => Promise<string[]>;

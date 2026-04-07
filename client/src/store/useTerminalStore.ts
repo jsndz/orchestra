@@ -9,19 +9,18 @@ type TerminalMeta = {
 type Store = {
   terminals: Record<string, TerminalMeta>;
 
-  createTerminal: () => string;
+  createTerminal: (id: string) => string;
   removeTerminal: (id: string) => void;
   setActive: (id: string) => void;
 };
 
 export const useTerminalStore = create<Store>((set, get) => ({
   terminals: {},
+createTerminal: (id: string) => {
+  set((state) => {
+    if (state.terminals[id]) return state;
 
-  createTerminal: () => {
-    const id = crypto.randomUUID();
-    console.log("terminal created");
-
-    set((state) => ({
+    return {
       terminals: {
         ...state.terminals,
         [id]: {
@@ -30,10 +29,10 @@ export const useTerminalStore = create<Store>((set, get) => ({
           isActive: true,
         },
       },
-    }));
-
-    return id;
-  },
+    };
+  });
+  return id;
+},
 
   removeTerminal: (id) =>
     set((state) => {

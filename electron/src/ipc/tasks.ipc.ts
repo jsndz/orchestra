@@ -1,8 +1,8 @@
-import { ipcMain, BrowserWindow,ipcRenderer } from "electron";
+import { ipcMain, BrowserWindow, ipcRenderer } from "electron";
 import crypto from "crypto";
 import type { Task, Dependency } from "../store/index.js";
 import { tasks, dependencies } from "../store/index.js";
-import {  stopExecution, stopProcess } from "../lib/process.js";
+import { stopExecution, stopProcess, terminalReady } from "../lib/process.js";
 import {
   yamlToDag,
   dagToWorkflow,
@@ -14,7 +14,6 @@ import { execute } from "../services/execution.js";
 
 export function registerTaskIPC() {
   ipcMain.handle("tasks:get", () => {
-    
     return { tasks, dependencies };
   });
 
@@ -103,11 +102,14 @@ export function registerTaskIPC() {
   ipcMain.handle("execution:start", async (event) => {
     const wc = event.sender;
     execute(wc);
-
   });
 
   ipcMain.handle("execution:stop", async () => {
     return await stopExecution();
+  });
+  ipcMain.handle("terminal:ready", async (event, id: string) => {
+    const wc = event.sender;
+    terminalReady(id, wc);
   });
 
   ipcMain.handle("task:stop", (_, id: string) => {
@@ -143,4 +145,6 @@ export function registerTaskIPC() {
   // ipcMain.handle("task:logs", (_, taskId: string) => {
   //   return taskLogs.get(taskId) ?? [];
   // });
+
+
 }
