@@ -9,20 +9,21 @@ export async function runCommand(
 ): Promise<void> {
   return new Promise(async (resolve, reject) => {
     const terminalId = terminalManager.create(task.folder, wc);
-    task.state = "starting";
+    updateTaskState(task, "starting", wc);
+    
     terminalManager.run(task.command, terminalId);
-    task.state = "running";
+    updateTaskState(task, "running", wc);
     const exitcode = await terminalManager.listenForExitCode(terminalId);
     console.log(exitcode);
     if (exitcode === 0) {
-      task.state = "completed";
+      updateTaskState(task, "completed", wc);
       resolve();
     } else {
-      task.state = "failed";
+      updateTaskState(task, "failed", wc);
       reject(new Error(`Command failed with exit code ${exitcode}`));
     }
     if (task.type === "service") {
-      await readinessCheck(task, terminalId);
+      await readinessCheck(task, terminalId, wc);
       resolve();
     }
   });
@@ -32,11 +33,11 @@ export function stopExecution() {
   terminalManager.killAll();
 }
 
-export function stopProcess(id: string) {
+export function stopProcess(id: string, wc: Electron.WebContents) {
   terminalManager.kill(id);
   const task = tasks.find((t) => t.id === id);
   if (task) {
-    task.state = "stopped";
+    updateTaskState(task, "stopped", wc);
   }
 }
 
@@ -44,17 +45,17 @@ export function terminalReady(id: string, wc: Electron.WebContents) {
   terminalManager.setReady(id, wc);
 }
 
-async function readinessCheck(task: Task, id: string): Promise<void> {
+async function readinessCheck(task: Task, id: string, wc: Electron.WebContents): Promise<void> {
   if (task.state === "ready") return;
   if (!task.ready) return;
 
   if (task.ready.kind === "port") {
     waitForPort(task.ready.port)
       .then(() => {
-        task.state = "ready";
+        updateTaskState(task, "ready", wc);
       })
       .catch((err) => {
-        task.state = "failed";
+        updateTaskState(task, "failed", wc);
       });
     return;
   }
@@ -62,10 +63,10 @@ async function readinessCheck(task: Task, id: string): Promise<void> {
   if (task.ready.kind === "log") {
     await waitForLog(id, task.ready.match)
       .then(() => {
-        task.state = "ready";
+        updateTaskState(task, "ready", wc);
       })
       .catch((err) => {
-        task.state = "failed";
+        updateTaskState(task, "failed", wc);
       });
     return;
   }
@@ -132,5 +133,19 @@ function waitForLog(
       cleanup();
       reject(new Error("log readiness timeout"));
     }, timeout);
+  });
+}
+
+
+function updateTaskState(
+  task: Task,
+  state: Task["state"],
+  wc: Electron.WebContents
+) {
+  task.state = state;
+
+  wc.send("task:state", {
+    id: task.id,
+    state,
   });
 }

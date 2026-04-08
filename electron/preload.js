@@ -51,6 +51,11 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("terminal:data", listener);
     return () => ipcRenderer.removeListener("terminal:data", listener);
   },
+  onTaskStateChange: (callback) => {
+    const listener = (_, data) => callback(data);
+    ipcRenderer.on("task:state", listener);
+    return () => ipcRenderer.removeListener("task:state", listener);
+  },
   terminalReady: (taskId) => ipcRenderer.invoke("terminal:ready", taskId),
 
   importYaml: (yaml) => ipcRenderer.invoke("yaml:import", yaml),
@@ -59,5 +64,5 @@ contextBridge.exposeInMainWorld("api", {
 
   getSystemStats: () => ipcRenderer.invoke("system:stats"),
 
-  getTaskLogs: (taskId) => ipcRenderer.invoke("task:logs", taskId),
+  // getTaskLogs: (taskId) => ipcRenderer.invoke("task:logs", taskId),
 });

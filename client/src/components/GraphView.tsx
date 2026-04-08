@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTasks, useSystemStats, useLogs } from "../hooks/useTasks";
 import { stopExecution } from "../api/tasks";
-import { Button } from "./ui/button";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,7 +10,6 @@ import {
 } from "lucide-react";
 import { ExecGraph } from "./ExecGraph";
 import LogViewer from "./LogView";
-import ExecutionNavbar from "./ExecutionNavbar";
 
 export default function LogPage() {
   const { data } = useTasks();
@@ -23,15 +21,38 @@ export default function LogPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const tasks = data?.tasks ?? [];
+  const [localTasks, setLocalTasks] = useState<any[]>([]);
+
   const dependencies = data?.dependencies ?? [];
+
   const { data: logsData } = useLogs(selectedTaskId);
-  const selectedTask = tasks.find((t) => t.id === selectedTaskId);
+
+  useEffect(() => {
+    if (data?.tasks) {
+      setLocalTasks(data.tasks);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    const handler = (payload: { id: string; state: string }) => {
+      setLocalTasks((prev) =>
+        prev.map((t) =>
+          t.id === payload.id ? { ...t, state: payload.state } : t
+        )
+      );
+    };
+
+    window.api.onTaskStateChange(handler);
+
+    
+  }, []);
+
   useEffect(() => {
     if (logsData) {
       setLogs(logsData);
     }
   }, [logsData]);
+
   const handleStop = async () => {
     if (status !== "idle") return;
 
@@ -43,16 +64,13 @@ export default function LogPage() {
       setStatus("idle");
     }
   };
-  const handleNodeClick = (id: string) => {
-    setSelectedTaskId(id);
-  };
+
+  const selectedTask = localTasks.find((t) => t.id === selectedTaskId);
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* HEADER */}
-
-      {/* MAIN */}
       <div className="flex flex-1 relative overflow-hidden">
-        {/* LEFT SIDEBAR (Workflow Steps) */}
+        {/* SIDEBAR */}
         <div
           className={`border-r bg-card transition-all duration-300 ${
             sidebarOpen ? "w-72" : "w-12"
@@ -77,7 +95,7 @@ export default function LogPage() {
 
           {sidebarOpen && (
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
-              {tasks.map((t) => (
+              {localTasks.map((t) => (
                 <div
                   key={t.id}
                   onClick={() => setSelectedTaskId(t.id)}
@@ -100,22 +118,25 @@ export default function LogPage() {
                       {t.command}
                     </div>
                   )}
+
+                  {/* 🔥 show state */}
+                  <div className="text-xs mt-2">{t.state}</div>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* GRAPH AREA */}
+        {/* GRAPH */}
         <div className="flex-1 relative">
           <ExecGraph
-            apiData={{ tasks, dependencies }}
+            apiData={{ tasks: localTasks, dependencies }}
             selectedId={selectedTaskId}
-            onNodeClick={(id) => handleNodeClick(id)}
+            onNodeClick={(id) => setSelectedTaskId(id)}
           />
         </div>
 
-        {/* RIGHT TERMINAL DRAWER */}
+        {/* TERMINAL */}
         <div
           className={`absolute top-0 right-0 h-full w-[500px] bg-card border-l shadow-2xl 
           transition-transform duration-300 z-40
@@ -123,7 +144,6 @@ export default function LogPage() {
         >
           {selectedTask && (
             <div className="flex flex-col h-full">
-              {/* Drawer Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b">
                 <div>
                   <div className="font-semibold text-sm">
@@ -142,8 +162,6 @@ export default function LogPage() {
                 </button>
               </div>
 
-              {/* Terminal */}
-
               <div className="flex-1 p-3 overflow-auto">
                 <LogViewer logs={logs} />
               </div>
@@ -151,8 +169,6 @@ export default function LogPage() {
           )}
         </div>
       </div>
-
-   
     </div>
   );
 }

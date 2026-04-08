@@ -146,7 +146,7 @@ export function ExecGraph({
     selectedId,
   );
 
-  setNodes(nodes); 
+  setNodes(nodes);
   setEdges(edges);
 }, [levels, apiData.tasks, selectedId]);
   return (

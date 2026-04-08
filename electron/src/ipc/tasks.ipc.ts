@@ -112,8 +112,8 @@ export function registerTaskIPC() {
     terminalReady(id, wc);
   });
 
-  ipcMain.handle("task:stop", (_, id: string) => {
-    return stopProcess(id);
+  ipcMain.handle("task:stop", (event, id: string) => {
+    return stopProcess(id,event.sender);
   });
 
   ipcMain.handle("yaml:import", (_, yaml: string) => {
