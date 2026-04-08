@@ -41,8 +41,9 @@ export class TerminalManager {
   run(command: string, id: string) {
     const terminal = this.terminals.get(id);
     if (!terminal) return;
-
-    terminal.process.write(command + "\r");
+    terminal.process.write(
+      `(${command}); EXIT_CODE=$?; echo "::TASK_EXIT:$EXIT_CODE::"\r`,
+    );
   }
 
   kill(id: string) {
@@ -71,4 +72,63 @@ export class TerminalManager {
       this.buffers.set(id, []);
     }
   }
+
+  async listenForExitCode(id: string): Promise<number> {
+    const terminal = this.terminals.get(id);
+    if (!terminal) throw new Error(`Terminal with id ${id} not found`);
+
+    return new Promise((resolve, reject) => {
+      let buffer = "";
+
+      const handler = (data: string) => {
+        buffer += data;
+
+        const match = buffer.match(/::TASK_EXIT:(\d+)::/);
+        if (match) {
+          const code = Number(match[1]);
+
+          resolve(code);
+        }
+      };
+
+      terminal.process.onData(handler);
+    });
+  }
+  async listenForLog(
+  id: string,
+  match: string | RegExp,
+  timeout = 30000,
+): Promise<void> {
+  const terminal = this.terminals.get(id);
+  if (!terminal) throw new Error(`Terminal with id ${id} not found`);
+
+  return new Promise((resolve, reject) => {
+    let buffer = "";
+
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("log readiness timeout"));
+    }, timeout);
+
+    const handler = (data: string) => {
+      buffer += data;
+
+      const matches =
+        typeof match === "string"
+          ? buffer.includes(match)
+          : match.test(buffer);
+
+      if (matches) {
+        cleanup();
+        resolve();
+      }
+    };
+
+    const cleanup = () => {
+      clearTimeout(timer);
+    };
+
+    terminal.process.onData(handler);
+  });
+}
 }

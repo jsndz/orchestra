@@ -1,0 +1,5 @@
+- [] fix the problem of running level 2 of parallels
+- [] add states for each task
+
+
+// using sentinels to get exit code for the process to send in the promise

@@ -25,3 +25,6 @@ export type Task = {
 export type Dependency = { from: string; to: string };
 export const tasks: Task[] = [];
 export const dependencies: Dependency[] = [];
+
+
+export const EXIT_SENTINEL = "/::TASK_EXIT:(\d+)::/"
