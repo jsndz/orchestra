@@ -19,10 +19,10 @@ export type StepState =
 
 export type StateCounts = Record<StepState, number>;
 
-type ReadyWhen =
+export type ReadyWhen =
   | { kind: "exit" }
   | { kind: "port"; port: number }
-  | { kind: "log"; match: string | RegExp };
+  | { kind: "log"; match: string | RegExp, isRegex: boolean };
 
 export type TaskRequest = {
   task: string;

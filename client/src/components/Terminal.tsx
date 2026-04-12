@@ -27,7 +27,6 @@ export default function Terminal({ status, name, terminalId }: Props) {
     term.open(containerRef.current);
     fitAddon.fit();
     window.api.onExecutionEvent((msg) => {
-      console.log(msg);
       if (terminalId == msg.terminalId) {
         term.write(msg.data);
       }

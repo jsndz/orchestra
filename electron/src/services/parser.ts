@@ -9,6 +9,7 @@ interface DagTask {
     kind: "exit" | "port" | "log";
     port?: number;
     match?: string;
+    isRegex?: boolean;
   };
   dependsOn?: string[];
 }
@@ -37,6 +38,7 @@ function serializeReady(ready?: Task["ready"]): DagTask["ready"] {
     return {
       kind: "log",
       match: typeof ready.match === "string" ? ready.match : ready.match.source,
+      isRegex: ready.isRegex,
     };
   }
 
@@ -51,7 +53,7 @@ function deserializeReady(ready?: DagTask["ready"]): Task["ready"] {
   }
 
   if (ready.kind === "log") {
-    return { kind: "log", match: ready.match! };
+    return { kind: "log", match: ready.match! ,isRegex: ready.isRegex!};
   }
 
   return { kind: "exit" };

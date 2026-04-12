@@ -11,7 +11,6 @@ export class TerminalManager {
   private isReady = new Map<string, boolean>();
   create(folder: string, wc: Electron.WebContents): string {
     const id = `term-${crypto.randomUUID()}`;
-    console.log("new Terminal created", id);
 
     const shell = pty.spawn("bash", [], {
       name: "xterm-color",
@@ -94,41 +93,52 @@ export class TerminalManager {
       terminal.process.onData(handler);
     });
   }
+
   async listenForLog(
-  id: string,
-  match: string | RegExp,
-  timeout = 30000,
-): Promise<void> {
-  const terminal = this.terminals.get(id);
-  if (!terminal) throw new Error(`Terminal with id ${id} not found`);
+    id: string,
+    match: string | RegExp,
+    isRegEx: boolean,
+    timeout = 30000,
+  ): Promise<void> {
+    const terminal = this.terminals.get(id);
+    if (!terminal) throw new Error(`Terminal with id ${id} not found`);
 
-  return new Promise((resolve, reject) => {
-    let buffer = "";
+    return new Promise((resolve, reject) => {
+      let buffer = "";
+console.log(match);
 
-    const timer = setTimeout(() => {
-      cleanup();
-      reject(new Error("log readiness timeout"));
-    }, timeout);
+      const safeRegex =
+        isRegEx && match instanceof RegExp
+          ? new RegExp(match.source, match.flags.replace("g", ""))
+          : null;
 
-    const handler = (data: string) => {
-      buffer += data;
+      const handler = (data: string) => {
+        buffer += data;
 
-      const matches =
-        typeof match === "string"
-          ? buffer.includes(match)
-          : match.test(buffer);
+        if (buffer.length > 5000) {
+          buffer = buffer.slice(-5000);
+        }
 
-      if (matches) {
+        const matches = isRegEx
+          ? safeRegex!.test(buffer)
+          : buffer.includes(match as string);
+
+        if (matches) {
+          cleanup();
+          resolve();
+        }
+      };
+
+      const cleanup = () => {
+        clearTimeout(timer);
+      };
+
+      const timer = setTimeout(() => {
         cleanup();
-        resolve();
-      }
-    };
+        reject(new Error("log readiness timeout"));
+      }, timeout);
 
-    const cleanup = () => {
-      clearTimeout(timer);
-    };
-
-    terminal.process.onData(handler);
-  });
-}
+      terminal.process.onData(handler);
+    });
+  }
 }

@@ -7,26 +7,29 @@ export async function runCommand(
   task: Task,
   wc: Electron.WebContents,
 ): Promise<void> {
-  return new Promise(async (resolve, reject) => {
-    const terminalId = terminalManager.create(task.folder, wc);
-    updateTaskState(task, "starting", wc);
-    
-    terminalManager.run(task.command, terminalId);
-    updateTaskState(task, "running", wc);
-    const exitcode = await terminalManager.listenForExitCode(terminalId);
-    console.log(exitcode);
-    if (exitcode === 0) {
-      updateTaskState(task, "completed", wc);
-      resolve();
-    } else {
-      updateTaskState(task, "failed", wc);
-      reject(new Error(`Command failed with exit code ${exitcode}`));
-    }
-    if (task.type === "service") {
+  const terminalId = terminalManager.create(task.folder, wc);
+
+  updateTaskState(task, "starting", wc);
+  terminalManager.run(task.command, terminalId);
+  updateTaskState(task, "running", wc);
+
+  if (task.type === "service") {
+    try {
       await readinessCheck(task, terminalId, wc);
-      resolve();
+      return;
+    } catch (err) {
+      throw err;
     }
-  });
+  }
+
+  const exitcode = await terminalManager.listenForExitCode(terminalId);
+
+  if (exitcode === 0) {
+    updateTaskState(task, "completed", wc);
+  } else {
+    updateTaskState(task, "failed", wc);
+    throw new Error(`Command failed with exit code ${exitcode}`);
+  }
 }
 
 export function stopExecution() {
@@ -45,31 +48,37 @@ export function terminalReady(id: string, wc: Electron.WebContents) {
   terminalManager.setReady(id, wc);
 }
 
-async function readinessCheck(task: Task, id: string, wc: Electron.WebContents): Promise<void> {
+async function readinessCheck(
+  task: Task,
+  id: string,
+  wc: Electron.WebContents,
+): Promise<void> {
   if (task.state === "ready") return;
   if (!task.ready) return;
 
   if (task.ready.kind === "port") {
-    waitForPort(task.ready.port)
-      .then(() => {
-        updateTaskState(task, "ready", wc);
-      })
-      .catch((err) => {
-        updateTaskState(task, "failed", wc);
-      });
+    try {
+      await waitForPort(task.ready.port);
+      updateTaskState(task, "ready", wc);
+    } catch (err) {
+      updateTaskState(task, "failed", wc);
+      throw err;
+    }
     return;
   }
 
   if (task.ready.kind === "log") {
-    await waitForLog(id, task.ready.match)
-      .then(() => {
-        updateTaskState(task, "ready", wc);
-      })
-      .catch((err) => {
-        updateTaskState(task, "failed", wc);
-      });
+    try {
+      await waitForLog(id, task.ready.match, task.ready.isRegex);
+      updateTaskState(task, "ready", wc);
+    } catch (err) {
+      updateTaskState(task, "failed", wc);
+      throw err;
+    }
     return;
   }
+
+  return;
 }
 
 function waitForPort(
@@ -77,6 +86,8 @@ function waitForPort(
   ip = "127.0.0.1",
   timeout = 30000,
 ): Promise<void> {
+  console.log("Waiting for port", port);
+
   const startTime = Date.now();
 
   return new Promise<void>((res, rej) => {
@@ -122,25 +133,16 @@ function waitForPort(
 function waitForLog(
   id: string,
   match: string | RegExp,
+  isRegEx: boolean,
   timeout = 30000,
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    terminalManager.listenForLog(id, match);
-    const cleanup = () => {
-      clearTimeout(timer);
-    };
-    const timer = setTimeout(() => {
-      cleanup();
-      reject(new Error("log readiness timeout"));
-    }, timeout);
-  });
+  return terminalManager.listenForLog(id, match, isRegEx, timeout);
 }
-
 
 function updateTaskState(
   task: Task,
   state: Task["state"],
-  wc: Electron.WebContents
+  wc: Electron.WebContents,
 ) {
   task.state = state;
 

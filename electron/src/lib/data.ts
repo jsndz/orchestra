@@ -52,7 +52,7 @@ export function addMockData() {
     dependency: [],
     type: "service",
     state: "idle",
-    ready: { kind: "log", match: /listening|server started/i },
+    ready: { kind: "log", match: /listening|server started/i , isRegex: true },
   };
 
   const task5: Task = {

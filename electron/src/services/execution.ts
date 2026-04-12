@@ -1,16 +1,11 @@
 import { parallelExecution, resolveDependencies } from "./graph.js";
-import {
-  tasks,
-  dependencies,
-  type Task,
-
-} from "../store/index.js";
+import { tasks, dependencies, type Task } from "../store/index.js";
 import { runCommand } from "../lib/process.js";
 
 // only if all the dependencies are satisfied, we can run the task
 function canRun(task: Task): boolean {
-  const result = task.dependency.every((depId:string) => {
-    const dep = tasks.find((t:Task) => t.id == depId);
+  const result = task.dependency.every((depId: string) => {
+    const dep = tasks.find((t: Task) => t.id == depId);
 
     if (!dep) {
       return false;
@@ -28,6 +23,7 @@ function canRun(task: Task): boolean {
 
     return false;
   });
+  console.log(task.command, result);
 
   return result;
 }
@@ -44,6 +40,7 @@ export async function execute(wc: Electron.WebContents) {
   if (!parallels.ok || !parallels.levels) {
     return { ok: false, error: "invalid execution plan" };
   }
+  console.log(parallels);
 
   for (let i = 0; i < parallels.levels.length; i++) {
     const level = parallels.levels[i];
@@ -52,13 +49,15 @@ export async function execute(wc: Electron.WebContents) {
     if (runnable.length === 0) {
       continue;
     }
+    console.log("ruunable", runnable);
 
     const results = await Promise.allSettled(
       runnable.map((task) => {
         task.state = "starting";
-        return runCommand(task,wc)
+        return runCommand(task, wc);
       }),
     );
+    console.log(i, results);
 
     results.forEach((result, index) => {
       const task = runnable[index];
@@ -75,5 +74,3 @@ export async function execute(wc: Electron.WebContents) {
     levels: parallels.levels.map((level) => level.map((t) => t.id)),
   };
 }
-
-

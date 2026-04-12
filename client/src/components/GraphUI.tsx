@@ -12,7 +12,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-import { Dependency, Task } from "../types";
+import { Dependency, ReadyWhen, Task } from "../types";
 import { useCallback, useEffect, useState } from "react";
 import {
   useDeleteTask,
@@ -21,20 +21,10 @@ import {
   useUpdateTask,
 } from "../hooks/useTasks";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "./ui/card";
 import { Button } from "./ui/button";
 import { analyze } from "../api/tasks";
 
-type ReadyWhen =
-  | { kind: "exit" }
-  | { kind: "port"; port: number }
-  | { kind: "log"; match: string };
+
 
 export function toReactFlowGraphFromLevels(
   levels: Task[][],
@@ -128,6 +118,7 @@ export function DependencyGraph({
   const [readyPort, setReadyPort] = useState<number>(3000);
   const [readyLogMatch, setReadyLogMatch] = useState("");
   const [levels, setLevels] = useState<Task[][]>([]);
+  const [logMatchType, setLogMatchType] = useState<"text" | "regex">("text");
   useEffect(() => {
     if (!editingTask) return;
 
@@ -240,7 +231,11 @@ export function DependencyGraph({
       }
 
       if (readyKind === "log") {
-        ready = { kind: "log", match: readyLogMatch };
+        ready = ready = {
+          kind: "log",
+          match: readyLogMatch,
+          isRegex: logMatchType === "regex",
+        };
       }
     }
 
@@ -397,12 +392,35 @@ export function DependencyGraph({
                 )}
 
                 {readyKind === "log" && (
-                  <input
-                    className="w-full border p-2 rounded"
-                    value={readyLogMatch}
-                    onChange={(e) => setReadyLogMatch(e.target.value)}
-                    placeholder="Log match text"
-                  />
+                  <div className="space-y-2">
+                    <select
+                      className="w-full border p-2 rounded"
+                      value={logMatchType}
+                      onChange={(e) =>
+                        setLogMatchType(e.target.value as "text" | "regex")
+                      }
+                    >
+                      <option value="text">Contains text</option>
+                      <option value="regex">Regex</option>
+                    </select>
+
+                    <input
+                      className="w-full border p-2 rounded"
+                      value={readyLogMatch}
+                      onChange={(e) => setReadyLogMatch(e.target.value)}
+                      placeholder={
+                        logMatchType === "regex"
+                          ? "e.g. server.*started"
+                          : "e.g. server started"
+                      }
+                    />
+
+                    {logMatchType === "regex" && (
+                      <p className="text-xs text-muted-foreground">
+                        Pattern will be matched using /pattern/i
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             )}

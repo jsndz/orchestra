@@ -10,7 +10,7 @@ type TaskState =
 type ReadyWhen =
   | { kind: "exit" }
   | { kind: "port"; port: number }
-  | { kind: "log"; match: string | RegExp };
+  | { kind: "log"; match: string | RegExp, isRegex: boolean };
 
 export type Task = {
   id: string;

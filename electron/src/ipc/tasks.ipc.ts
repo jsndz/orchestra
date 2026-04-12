@@ -32,7 +32,7 @@ export function registerTaskIPC() {
       state: "idle",
       ready:
         body.type === "service"
-          ? (body.ready ?? { kind: "log", match: "" })
+          ? (body.ready ?? { kind: "log", match: "", isRegex: false })
           : { kind: "exit" },
     };
 
