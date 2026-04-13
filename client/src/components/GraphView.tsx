@@ -14,7 +14,7 @@ import LogViewer from "./LogView";
 export default function LogPage() {
   const { data } = useTasks();
   const { data: systemStats } = useSystemStats();
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logsMap, setLogsMap] = useState<Record<string, string[]>>({});
   const navigate = useNavigate();
 
   const [status, setStatus] = useState<"idle" | "loading" | "stopped">("idle");
@@ -37,22 +37,27 @@ export default function LogPage() {
     const handler = (payload: { id: string; state: string }) => {
       setLocalTasks((prev) =>
         prev.map((t) =>
-          t.id === payload.id ? { ...t, state: payload.state } : t
-        )
+          t.id === payload.id ? { ...t, state: payload.state } : t,
+        ),
       );
     };
 
     window.api.onTaskStateChange(handler);
-
-    
   }, []);
 
   useEffect(() => {
-    if (logsData) {
-      setLogs(logsData);
-    }
-  }, [logsData]);
+    const cleanup = window.api.onTaskLog((log) => {
+      setLogsMap((prev) => {
+        const taskLogs = prev[log.taskId] || [];
+        return {
+          ...prev,
+          [log.taskId]: [...taskLogs, log.message].slice(-1000),
+        };
+      });
+    });
 
+    return cleanup;
+  }, []);
   const handleStop = async () => {
     if (status !== "idle") return;
 
@@ -66,6 +71,7 @@ export default function LogPage() {
   };
 
   const selectedTask = localTasks.find((t) => t.id === selectedTaskId);
+  const logs = selectedTaskId ? logsMap[selectedTaskId] || [] : [];
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

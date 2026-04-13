@@ -40,7 +40,7 @@ contextBridge.exposeInMainWorld("api", {
   },
 
   stopTask: (id) => ipcRenderer.invoke("task:stop", id),
-  
+
   onTerminalCreated: (callback) => {
     const listener = (_, config) => callback(config);
     ipcRenderer.on("terminal:created", listener);
@@ -56,6 +56,12 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("task:state", listener);
     return () => ipcRenderer.removeListener("task:state", listener);
   },
+  onTaskLog: (callback) => {
+    const listener = (_, data) => callback(data);
+    ipcRenderer.on("task:log", listener);
+
+    return () => ipcRenderer.removeListener("task:log", listener);
+  },  
   terminalReady: (taskId) => ipcRenderer.invoke("terminal:ready", taskId),
 
   importYaml: (yaml) => ipcRenderer.invoke("yaml:import", yaml),

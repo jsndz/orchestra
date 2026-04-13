@@ -1,5 +1,5 @@
-import { TerminalManager } from "./terminal.manager";
-import { EXIT_SENTINEL, Task, tasks } from "../store";
+import { TerminalManager } from "./terminal.manager.js";
+import { EXIT_SENTINEL, Task, tasks } from "../store/index.js";
 import net from "net";
 const terminalManager = new TerminalManager();
 
@@ -7,7 +7,7 @@ export async function runCommand(
   task: Task,
   wc: Electron.WebContents,
 ): Promise<void> {
-  const terminalId = terminalManager.create(task.folder, wc);
+  const terminalId = terminalManager.create(task.folder, wc, task);
 
   updateTaskState(task, "starting", wc);
   terminalManager.run(task.command, terminalId);
@@ -86,7 +86,6 @@ function waitForPort(
   ip = "127.0.0.1",
   timeout = 30000,
 ): Promise<void> {
-  console.log("Waiting for port", port);
 
   const startTime = Date.now();
 

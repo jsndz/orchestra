@@ -1,16 +1,23 @@
-const { app, BrowserWindow } = require("electron");
-const path = require("path");
+import { app, BrowserWindow } from "electron";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// __dirname replacement
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const servicesPath = path.join(__dirname, "electron/dist");
 
-const tasksIPC = require(path.join(servicesPath, "ipc/tasks.ipc.js"));
-const graphIPC = require(path.join(servicesPath, "ipc/graph.ipc.js"));
+// dynamic imports for local files
+const tasksIPC = await import(path.join(servicesPath, "ipc/tasks.ipc.js"));
+const graphIPC = await import(path.join(servicesPath, "ipc/graph.ipc.js"));
 
 tasksIPC.registerTaskIPC();
 graphIPC.registerGraphIPC();
 
 let mainWindow;
-let isDev =true;
+const isDev = true;
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -24,7 +31,8 @@ function createWindow() {
 
   const indexPath = path.join(__dirname, "client/dist/index.html");
 
-mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
+
   if (isDev) {
     mainWindow.loadURL("http://localhost:6080");
   } else {
@@ -38,5 +46,7 @@ app.on("window-all-closed", () => {
   app.quit();
 });
 
-// 👇 export window getter for IPC files
-module.exports.getMainWindow = () => mainWindow;
+// export
+export function getMainWindow() {
+  return mainWindow;
+}

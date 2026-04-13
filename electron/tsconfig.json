@@ -4,7 +4,7 @@
     "module": "node16",
     "rootDir": "src",
     "outDir": "dist",
-    "moduleResolution": "node16",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "strict": true
   },

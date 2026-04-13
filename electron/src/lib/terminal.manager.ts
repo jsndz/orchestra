@@ -1,15 +1,22 @@
 import * as pty from "node-pty";
-
+import stripAnsi from "strip-ansi";
+import { Task } from "../store/index.js";
 type Terminal = {
   id: string;
   process: pty.IPty;
 };
 
+function cleanChunk(chunk: string) {
+  return stripAnsi(chunk).replace(/\r/g, "");
+}
+function isNoise(line: string) {
+  return /^[⠙⠹⠸⠼⠴⠦⠧⠇⠏⠋]+$/.test(line.trim());
+}
 export class TerminalManager {
   private terminals = new Map<string, Terminal>();
   private buffers = new Map<string, string[]>();
   private isReady = new Map<string, boolean>();
-  create(folder: string, wc: Electron.WebContents): string {
+  create(folder: string, wc: Electron.WebContents,task :Task): string {
     const id = `term-${crypto.randomUUID()}`;
 
     const shell = pty.spawn("bash", [], {
@@ -25,6 +32,7 @@ export class TerminalManager {
     shell.onData((data) => {
       if (this.isReady.get(id)) {
         wc.send("terminal:data", { terminalId: id, data });
+        this.handleLogChunk(task.id, data, wc);
       } else {
         this.buffers.get(id)?.push(data);
       }
@@ -105,7 +113,6 @@ export class TerminalManager {
 
     return new Promise((resolve, reject) => {
       let buffer = "";
-console.log(match);
 
       const safeRegex =
         isRegEx && match instanceof RegExp
@@ -141,4 +148,29 @@ console.log(match);
       terminal.process.onData(handler);
     });
   }
+  
+  private logBuffers = new Map<string, string>();
+
+  private handleLogChunk(id: string, chunk: string, wc: Electron.WebContents) {
+    const cleaned = cleanChunk(chunk);
+
+      const prev = this.logBuffers.get(id) || "";
+      const combined = prev + cleaned;
+
+      const lines = combined.split("\n");
+      this.logBuffers.set(id, lines.pop() || "");
+
+      for (const line of lines) {
+        const clean = line.trim();
+        if (!clean) continue;
+        if (isNoise(clean)) continue;
+
+        wc.send("task:log", {
+          taskId: id,
+          message: clean,
+          ts: Date.now(),
+        });
+        console.log("LOG SENT", id, chunk);
+      }
+    }
 }

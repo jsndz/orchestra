@@ -29,6 +29,7 @@ declare global {
       stopTask: (id: string) => Promise<any>;
       onExecutionEvent: (cb: (data: any) => void) => () => void;
       onTaskStateChange: (cb: (data: any) => void) => () => void;
+      onTaskLog: (cb: (data: any) => void) => () => void;
       onTerminalCreated: (cb: (config: any) => void) => () => void;
       terminalReady: (id: string) => void;
       // YAML

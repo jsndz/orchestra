@@ -1,4 +1,4 @@
-import { type Dependency, type Task } from "../store";
+import { type Dependency, type Task } from "../store/index.js";
 import { parse, stringify } from "yaml";
 
 interface DagTask {

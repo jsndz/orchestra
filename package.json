@@ -4,7 +4,7 @@
   "description": "",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
+  "type": "module",
   "main": "main.js",
   "scripts": {
     "electron:build": "tsc -p electron",
@@ -17,6 +17,7 @@
   "dependencies": {
     "child_process": "^1.0.2",
     "node-pty": "^1.1.0",
+    "strip-ansi": "^7.2.0",
     "yaml": "^2.8.3"
   }
 }

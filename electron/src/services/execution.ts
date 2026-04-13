@@ -23,7 +23,6 @@ function canRun(task: Task): boolean {
 
     return false;
   });
-  console.log(task.command, result);
 
   return result;
 }
@@ -40,7 +39,6 @@ export async function execute(wc: Electron.WebContents) {
   if (!parallels.ok || !parallels.levels) {
     return { ok: false, error: "invalid execution plan" };
   }
-  console.log(parallels);
 
   for (let i = 0; i < parallels.levels.length; i++) {
     const level = parallels.levels[i];
@@ -49,7 +47,6 @@ export async function execute(wc: Electron.WebContents) {
     if (runnable.length === 0) {
       continue;
     }
-    console.log("ruunable", runnable);
 
     const results = await Promise.allSettled(
       runnable.map((task) => {
@@ -57,8 +54,7 @@ export async function execute(wc: Electron.WebContents) {
         return runCommand(task, wc);
       }),
     );
-    console.log(i, results);
-
+  
     results.forEach((result, index) => {
       const task = runnable[index];
 

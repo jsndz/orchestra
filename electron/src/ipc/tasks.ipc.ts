@@ -13,9 +13,7 @@ import { getSystemStats } from "../lib/os.js";
 import { execute } from "../services/execution.js";
 
 export function registerTaskIPC() {
-  ipcMain.handle("tasks:get", () => {
-    console.log(tasks);
-    
+  ipcMain.handle("tasks:get", () => {    
     return { tasks, dependencies };
   });
 
@@ -24,7 +22,6 @@ export function registerTaskIPC() {
       throw new Error("Missing required fields");
     }
 
-    console.log(body.ready);
     
     const t: Task = {
       id: crypto.randomUUID(),
