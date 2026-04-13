@@ -1,5 +1,3 @@
-- [] fix the problem of running level 2 of parallels
-- [] add states for each task
-
-
-// using sentinels to get exit code for the process to send in the promise
+- [x] add regex or text for add steps
+- [] add custom and default logs for steps
+- [] add logs for steps in the log view

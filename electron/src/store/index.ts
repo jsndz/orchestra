@@ -7,7 +7,7 @@ type TaskState =
   | "failed"
   | "stopped"; // manually stop
 
-type ReadyWhen =
+export type ReadyWhen =
   | { kind: "exit" }
   | { kind: "port"; port: number }
   | { kind: "log"; match: string | RegExp, isRegex: boolean };

@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow, ipcRenderer } from "electron";
 import crypto from "crypto";
-import type { Task, Dependency } from "../store/index.js";
+import type { Task, Dependency, ReadyWhen } from "../store/index.js";
 import { tasks, dependencies } from "../store/index.js";
 import { stopExecution, stopProcess, terminalReady } from "../lib/process.js";
 import {
@@ -14,6 +14,8 @@ import { execute } from "../services/execution.js";
 
 export function registerTaskIPC() {
   ipcMain.handle("tasks:get", () => {
+    console.log(tasks);
+    
     return { tasks, dependencies };
   });
 
@@ -22,6 +24,8 @@ export function registerTaskIPC() {
       throw new Error("Missing required fields");
     }
 
+    console.log(body.ready);
+    
     const t: Task = {
       id: crypto.randomUUID(),
       task: body.task,
@@ -30,10 +34,7 @@ export function registerTaskIPC() {
       dependency: [],
       type: body.type,
       state: "idle",
-      ready:
-        body.type === "service"
-          ? (body.ready ?? { kind: "log", match: "", isRegex: false })
-          : { kind: "exit" },
+      ready: body.ready || { kind: "exit" }
     };
 
     tasks.push(t);

@@ -19,7 +19,7 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
   const [taskCommand, setTaskCommand] = useState("");
 
   const [taskType, setTaskType] = useState<"job" | "service">("job");
-
+  const [readyIsRegex, setReadyIsRegex] = useState(false);
   const [readyKind, setReadyKind] = useState<"none" | "port" | "log">("none");
   const [readyPort, setReadyPort] = useState("");
   const [readyLog, setReadyLog] = useState("");
@@ -37,7 +37,7 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
       }
 
       if (readyKind === "log" && readyLog.trim()) {
-        ready = { kind: "log", match: readyLog };
+        ready = { kind: "log", match: readyLog, isRegex: readyIsRegex };
       }
     }
 
@@ -75,7 +75,6 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
   return (
     <div className="flex flex-col items-center">
       <div className="relative">
-
         {(mode === "add" || mode === "new") && (
           <Card className="absolute bottom-full mb-4 w-96 p-4 space-y-3 shadow-xl bg-card/95 backdrop-blur-sm">
             <Button variant="ghost" size="sm" onClick={() => setMode("none")}>
@@ -104,9 +103,7 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
             <select
               className="w-full border rounded px-2 py-1"
               value={taskType}
-              onChange={(e) =>
-                setTaskType(e.target.value as "job" | "service")
-              }
+              onChange={(e) => setTaskType(e.target.value as "job" | "service")}
             >
               <option value="job">Job (finite)</option>
               <option value="service">Service (long running)</option>
@@ -118,9 +115,7 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
                 <select
                   className="w-full border rounded px-2 py-1"
                   value={readyKind}
-                  onChange={(e) =>
-                    setReadyKind(e.target.value as any)
-                  }
+                  onChange={(e) => setReadyKind(e.target.value as any)}
                 >
                   <option value="none">No readiness</option>
                   <option value="port">Ready on Port</option>
@@ -136,11 +131,22 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
                 )}
 
                 {readyKind === "log" && (
-                  <Input
-                    placeholder='Log match (e.g. "Server started")'
-                    value={readyLog}
-                    onChange={(e) => setReadyLog(e.target.value)}
-                  />
+                  <>
+                    <Input
+                      placeholder='Log match (e.g. "Server started")'
+                      value={readyLog}
+                      onChange={(e) => setReadyLog(e.target.value)}
+                    />
+
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={readyIsRegex}
+                        onChange={(e) => setReadyIsRegex(e.target.checked)}
+                      />
+                      Use regex
+                    </label>
+                  </>
                 )}
               </>
             )}

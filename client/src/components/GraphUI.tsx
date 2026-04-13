@@ -24,8 +24,6 @@ import {
 import { Button } from "./ui/button";
 import { analyze } from "../api/tasks";
 
-
-
 export function toReactFlowGraphFromLevels(
   levels: Task[][],
   deps: Dependency[],
@@ -136,6 +134,8 @@ export function DependencyGraph({
 
       if (editingTask.ready.kind === "log") {
         setReadyLogMatch(String(editingTask.ready.match));
+
+        setLogMatchType(editingTask.ready.isRegex ? "regex" : "text");
       }
     } else {
       setReadyKind("exit");
@@ -229,11 +229,13 @@ export function DependencyGraph({
       if (readyKind === "port") {
         ready = { kind: "port", port: readyPort };
       }
-
       if (readyKind === "log") {
-        ready = ready = {
+        ready = {
           kind: "log",
-          match: readyLogMatch,
+          match:
+            logMatchType === "regex"
+              ? new RegExp(readyLogMatch)
+              : readyLogMatch,
           isRegex: logMatchType === "regex",
         };
       }
@@ -393,17 +395,6 @@ export function DependencyGraph({
 
                 {readyKind === "log" && (
                   <div className="space-y-2">
-                    <select
-                      className="w-full border p-2 rounded"
-                      value={logMatchType}
-                      onChange={(e) =>
-                        setLogMatchType(e.target.value as "text" | "regex")
-                      }
-                    >
-                      <option value="text">Contains text</option>
-                      <option value="regex">Regex</option>
-                    </select>
-
                     <input
                       className="w-full border p-2 rounded"
                       value={readyLogMatch}
@@ -415,11 +406,16 @@ export function DependencyGraph({
                       }
                     />
 
-                    {logMatchType === "regex" && (
-                      <p className="text-xs text-muted-foreground">
-                        Pattern will be matched using /pattern/i
-                      </p>
-                    )}
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={logMatchType === "regex"}
+                        onChange={(e) =>
+                          setLogMatchType(e.target.checked ? "regex" : "text")
+                        }
+                      />
+                      Use regex
+                    </label>
                   </div>
                 )}
               </div>
