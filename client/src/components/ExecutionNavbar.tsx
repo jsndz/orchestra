@@ -86,7 +86,15 @@ export default function ExecutionNavbar({
           {getButtonText()}
         </Button>
 
-        <Button onClick={onCreateYaml}>Create YAML</Button>
+        <Button
+          onClick={() => {
+            console.log("clicking");
+            
+            onCreateYaml();
+          }}
+        >
+          Create YAML
+        </Button>
       </div>
     </div>
   );

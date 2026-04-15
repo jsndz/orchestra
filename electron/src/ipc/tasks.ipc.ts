@@ -133,16 +133,16 @@ export function registerTaskIPC() {
     if (!workflow) throw new Error("Missing workflow name");
 
     const dag = WorkFlowToDAG(tasks, dependencies, workflow, 1);
-    return dagToYaml(dag);
+    console.log(dag);
+    const res = dagToYaml(dag)
+    console.log("res",res);
+    
+    return res;
   });
 
   ipcMain.handle("system:stats", () => {
     return getSystemStats();
   });
-
-  // ipcMain.handle("task:logs", (_, taskId: string) => {
-  //   return taskLogs.get(taskId) ?? [];
-  // });
 
 
 }

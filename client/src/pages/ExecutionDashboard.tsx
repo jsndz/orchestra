@@ -4,6 +4,7 @@ import LogPage from "../components/GraphView";
 import { useSystemStats } from "../hooks/useTasks";
 import ExecutionNavbar from "../components/ExecutionNavbar";
 import { downloadYaml, execute, stopExecution } from "../api/tasks";
+import { useWorkflowStore } from "../store/useAppStore";
 
 type ViewMode = "terminal" | "graph";
 
@@ -11,7 +12,37 @@ export default function ExecutionDashboard() {
   const [view, setView] = useState<ViewMode>("terminal");
   const { data: systemStats } = useSystemStats();
   const [status, setStatus] = useState<"idle" | "loading" | "stopped">("idle");
- 
+  const workflowName = useWorkflowStore((s) => s.workflowName);
+  const setWorkflowName = useWorkflowStore((s) => s.setWorkflowName);
+
+  const [showYamlModal, setShowYamlModal] = useState(false);
+  const [tempName, setTempName] = useState(workflowName || "");
+  const handleYaml = async () => {
+    if (!workflowName || workflowName === "temp-workflow") {
+      setShowYamlModal(true);
+      return;
+    }
+    console.log("reaching here");
+
+    const res = await downloadYaml(workflowName);
+
+    const blob = new Blob([res], { type: "text/yaml" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${workflowName}.yaml`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+  };
+  useEffect(() => {
+    if (showYamlModal) {
+      setTempName(workflowName === "temp-workflow" ? "" : workflowName);
+    }
+  }, [showYamlModal, workflowName]);
   useEffect(() => {
     execute();
   }, []);
@@ -29,12 +60,6 @@ export default function ExecutionDashboard() {
 
   const handleRestart = () => {
     window.location.reload();
-  };
-
-  const handleYaml = async () => {
-    const name = prompt("Workflow name");
-    if (!name) return;
-    await downloadYaml(name);
   };
 
   return (
@@ -80,7 +105,33 @@ export default function ExecutionDashboard() {
           </button>
         </div>
       </div>
+      {showYamlModal && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card p-6 rounded-xl w-80">
+            <input
+              autoFocus
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
+              placeholder="Workflow name"
+              className="w-full border px-2 py-1 rounded mb-4"
+            />
 
+            <button
+              className="bg-primary text-white px-3 py-1 rounded text-sm"
+              onClick={async () => {
+                if (!tempName.trim()) return;
+
+                setWorkflowName(tempName); // update store once
+                await downloadYaml(tempName);
+
+                setShowYamlModal(false);
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      )}
       <footer className="w-full h-8 bg-card border-t px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0">
         {systemStats ? (
           <>

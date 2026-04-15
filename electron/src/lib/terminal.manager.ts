@@ -170,7 +170,6 @@ export class TerminalManager {
           message: clean,
           ts: Date.now(),
         });
-        console.log("LOG SENT", id, chunk);
       }
     }
 }
