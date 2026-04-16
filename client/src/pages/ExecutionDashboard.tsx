@@ -5,6 +5,8 @@ import { useSystemStats } from "../hooks/useTasks";
 import ExecutionNavbar from "../components/ExecutionNavbar";
 import { downloadYaml, execute, stopExecution } from "../api/tasks";
 import { useWorkflowStore } from "../store/useAppStore";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 type ViewMode = "terminal" | "graph";
 
@@ -86,29 +88,29 @@ export default function ExecutionDashboard() {
       {/* VIEW SWITCHER */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50">
         <div className="bg-card border shadow-xl rounded-full px-2 py-2 flex gap-2">
-          <button
+          <Button
             onClick={() => setView("terminal")}
             className={`px-4 py-1 rounded-full text-sm ${
               view === "terminal" ? "bg-primary text-white" : "hover:bg-muted"
             }`}
           >
             Terminal
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={() => setView("graph")}
             className={`px-4 py-1 rounded-full text-sm ${
               view === "graph" ? "bg-primary text-white" : "hover:bg-muted"
             }`}
           >
             Graph
-          </button>
+          </Button>
         </div>
       </div>
       {showYamlModal && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card p-6 rounded-xl w-80">
-            <input
+            <Input
               autoFocus
               value={tempName}
               onChange={(e) => setTempName(e.target.value)}
@@ -116,19 +118,17 @@ export default function ExecutionDashboard() {
               className="w-full border px-2 py-1 rounded mb-4"
             />
 
-            <button
+            <Button
               className="bg-primary text-white px-3 py-1 rounded text-sm"
               onClick={async () => {
                 if (!tempName.trim()) return;
-
-                setWorkflowName(tempName); // update store once
+                setWorkflowName(tempName);
                 await downloadYaml(tempName);
-
                 setShowYamlModal(false);
               }}
             >
               Save
-            </button>
+            </Button>
           </div>
         </div>
       )}

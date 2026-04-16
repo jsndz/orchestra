@@ -20,9 +20,18 @@ import {
   useAddDependency,
   useUpdateTask,
 } from "../hooks/useTasks";
-
-import { Button } from "./ui/button";
 import { analyze } from "../api/tasks";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 export function toReactFlowGraphFromLevels(
   levels: Task[][],
@@ -287,21 +296,22 @@ export function DependencyGraph({
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-semibold text-lg">Edit Step</h2>
 
-            <button
+            <Button
               onClick={() => setEditingTask(null)}
-              className="p-1 rounded hover:bg-muted"
+              variant="ghost"
+              className="p-1 rounded hover:bg-muted h-7 w-7"
             >
               ✕
-            </button>
+            </Button>
           </div>
 
           <div className="space-y-5 flex-1">
             {/* TASK NAME */}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+              <Label className="text-sm font-medium text-muted-foreground">
                 Task Name
-              </label>
-              <input
+              </Label>
+              <Input
                 className="w-full border p-2 rounded"
                 value={taskName}
                 onChange={(e) => setTaskName(e.target.value)}
@@ -310,10 +320,10 @@ export function DependencyGraph({
 
             {/* FOLDER */}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+              <Label className="text-sm font-medium text-muted-foreground">
                 Folder
-              </label>
-              <input
+              </Label>
+              <Input
                 className="w-full border p-2 rounded"
                 value={folderName}
                 onChange={(e) => setFolderName(e.target.value)}
@@ -322,10 +332,10 @@ export function DependencyGraph({
 
             {/* COMMAND */}
             <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+              <Label className="text-sm font-medium text-muted-foreground">
                 Command
-              </label>
-              <textarea
+              </Label>
+              <Textarea
                 className="w-full border p-2 rounded resize-none"
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
@@ -335,56 +345,53 @@ export function DependencyGraph({
 
             {/* TYPE */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">
+              <Label className="text-sm font-medium text-muted-foreground">
                 Step Type
-              </label>
+              </Label>
 
               <div className="flex gap-2">
-                <button
+                <Button
                   onClick={() => setTaskType("job")}
-                  className={`flex-1 border rounded p-2 text-sm font-medium transition ${
-                    taskType === "job"
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "hover:bg-muted"
-                  }`}
+                  variant={taskType === "job" ? "default" : "outline"}
+                  className="flex-1"
                 >
                   JOB
-                </button>
-
-                <button
+                </Button>
+                <Button
                   onClick={() => setTaskType("service")}
-                  className={`flex-1 border rounded p-2 text-sm font-medium transition ${
-                    taskType === "service"
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "hover:bg-muted"
-                  }`}
+                  variant={taskType === "service" ? "default" : "outline"}
+                  className="flex-1"
                 >
                   SERVICE
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* READY CONDITION */}
             {taskType === "service" && (
               <div className="space-y-3 border rounded p-3">
-                <label className="text-sm font-medium text-muted-foreground">
+                <Label className="text-sm font-medium text-muted-foreground">
                   Ready Condition
-                </label>
+                </Label>
 
-                <select
-                  className="w-full border p-2 rounded"
+                <Select
                   value={readyKind}
-                  onChange={(e) =>
-                    setReadyKind(e.target.value as "exit" | "port" | "log")
+                  onValueChange={(value) =>
+                    setReadyKind(value as "exit" | "port" | "log")
                   }
                 >
-                  <option value="exit">Process exits</option>
-                  <option value="port">Port open</option>
-                  <option value="log">Log match</option>
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select ready condition" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="exit">Process exits</SelectItem>
+                    <SelectItem value="port">Port open</SelectItem>
+                    <SelectItem value="log">Log match</SelectItem>
+                  </SelectContent>
+                </Select>
 
                 {readyKind === "port" && (
-                  <input
+                  <Input
                     type="number"
                     className="w-full border p-2 rounded"
                     value={readyPort}
@@ -395,7 +402,7 @@ export function DependencyGraph({
 
                 {readyKind === "log" && (
                   <div className="space-y-2">
-                    <input
+                    <Input
                       className="w-full border p-2 rounded"
                       value={readyLogMatch}
                       onChange={(e) => setReadyLogMatch(e.target.value)}

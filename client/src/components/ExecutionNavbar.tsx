@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useWorkflowStore } from "../store/useAppStore";
 import { useState } from "react";
+import { Input } from "./ui/input";
 
 type Props = {
   onStop: () => void;
@@ -39,9 +40,9 @@ export default function ExecutionNavbar({
           <span className="mx-1 text-muted-foreground">/</span>
 
           {editingName ? (
-            <input
+            <Input
               autoFocus
-              className="border rounded px-1 text-sm w-40"
+              className="border rounded px-1 text-sm w-40 h-8"
               value={workflowName}
               onChange={(e) => setWorkflowName(e.target.value)}
               onBlur={() => setEditingName(false)}

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { ExecGraph } from "./ExecGraph";
 import LogViewer from "./LogView";
+import { Button } from "./ui/button";
 
 export default function LogPage() {
   const { data } = useTasks();
@@ -87,16 +88,13 @@ export default function LogPage() {
               <span className="text-sm font-semibold">Workflow Steps</span>
             )}
 
-            <button
+            <Button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-1 rounded hover:bg-muted"
+              variant="ghost"
+              className="p-1 rounded hover:bg-muted h-7 w-7"
             >
-              {sidebarOpen ? (
-                <ChevronLeft size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
+              {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            </Button>
           </div>
 
           {sidebarOpen && (
@@ -160,12 +158,13 @@ export default function LogPage() {
                   </div>
                 </div>
 
-                <button
+                <Button
                   onClick={() => setSelectedTaskId(null)}
-                  className="p-1 rounded hover:bg-muted"
+                  variant="ghost"
+                  className="p-1 rounded hover:bg-muted h-7 w-7"
                 >
                   <ChevronRight size={18} />
-                </button>
+                </Button>
               </div>
 
               <div className="flex-1 p-3 overflow-auto">

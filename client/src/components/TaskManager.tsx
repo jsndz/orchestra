@@ -1,11 +1,24 @@
 import { useState } from "react";
-import { Plus, ListTodo, Link, Loader2 } from "lucide-react";
+import {
+  Plus,
+  ListTodo,
+  Link,
+  Loader2,
+  FolderOpen,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
 import { useAddTask, useAddDependency } from "../hooks/useTasks";
 import { TaskRequest } from "../types";
 import DependencyForm from "./DependencyForm";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 export default function WorkflowControls({ tasks, dependencies }: any) {
   const addTask = useAddTask();
@@ -25,6 +38,11 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
   const [readyLog, setReadyLog] = useState("");
 
   const [lastTaskId, setLastTaskId] = useState<string | null>(null);
+
+  const handlePickFolder = async () => {
+    const fullPath = await window.api.selectFolder();
+    if (fullPath) setTaskFolder(fullPath);
+  };
 
   const handleAddTask = (isNewWorkflow: boolean) => {
     if (!taskName.trim()) return;
@@ -87,11 +105,17 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
               onChange={(e) => setTaskName(e.target.value)}
             />
 
-            <Input
-              placeholder="Working directory"
-              value={taskFolder}
-              onChange={(e) => setTaskFolder(e.target.value)}
-            />
+            <div className="flex gap-2">
+              <Input
+                placeholder="Working directory"
+                value={taskFolder}
+                readOnly
+              />
+              <Button type="button" variant="outline" onClick={handlePickFolder}>
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Browse
+              </Button>
+            </div>
 
             <Input
               placeholder="Command"
@@ -100,27 +124,37 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
             />
 
             {/* Task Type */}
-            <select
-              className="w-full border rounded px-2 py-1"
+            <Select
               value={taskType}
-              onChange={(e) => setTaskType(e.target.value as "job" | "service")}
+              onValueChange={(value) => setTaskType(value as "job" | "service")}
             >
-              <option value="job">Job (finite)</option>
-              <option value="service">Service (long running)</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select task type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="job">Job (finite)</SelectItem>
+                <SelectItem value="service">Service (long running)</SelectItem>
+              </SelectContent>
+            </Select>
 
             {/* Readiness (only for service) */}
             {taskType === "service" && (
               <>
-                <select
-                  className="w-full border rounded px-2 py-1"
+                <Select
                   value={readyKind}
-                  onChange={(e) => setReadyKind(e.target.value as any)}
+                  onValueChange={(value) =>
+                    setReadyKind(value as "none" | "port" | "log")
+                  }
                 >
-                  <option value="none">No readiness</option>
-                  <option value="port">Ready on Port</option>
-                  <option value="log">Ready on Log</option>
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select readiness condition" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No readiness</SelectItem>
+                    <SelectItem value="port">Ready on Port</SelectItem>
+                    <SelectItem value="log">Ready on Log</SelectItem>
+                  </SelectContent>
+                </Select>
 
                 {readyKind === "port" && (
                   <Input

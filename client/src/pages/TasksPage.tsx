@@ -18,6 +18,7 @@ import { useSystemStats } from "../hooks/useTasks";
 import { useState } from "react";
 import { Task } from "../types";
 import { useWorkflowStore } from "../store/useAppStore";
+import { Input } from "@base-ui/react";
 export default function TasksPage() {
   const { data, refetch } = useTasks();
   const { data: systemStats } = useSystemStats();
@@ -47,9 +48,9 @@ export default function TasksPage() {
             <span className="mx-1 text-muted-foreground">/</span>
 
             {editingName ? (
-              <input
+              <Input
                 autoFocus
-                className="border rounded px-1 text-sm w-40"
+                className="border rounded px-1 text-sm w-40 h-8"
                 value={workflowName}
                 onChange={(e) => setWorkflowName(e.target.value)}
                 onBlur={() => setEditingName(false)}
@@ -109,16 +110,20 @@ export default function TasksPage() {
               <span className="text-sm font-semibold">Workflow Steps</span>
             )}
 
-            <button
+            <Button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-1 rounded hover:bg-muted"
+              variant="ghost"
+              className="p-1 rounded hover:bg-muted h-7 w-7"
             >
-              {sidebarOpen ? (
-                <ChevronLeft size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
+              {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            </Button>
+
+            <Input
+              className="bg-transparent outline-none text-sm flex-1 border-0 shadow-none focus-visible:ring-0 px-0 h-auto"
+              placeholder="Search steps..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
 
           {sidebarOpen && (

@@ -12,9 +12,12 @@ declare global {
       deleteTask: (id: string) => Promise<{ ok: boolean }>;
 
       // DEPENDENCIES
-      addDependency: (dep: { from: string; to: string }) => Promise<{ ok: true }>;
+      addDependency: (dep: {
+        from: string;
+        to: string;
+      }) => Promise<{ ok: true }>;
       removeDependency: (from: string, to: string) => Promise<{ ok: true }>;
-
+      selectFolder: () => Promise<string | null>;
       // GRAPH
       getOrder: () => Promise<any>;
       getPath: (from: string, to: string) => Promise<any>;
@@ -38,8 +41,6 @@ declare global {
 
       // SYSTEM
       getSystemStats: () => Promise<any>;
-
-
 
       // LOGS
       getTaskLogs: (taskId: string) => Promise<string[]>;

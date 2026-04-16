@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
+  selectFolder: () => ipcRenderer.invoke("select:folder"),
+
   getTasks: () => ipcRenderer.invoke("tasks:get"),
 
   createTask: (data) => ipcRenderer.invoke("task:create", data),

@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, ipcRenderer } from "electron";
+import { ipcMain, BrowserWindow, ipcRenderer, dialog } from "electron";
 import crypto from "crypto";
 import type { Task, Dependency, ReadyWhen } from "../store/index.js";
 import { tasks, dependencies } from "../store/index.js";
@@ -16,7 +16,15 @@ export function registerTaskIPC() {
   ipcMain.handle("tasks:get", () => {    
     return { tasks, dependencies };
   });
+ipcMain.handle("select:folder", async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ["openDirectory"],
+  });
 
+  if (result.canceled) return null;
+
+  return result.filePaths[0];
+});
   ipcMain.handle("task:create", (_, body: Partial<Task>) => {
     if (!body.task || !body.command || !body.folder || !body.type) {
       throw new Error("Missing required fields");
