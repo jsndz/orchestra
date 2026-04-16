@@ -45,8 +45,12 @@ export default function ExecutionDashboard() {
       setTempName(workflowName === "temp-workflow" ? "" : workflowName);
     }
   }, [showYamlModal, workflowName]);
+      console.log(view);
+
   useEffect(() => {
+    
     execute();
+
   }, []);
   const handleStop = async () => {
     if (status !== "idle") return;
@@ -91,7 +95,7 @@ export default function ExecutionDashboard() {
           <Button
             onClick={() => setView("terminal")}
             className={`px-4 py-1 rounded-full text-sm ${
-              view === "terminal" ? "bg-primary text-white" : "hover:bg-muted"
+              view === "terminal" ? "bg-primary text-white"  : "bg-transparent hover:bg-muted"
             }`}
           >
             Terminal
@@ -100,7 +104,7 @@ export default function ExecutionDashboard() {
           <Button
             onClick={() => setView("graph")}
             className={`px-4 py-1 rounded-full text-sm ${
-              view === "graph" ? "bg-primary text-white" : "hover:bg-muted"
+              view === "graph" ? "bg-primary text-white" : "bg-transparent hover:bg-muted"
             }`}
           >
             Graph

@@ -9,14 +9,14 @@ type TerminalMeta = {
 type Store = {
   terminals: Record<string, TerminalMeta>;
 
-  createTerminal: (id: string) => string;
+  createTerminal: (id: string,name:string) => string;
   removeTerminal: (id: string) => void;
   setActive: (id: string) => void;
 };
 
 export const useTerminalStore = create<Store>((set, get) => ({
   terminals: {},
-createTerminal: (id: string) => {
+  createTerminal: (id: string,name:string) => {
   set((state) => {
     if (state.terminals[id]) return state;
 
@@ -25,7 +25,7 @@ createTerminal: (id: string) => {
         ...state.terminals,
         [id]: {
           id,
-          name: `Terminal ${Object.keys(state.terminals).length + 1}`,
+          name: name,
           isActive: true,
         },
       },

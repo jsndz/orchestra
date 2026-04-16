@@ -26,15 +26,15 @@ import {
 import { Task } from "../types";
 import { analyze } from "../api/tasks";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 export default function AnalysisPanel({ tasks }: { tasks: Task[] }) {
   const [selectedFailure, setSelectedFailure] = useState("");
-
+  const navigate = useNavigate();
   const { data: parallelData } = useQuery<{
     ok: boolean;
     levels: Task[][];
-  }
-  >({
+  }>({
     queryKey: ["parallel"],
     queryFn: () => analyze("parallel"),
   });
@@ -48,7 +48,6 @@ export default function AnalysisPanel({ tasks }: { tasks: Task[] }) {
     queryKey: ["unreachable"],
     queryFn: () => analyze("unreachable"),
   });
-
 
   const { data: cycleData } = useQuery<string[]>({
     queryKey: ["cycle"],
@@ -112,7 +111,6 @@ export default function AnalysisPanel({ tasks }: { tasks: Task[] }) {
 
   const impacted = selectedFailure ? getImpacted(selectedFailure) : [];
 
-
   const metrics = {
     totalTasks: tasks.length,
     depth,
@@ -126,16 +124,28 @@ export default function AnalysisPanel({ tasks }: { tasks: Task[] }) {
       <div className="fixed inset-0 -z-10 opacity-30 pointer-events-none dot-grid" />
 
       {/* PAGE HEADER */}
-      <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-          <Activity className="text-indigo-500" />
+      <div className="flex justify-between items-end gap-4">
+        <div className="flex gap-5">
+          {" "}
+          <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+            <Activity className="text-indigo-500" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold"> Insights</h1>
+            <p className="text-sm text-muted-foreground">
+              Architectural intelligence & execution analysis
+            </p>
+          </div>
         </div>
-
         <div>
-          <h1 className="text-2xl font-bold">Advanced Insights</h1>
-          <p className="text-sm text-muted-foreground">
-            Architectural intelligence & execution analysis
-          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto"
+            onClick={() => navigate("/")}
+          >
+            Back to Tasks
+          </Button>
         </div>
       </div>
 
@@ -272,7 +282,8 @@ export default function AnalysisPanel({ tasks }: { tasks: Task[] }) {
                   None found.
                 </span>
               ) : (
-               terminalData && terminalData.map((t:string) => (
+                terminalData &&
+                terminalData.map((t: string) => (
                   <Badge key={t} variant="secondary" className="font-mono">
                     {t}
                   </Badge>
@@ -294,11 +305,16 @@ export default function AnalysisPanel({ tasks }: { tasks: Task[] }) {
                 />
 
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {unreachableData &&  unreachableData.map((t:string) => (
-                    <Badge key={t} variant="destructive" className="font-mono">
-                      {t}
-                    </Badge>
-                  ))}
+                  {unreachableData &&
+                    unreachableData.map((t: string) => (
+                      <Badge
+                        key={t}
+                        variant="destructive"
+                        className="font-mono"
+                      >
+                        {t}
+                      </Badge>
+                    ))}
                 </div>
               </section>
 
@@ -367,8 +383,6 @@ export default function AnalysisPanel({ tasks }: { tasks: Task[] }) {
     </div>
   );
 }
-
-
 
 function MetricCard({ label, value }: { label: string; value: number }) {
   return (

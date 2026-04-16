@@ -28,6 +28,7 @@ export class TerminalManager {
     });
     wc.send("terminal:created", {
       terminalId: id,
+      name:task.task
     });
     shell.onData((data) => {
       if (this.isReady.get(id)) {
