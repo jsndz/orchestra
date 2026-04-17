@@ -21,6 +21,7 @@ export type Task = {
   type: "job" | "service";
   state: TaskState;
   ready?: ReadyWhen;
+  failureReason?: string;
 };
 export type Dependency = { from: string; to: string };
 export const tasks: Task[] = [];

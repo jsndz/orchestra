@@ -28,6 +28,7 @@ export async function runCommand(
     updateTaskState(task, "completed", wc);
   } else {
     updateTaskState(task, "failed", wc);
+    
     throw new Error(`Command failed with exit code ${exitcode}`);
   }
 }
@@ -41,6 +42,7 @@ export function stopProcess(id: string, wc: Electron.WebContents) {
   const task = tasks.find((t) => t.id === id);
   if (task) {
     updateTaskState(task, "stopped", wc);
+    setFailureReason(task, "Manually stopped");
   }
 }
 
@@ -62,6 +64,7 @@ async function readinessCheck(
       updateTaskState(task, "ready", wc);
     } catch (err) {
       updateTaskState(task, "failed", wc);
+      setFailureReason(task, `Port ${task.ready.port} not open after timeout`);
       throw err;
     }
     return;
@@ -73,6 +76,7 @@ async function readinessCheck(
       updateTaskState(task, "ready", wc);
     } catch (err) {
       updateTaskState(task, "failed", wc);
+      setFailureReason(task, "Failed to read the required log message till timeout");
       throw err;
     }
     return;
@@ -149,4 +153,10 @@ function updateTaskState(
     id: task.id,
     state,
   });
+}
+
+
+function setFailureReason(task: Task, reason: string) {
+  task.failureReason = reason;
+
 }
