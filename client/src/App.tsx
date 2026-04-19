@@ -11,10 +11,7 @@ function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/tasks" element={<TasksPage />} />
-
-      <Route path="/analysis" element={<AnalysisPage />} />
       <Route path="/execution" element={<ExecutionDashboard />} />
-      <Route path="/report" element={<ReportPage />} />
     </Routes>
   );
 }

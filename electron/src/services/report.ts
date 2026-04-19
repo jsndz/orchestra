@@ -22,25 +22,33 @@ class Report {
   }
 
   CalculateStatus() {
-    // logic to calculate status based on tasks
+    let hasFailure = false;
+    let hasRunning = false;
+
     for (const task of tasks) {
-      if (task.state == "failed" || task.state == "stopped") {
-        this.status = "failure";
+      if (task.state === "failed" || task.state === "stopped") {
+        hasFailure = true;
+      }
+      if (task.state === "running") {
+        hasRunning = true;
       }
     }
-    this.status = "success";
+
+    if (hasFailure) this.status = "failure";
+    else if (hasRunning) this.status = "running";
+    else this.status = "success";
   }
   updateTiming(taskId: string, start: Date, end: Date) {
     this.timing.set(taskId, { startTime: start, endTime: end });
   }
 
   calculateTotalTime() {
-    if (this.totalDuration !== 0) return this.totalDuration;
-    for (const [_, timing] of this.timing.entries()) {
-      const duration =
-        (timing.endTime.getTime() - timing.startTime.getTime()) / 1000;
-      this.totalDuration += duration;
+    let total = 0;
+    for (const [, timing] of this.timing) {
+      total += (timing.endTime.getTime() - timing.startTime.getTime()) / 1000;
     }
+    this.totalDuration = total;
+    return total;
   }
   calculateTaskCounts() {
     for (const task of tasks) {

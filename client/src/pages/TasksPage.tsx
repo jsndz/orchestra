@@ -81,13 +81,13 @@ export default function TasksPage() {
               }
             }}
           />
-
+{/* 
           <Button>
             <NavLink to="/analysis" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Analysis
             </NavLink>
-          </Button>
+          </Button> */}
 
           <Button>
             <NavLink to="/execution" className="flex items-center gap-2">

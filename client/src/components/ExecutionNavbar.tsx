@@ -67,9 +67,9 @@ export default function ExecutionNavbar({
           Back to Tasks
         </Button>
 
-        <Button variant="outline" onClick={() => navigate("/report")}>
+        {/* <Button variant="outline" onClick={() => navigate("/report")}>
           Report
-        </Button>
+        </Button> */}
 
         <Button
           onClick={onRestart}
