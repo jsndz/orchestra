@@ -6,7 +6,7 @@ type TaskState =
   | "completed" // job completed
   | "failed"
   | "stopped"; // manually stop
-
+export type globalState = "idle" | "running" | "completed" | "failed";
 export type ReadyWhen =
   | { kind: "exit" }
   | { kind: "port"; port: number }
@@ -27,5 +27,8 @@ export type Dependency = { from: string; to: string };
 export const tasks: Task[] = [];
 export const dependencies: Dependency[] = [];
 
-
+export let GlobalState: globalState = "idle";
+export function setGlobalState(state: globalState) {
+  GlobalState = state;
+}
 export const EXIT_SENTINEL = "/::TASK_EXIT:(\d+)::/"

@@ -58,6 +58,11 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("task:state", listener);
     return () => ipcRenderer.removeListener("task:state", listener);
   },
+    onGlobalStateChange: (callback) => {
+    const listener = (_, data) => callback(data);
+    ipcRenderer.on("global:state", listener);
+    return () => ipcRenderer.removeListener("global:state", listener);
+  },
   onTaskLog: (callback) => {
     const listener = (_, data) => callback(data);
     ipcRenderer.on("task:log", listener);

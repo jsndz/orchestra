@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useWorkflowStore } from "../store/useAppStore";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 
 type Props = {
@@ -22,13 +22,20 @@ export default function ExecutionNavbar({
   const navigate = useNavigate();
   const setWorkflowName = useWorkflowStore((s) => s.setWorkflowName);
   const [editingName, setEditingName] = useState(false);
-
+  const [globalState, setGlobalState] = useState<
+    "idle" | "running" | "completed" | "failed"
+  >("idle");
   const getButtonText = () => {
     if (status === "loading") return "Stopping...";
     if (status === "stopped") return "Stopped";
     return "Stop";
   };
-
+  useEffect(() => {
+    window.api.onGlobalStateChange((state) => {
+      console.log("Global State Changed:", state);
+      setGlobalState(state);
+    });
+  }, []);
   return (
     <div className="w-full flex justify-between items-center px-4 h-16 border-b border-zinc-800 bg-zinc-950">
       {/* LOGO */}
@@ -59,13 +66,30 @@ export default function ExecutionNavbar({
             </span>
           )}
         </div>
+        <div>
+          <span
+            className={`ml-4 px-2 py-1 rounded text-xs font-medium ${
+              globalState === "running"
+                ? "bg-green-500 text-white"
+                : globalState === "failed"
+                  ? "bg-red-500 text-white"
+                  : globalState === "completed"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-500 text-white"
+            }`}
+          >
+            {globalState.toUpperCase()}
+          </span>
+        </div>
       </div>
 
       {/* ACTIONS */}
       <div className="flex gap-3">
-        <Button variant="outline" onClick={() => navigate("/")}>
-          Back to Tasks
-        </Button>
+        {(globalState === "failed" || globalState === "completed") && (
+          <Button variant="outline" onClick={() => navigate("/")}>
+            Back to Tasks
+          </Button>
+        )}
 
         {/* <Button variant="outline" onClick={() => navigate("/report")}>
           Report
@@ -89,7 +113,6 @@ export default function ExecutionNavbar({
 
         <Button
           onClick={() => {
-            
             onCreateYaml();
           }}
         >

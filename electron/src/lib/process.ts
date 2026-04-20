@@ -1,5 +1,12 @@
 import { TerminalManager } from "./terminal.manager.js";
-import { EXIT_SENTINEL, Task, tasks } from "../store/index.js";
+import {
+  EXIT_SENTINEL,
+  globalState,
+  GlobalState,
+  setGlobalState,
+  Task,
+  tasks,
+} from "../store/index.js";
 import net from "net";
 const terminalManager = new TerminalManager();
 
@@ -28,21 +35,31 @@ export async function runCommand(
     updateTaskState(task, "completed", wc);
   } else {
     updateTaskState(task, "failed", wc);
-    
+
     throw new Error(`Command failed with exit code ${exitcode}`);
   }
 }
 
-export function stopExecution() {
+export function forceStopExecution() {
   terminalManager.killAll();
+  for (const task of tasks) {
+    if (
+      task.state === "running" ||
+      task.state === "starting" ||
+      task.state === "ready"
+    ) {
+      updateTaskState(task, "stopped", null as any);
+      setFailureReason(task, "Execution Stopped");
+    }
+  }
 }
 
-export function stopProcess(id: string, wc: Electron.WebContents) {
+export function CloseTerminal(id: string, wc: Electron.WebContents) {
   terminalManager.kill(id);
   const task = tasks.find((t) => t.id === id);
   if (task) {
     updateTaskState(task, "stopped", wc);
-    setFailureReason(task, "Manually stopped");
+    setFailureReason(task, "Terminal Closed");
   }
 }
 
@@ -76,7 +93,10 @@ async function readinessCheck(
       updateTaskState(task, "ready", wc);
     } catch (err) {
       updateTaskState(task, "failed", wc);
-      setFailureReason(task, "Failed to read the required log message till timeout");
+      setFailureReason(
+        task,
+        "Failed to read the required log message till timeout",
+      );
       throw err;
     }
     return;
@@ -90,7 +110,6 @@ function waitForPort(
   ip = "127.0.0.1",
   timeout = 30000,
 ): Promise<void> {
-
   const startTime = Date.now();
 
   return new Promise<void>((res, rej) => {
@@ -153,8 +172,8 @@ function updateTaskState(
     id: task.id,
     state,
   });
+  updateGlobalState(wc);
 }
-
 
 function setFailureReason(task: Task, reason: string) {
   task.failureReason = reason;
@@ -163,15 +182,15 @@ function setFailureReason(task: Task, reason: string) {
 export function inputcommand(
   terminalId: string,
   data: string,
-  
-  wc: Electron.WebContents
+
+  wc: Electron.WebContents,
 ) {
   console.log(data);
   const taskId = terminalManager.getTaskIdByTerminalId(terminalId);
   if (data === "\x03") {
     const task = tasks.find((t) => t.id === taskId);
     console.log(data);
-    
+
     if (task) {
       updateTaskState(task, "stopped", wc);
       setFailureReason(task, "Interrupted (Ctrl+C)");
@@ -179,4 +198,31 @@ export function inputcommand(
   }
 
   terminalManager.write(terminalId, data);
+}
+
+function updateGlobalState(wc?: Electron.WebContents) {
+  let next: globalState = "idle";
+
+  if (tasks.length === 0) {
+    next = "idle";
+  } else if (tasks.some((t) => t.state === "failed")) {
+    next = "failed";
+  } else if (
+    tasks.every(
+      (t) =>
+        (t.type === "job" && t.state === "completed") ||
+        (t.type === "service" && t.state === "ready"),
+    )
+  ) {
+    next = "completed";
+  } else if (
+    tasks.some((t) => t.state === "starting" || t.state === "running")
+  ) {
+    next = "running";
+  }
+
+  if (GlobalState !== next) {
+    setGlobalState(next);
+    wc?.send("global:state", GlobalState);
+  }
 }

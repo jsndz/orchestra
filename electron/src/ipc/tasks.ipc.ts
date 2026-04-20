@@ -2,7 +2,7 @@ import { ipcMain, BrowserWindow, ipcRenderer, dialog } from "electron";
 import crypto from "crypto";
 import type { Task, Dependency, ReadyWhen } from "../store/index.js";
 import { tasks, dependencies } from "../store/index.js";
-import { inputcommand, stopExecution, stopProcess, terminalReady } from "../lib/process.js";
+import { inputcommand, forceStopExecution, CloseTerminal, terminalReady } from "../lib/process.js";
 import {
   yamlToDag,
   dagToWorkflow,
@@ -110,7 +110,7 @@ export function registerTaskIPC() {
   });
 
   ipcMain.handle("execution:stop", async () => {
-    return await stopExecution();
+     forceStopExecution();
   });
   ipcMain.handle("terminal:ready", async (event, id: string) => {
     const wc = event.sender;
@@ -118,7 +118,7 @@ export function registerTaskIPC() {
   });
 
   ipcMain.handle("task:stop", (event, id: string) => {
-    return stopProcess(id, event.sender);
+    return CloseTerminal(id, event.sender);
   });
 
   ipcMain.handle("yaml:import", (_, yaml: string) => {
