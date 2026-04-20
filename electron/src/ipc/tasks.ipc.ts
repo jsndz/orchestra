@@ -109,8 +109,9 @@ export function registerTaskIPC() {
     execute(wc);
   });
 
-  ipcMain.handle("execution:stop", async () => {
-     forceStopExecution();
+  ipcMain.handle("execution:stop", async (event) => {
+    const wc = event.sender;
+    forceStopExecution(wc);
   });
   ipcMain.handle("terminal:ready", async (event, id: string) => {
     const wc = event.sender;

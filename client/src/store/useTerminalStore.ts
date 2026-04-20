@@ -11,6 +11,7 @@ type Store = {
 
   createTerminal: (id: string,name:string) => string;
   removeTerminal: (id: string) => void;
+  removeAllTerminals: () => void;
   setActive: (id: string) => void;
 };
 
@@ -40,7 +41,7 @@ export const useTerminalStore = create<Store>((set, get) => ({
       delete updated[id];
       return { terminals: updated };
     }),
-
+  removeAllTerminals: () => set({ terminals: {} }),
   setActive: (id) =>
     set((state) => ({
       terminals: Object.fromEntries(

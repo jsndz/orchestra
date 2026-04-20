@@ -73,14 +73,14 @@ export default function TasksPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <UploadYaml
+          {/* <UploadYaml
             onSuccess={(fileName) => {
               refetch();
               if (fileName) {
                 setWorkflowName(fileName.replace(".yaml", ""));
               }
             }}
-          />
+          /> */}
 {/* 
           <Button>
             <NavLink to="/analysis" className="flex items-center gap-2">

@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { useWorkflowStore } from "../store/useAppStore";
 import { useEffect, useState } from "react";
 import { Input } from "./ui/input";
+import { useTerminalStore } from "../store/useTerminalStore";
 
 type Props = {
   onStop: () => void;
@@ -21,9 +22,10 @@ export default function ExecutionNavbar({
 
   const navigate = useNavigate();
   const setWorkflowName = useWorkflowStore((s) => s.setWorkflowName);
+  const removeAllTerminals = useTerminalStore((s) => s.removeAllTerminals);
   const [editingName, setEditingName] = useState(false);
   const [globalState, setGlobalState] = useState<
-    "idle" | "running" | "completed" | "failed"
+    "idle" | "running" | "completed" | "failed" | "stopped"
   >("idle");
   const getButtonText = () => {
     if (status === "loading") return "Stopping...";
@@ -85,8 +87,16 @@ export default function ExecutionNavbar({
 
       {/* ACTIONS */}
       <div className="flex gap-3">
-        {(globalState === "failed" || globalState === "completed") && (
-          <Button variant="outline" onClick={() => navigate("/")}>
+        {(globalState === "failed" ||
+          globalState === "completed" ||
+          globalState === "stopped") && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              removeAllTerminals();
+              navigate("/tasks");
+            }}
+          >
             Back to Tasks
           </Button>
         )}
@@ -104,7 +114,10 @@ export default function ExecutionNavbar({
         </Button>
 
         <Button
-          onClick={onStop}
+          onClick={() => {
+            setGlobalState("stopped");
+            onStop();
+          }}
           disabled={status === "loading" || status === "stopped"}
           variant={status === "stopped" ? "secondary" : "destructive"}
         >

@@ -1,6 +1,6 @@
 MVP todo:
  [x] fix stop 
- [] fix back to tasks
+ [X] fix back to tasks
  [x] fix restart
  [] New Workflow Proper UX ? maybe remove
  [] better UI for sidebar

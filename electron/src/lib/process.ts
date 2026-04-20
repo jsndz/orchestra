@@ -40,7 +40,7 @@ export async function runCommand(
   }
 }
 
-export function forceStopExecution() {
+export function forceStopExecution(wc: Electron.WebContents) {
   terminalManager.killAll();
   for (const task of tasks) {
     if (
@@ -50,6 +50,7 @@ export function forceStopExecution() {
     ) {
       updateTaskState(task, "stopped", null as any);
       setFailureReason(task, "Execution Stopped");
+      updateGlobalState(wc);
     }
   }
 }
@@ -167,11 +168,10 @@ function updateTaskState(
   wc: Electron.WebContents,
 ) {
   task.state = state;
+  if (wc && !wc.isDestroyed()) {
+    wc.send("task:state", { id: task.id, state });
+  }
 
-  wc.send("task:state", {
-    id: task.id,
-    state,
-  });
   updateGlobalState(wc);
 }
 
