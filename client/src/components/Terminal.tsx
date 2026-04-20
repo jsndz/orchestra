@@ -38,7 +38,9 @@ export default function Terminal({ status, name, terminalId }: Props) {
     });
 
     resizeObserver.observe(containerRef.current);
-
+    term.onData((data)=>{
+      window.api.sendTerminalInput(terminalId, data);
+    })
     const unsubscribe = window.api.onExecutionEvent((msg) => {
       if (terminalId === msg.terminalId) {
         term.write(msg.data);

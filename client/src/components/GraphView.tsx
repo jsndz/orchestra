@@ -36,6 +36,8 @@ export default function LogPage() {
 
   useEffect(() => {
     const handler = (payload: { id: string; state: string }) => {
+      console.log(payload.id, payload.state);
+      
       setLocalTasks((prev) =>
         prev.map((t) =>
           t.id === payload.id ? { ...t, state: payload.state } : t,

@@ -40,7 +40,7 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.removeListener("execution:event", listener);
     };
   },
-
+  sendTerminalInput: (terminalId,data)=> ipcRenderer.send("terminal:input", { terminalId, data }),
   stopTask: (id) => ipcRenderer.invoke("task:stop", id),
 
   onTerminalCreated: (callback) => {

@@ -12,3 +12,4 @@ MVP todo:
  [] terminal font
  [] different UI for terminal and task creation
  []  fix navbar of tasks and terminal
+ [] new home page UI

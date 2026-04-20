@@ -29,7 +29,7 @@ declare global {
       // EXECUTION
       startExecution: () => void;
       stopExecution: () => Promise<any>;
-      stopTask: (id: string) => Promise<any>;
+      sendTerminalInput: (terminalId: string, data: string) => void;
       onExecutionEvent: (cb: (data: any) => void) => () => void;
       onTaskStateChange: (cb: (data: any) => void) => () => void;
       onTaskLog: (cb: (data: any) => void) => () => void;

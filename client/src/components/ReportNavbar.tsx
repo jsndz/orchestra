@@ -85,7 +85,6 @@ export default function ReportNavbar({
 
         <Button
           onClick={() => {
-            console.log("clicking");
             
             onCreateYaml();
           }}

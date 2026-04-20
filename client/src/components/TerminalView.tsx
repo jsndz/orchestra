@@ -7,7 +7,7 @@ export const TerminalPage = () => {
   const createTerminal = useTerminalStore((s) => s.createTerminal);
 
   const [activeId, setActiveId] = useState<string | null>(null);
-
+ 
   useEffect(() => {
     const unsubscribe = window.api.onTerminalCreated((config) => {
       if (!terminals[config.terminalId]) {
@@ -26,7 +26,6 @@ export const TerminalPage = () => {
       {/* TABS */}
       <div className="flex items-center border-b bg-muted px-2 h-10 overflow-x-auto">
         {terminalList.map((t) => {
-          console.log(t.name);
           return (
             <button
               key={t.id}

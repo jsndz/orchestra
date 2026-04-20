@@ -2,7 +2,7 @@ import { ipcMain, BrowserWindow, ipcRenderer, dialog } from "electron";
 import crypto from "crypto";
 import type { Task, Dependency, ReadyWhen } from "../store/index.js";
 import { tasks, dependencies } from "../store/index.js";
-import { stopExecution, stopProcess, terminalReady } from "../lib/process.js";
+import { inputcommand, stopExecution, stopProcess, terminalReady } from "../lib/process.js";
 import {
   yamlToDag,
   dagToWorkflow,
@@ -13,24 +13,23 @@ import { getSystemStats } from "../lib/os.js";
 import { execute } from "../services/execution.js";
 
 export function registerTaskIPC() {
-  ipcMain.handle("tasks:get", () => {    
+  ipcMain.handle("tasks:get", () => {
     return { tasks, dependencies };
   });
-ipcMain.handle("select:folder", async () => {
-  const result = await dialog.showOpenDialog({
-    properties: ["openDirectory"],
+  ipcMain.handle("select:folder", async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ["openDirectory"],
+    });
+
+    if (result.canceled) return null;
+
+    return result.filePaths[0];
   });
-
-  if (result.canceled) return null;
-
-  return result.filePaths[0];
-});
   ipcMain.handle("task:create", (_, body: Partial<Task>) => {
     if (!body.task || !body.command || !body.folder || !body.type) {
       throw new Error("Missing required fields");
     }
 
-    
     const t: Task = {
       id: crypto.randomUUID(),
       task: body.task,
@@ -39,7 +38,7 @@ ipcMain.handle("select:folder", async () => {
       dependency: [],
       type: body.type,
       state: "idle",
-      ready: body.ready || { kind: "exit" }
+      ready: body.ready || { kind: "exit" },
     };
 
     tasks.push(t);
@@ -119,7 +118,7 @@ ipcMain.handle("select:folder", async () => {
   });
 
   ipcMain.handle("task:stop", (event, id: string) => {
-    return stopProcess(id,event.sender);
+    return stopProcess(id, event.sender);
   });
 
   ipcMain.handle("yaml:import", (_, yaml: string) => {
@@ -139,12 +138,8 @@ ipcMain.handle("select:folder", async () => {
 
   ipcMain.handle("yaml:export", (_, workflow: string) => {
     if (!workflow) throw new Error("Missing workflow name");
-
     const dag = WorkFlowToDAG(tasks, dependencies, workflow, 1);
-    console.log(dag);
-    const res = dagToYaml(dag)
-    console.log("res",res);
-    
+    const res = dagToYaml(dag);
     return res;
   });
 
@@ -152,5 +147,7 @@ ipcMain.handle("select:folder", async () => {
     return getSystemStats();
   });
 
-
+  ipcMain.on("terminal:input", (event, { terminalId, data }) => {
+    return inputcommand(terminalId, data, event.sender);
+  });
 }

@@ -16,9 +16,9 @@ export class TerminalManager {
   private terminals = new Map<string, Terminal>();
   private buffers = new Map<string, string[]>();
   private isReady = new Map<string, boolean>();
-  create(folder: string, wc: Electron.WebContents,task :Task): string {
+  private terminalToTask = new Map<string, string>();
+  create(folder: string, wc: Electron.WebContents, task: Task): string {
     const id = `term-${crypto.randomUUID()}`;
-
     const shell = pty.spawn("bash", [], {
       name: "xterm-color",
       cwd: folder,
@@ -28,7 +28,7 @@ export class TerminalManager {
     });
     wc.send("terminal:created", {
       terminalId: id,
-      name:task.task
+      name: task.task,
     });
     shell.onData((data) => {
       if (this.isReady.get(id)) {
@@ -38,6 +38,8 @@ export class TerminalManager {
         this.buffers.get(id)?.push(data);
       }
     });
+    this.terminalToTask.set(id, task.id);
+
     this.terminals.set(id, { id, process: shell });
     return id;
   }
@@ -53,6 +55,11 @@ export class TerminalManager {
       `(${command}); EXIT_CODE=$?; echo "::TASK_EXIT:$EXIT_CODE::"\r`,
     );
   }
+  write(id: string, data: string) {
+    const terminal = this.terminals.get(id);
+    if (!terminal) return;
+    terminal.process.write(data);
+  }
 
   kill(id: string) {
     const terminal = this.terminals.get(id);
@@ -61,7 +68,9 @@ export class TerminalManager {
     terminal.process.kill();
     this.terminals.delete(id);
   }
-
+  getTaskIdByTerminalId(terminalId: string): string | undefined {
+    return this.terminalToTask.get(terminalId);
+  }
   killAll() {
     for (const id of this.terminals.keys()) {
       this.kill(id);
@@ -149,28 +158,28 @@ export class TerminalManager {
       terminal.process.onData(handler);
     });
   }
-  
+
   private logBuffers = new Map<string, string>();
 
   private handleLogChunk(id: string, chunk: string, wc: Electron.WebContents) {
     const cleaned = cleanChunk(chunk);
 
-      const prev = this.logBuffers.get(id) || "";
-      const combined = prev + cleaned;
+    const prev = this.logBuffers.get(id) || "";
+    const combined = prev + cleaned;
 
-      const lines = combined.split("\n");
-      this.logBuffers.set(id, lines.pop() || "");
+    const lines = combined.split("\n");
+    this.logBuffers.set(id, lines.pop() || "");
 
-      for (const line of lines) {
-        const clean = line.trim();
-        if (!clean) continue;
-        if (isNoise(clean)) continue;
+    for (const line of lines) {
+      const clean = line.trim();
+      if (!clean) continue;
+      if (isNoise(clean)) continue;
 
-        wc.send("task:log", {
-          taskId: id,
-          message: clean,
-          ts: Date.now(),
-        });
-      }
+      wc.send("task:log", {
+        taskId: id,
+        message: clean,
+        ts: Date.now(),
+      });
     }
+  }
 }

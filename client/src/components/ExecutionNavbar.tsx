@@ -89,7 +89,6 @@ export default function ExecutionNavbar({
 
         <Button
           onClick={() => {
-            console.log("clicking");
             
             onCreateYaml();
           }}

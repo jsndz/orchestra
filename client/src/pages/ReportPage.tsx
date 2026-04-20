@@ -18,7 +18,6 @@ export const ReportPage = () => {
       setShowYamlModal(true);
       return;
     }
-    console.log("reaching here");
 
     const res = await downloadYaml(workflowName);
 

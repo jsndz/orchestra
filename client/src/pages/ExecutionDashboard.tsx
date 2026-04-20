@@ -24,7 +24,6 @@ export default function ExecutionDashboard() {
       setShowYamlModal(true);
       return;
     }
-    console.log("reaching here");
 
     const res = await downloadYaml(workflowName);
 
@@ -45,7 +44,6 @@ export default function ExecutionDashboard() {
       setTempName(workflowName === "temp-workflow" ? "" : workflowName);
     }
   }, [showYamlModal, workflowName]);
-      console.log(view);
 
   useEffect(() => {
     
