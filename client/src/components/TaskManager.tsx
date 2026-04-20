@@ -25,7 +25,6 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
   const addDep = useAddDependency();
 
   const [mode, setMode] = useState<"none" | "add" | "new" | "link">("none");
-  const [newFlow, setNewflow] = useState<boolean>(true);
 
   const [taskName, setTaskName] = useState("");
   const [taskFolder, setTaskFolder] = useState("");
@@ -44,7 +43,7 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
     if (fullPath) setTaskFolder(fullPath);
   };
 
-  const handleAddTask = (isNewWorkflow: boolean) => {
+  const handleAddTask = () => {
     if (!taskName.trim()) return;
 
     let ready: TaskRequest["ready"] | undefined;
@@ -69,12 +68,7 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
 
     addTask.mutate(task, {
       onSuccess: (newTask) => {
-        if (!isNewWorkflow && lastTaskId) {
-          addDep.mutate({
-            from: lastTaskId,
-            to: newTask.id,
-          });
-        }
+       
         setLastTaskId(newTask.id);
       },
     });
@@ -87,7 +81,6 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
     setReadyKind("none");
     setReadyPort("");
     setReadyLog("");
-    setNewflow(false);
   };
 
   return (
@@ -187,7 +180,7 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
 
             <Button
               className="w-full"
-              onClick={() => handleAddTask(mode === "new")}
+              onClick={() => handleAddTask()}
               disabled={addTask.isPending}
             >
               {addTask.isPending ? (
@@ -218,21 +211,10 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
             Add Step
           </Button>
 
-          <Button
-            onClick={() => {
-              setLastTaskId(null);
-              setMode("new");
-              setNewflow(true);
-            }}
-            variant={newFlow ? "link" : "secondary"}
-          >
-            <ListTodo className="h-4 w-4 mr-2" />
-            New Workflow
-          </Button>
 
           <Button variant="outline" onClick={() => setMode("link")}>
             <Link className="h-4 w-4 mr-2" />
-            Link Workflow
+            Link Steps
           </Button>
         </div>
       </div>
