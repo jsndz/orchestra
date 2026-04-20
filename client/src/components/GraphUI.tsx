@@ -284,6 +284,7 @@ export function DependencyGraph({
           panOnScroll
           zoomOnScroll
           defaultEdgeOptions={{ type: "smoothstep" }}
+          proOptions={{ hideAttribution: true }}
         >
           <Background />
           <Controls />

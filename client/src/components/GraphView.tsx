@@ -11,6 +11,7 @@ import {
 import { ExecGraph } from "./ExecGraph";
 import LogViewer from "./LogView";
 import { Button } from "./ui/button";
+import { ScrollArea } from "./ui/scroll-area";
 
 export default function LogPage() {
   const { data } = useTasks();
@@ -80,6 +81,7 @@ export default function LogPage() {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex flex-1 relative overflow-hidden">
         {/* SIDEBAR */}
+        <ScrollArea >
         <div
           className={`border-r bg-card transition-all duration-300 ${
             sidebarOpen ? "w-72" : "w-12"
@@ -132,7 +134,7 @@ export default function LogPage() {
             </div>
           )}
         </div>
-
+</ScrollArea>
         {/* GRAPH */}
         <div className="flex-1 relative">
           <ExecGraph

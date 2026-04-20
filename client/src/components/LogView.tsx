@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface LogProps {
   logs: string[];
@@ -28,6 +29,8 @@ export default function LogViewer({ logs }: LogProps) {
   }, [logs]);
 
   return (
+        <ScrollArea className="h-full w-full bg-black text-sm text-green-400 font-mono rounded">
+
     <div
       ref={containerRef}
       onScroll={handleScroll}
@@ -39,5 +42,6 @@ export default function LogViewer({ logs }: LogProps) {
         </div>
       ))}
     </div>
+    </ScrollArea>
   );
 }

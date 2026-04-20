@@ -4,11 +4,13 @@ import ReactFlow, {
   MarkerType,
   type Node,
   type Edge,
+  ReactFlowInstance,
+  useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
 import { Dependency, StepState, Task } from "../types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { analyze } from "../api/tasks";
 
 function getStateStyle(state: StepState, isSelected: boolean) {
@@ -129,31 +131,43 @@ export function ExecGraph({
   onNodeClick: (id: string) => void;
 }) {
   const [levels, setLevels] = useState<Task[][]>([]);
-
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  
+  const rfInstance =  useRef<any>(null);
+
   useEffect(() => {
     analyze("parallel").then((res) => {
-      if (res.ok) {
-        setLevels(res.levels);
-      }
+      if (res.ok) setLevels(res.levels);
     });
   }, [apiData.tasks, apiData.dependencies]);
- useEffect(() => {
-  const { nodes, edges } = toReactFlowGraphFromLevels(
-    levels,
-    apiData.dependencies,
-    selectedId,
-  );
 
-  setNodes(nodes);
-  setEdges(edges);
-}, [levels, apiData.tasks, selectedId]);
+  useEffect(() => {
+    const { nodes: newNodes, edges: newEdges } = toReactFlowGraphFromLevels(
+      levels,
+      apiData.dependencies,
+      selectedId,
+    );
+
+    setNodes(newNodes);
+    setEdges(newEdges);
+
+    if (rfInstance.current && newNodes.length > 0) {
+      setTimeout(() => {
+        rfInstance.current.fitView({ padding: 0.2 });
+      }, 50);
+    }
+  }, [levels, apiData.tasks, selectedId]);
+
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        // 3. Capture the instance here
+        onInit={(instance) => {
+          rfInstance.current = instance;
+        }}
         fitView
         nodesDraggable={false}
         nodesConnectable={false}
