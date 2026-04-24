@@ -7,7 +7,7 @@ export const TerminalPage = () => {
   const createTerminal = useTerminalStore((s) => s.createTerminal);
 
   const [activeId, setActiveId] = useState<string | null>(null);
- 
+
   useEffect(() => {
     const unsubscribe = window.api.onTerminalCreated((config) => {
       if (!terminals[config.terminalId]) {
@@ -24,36 +24,46 @@ export const TerminalPage = () => {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* TABS */}
-      <div className="flex items-center border-b bg-muted px-2 h-10 overflow-x-auto">
-        {terminalList.map((t) => {
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveId(t.id)}
-              className={`px-3 py-1 text-sm rounded mr-2 whitespace-nowrap ${
+      <div className="flex items-center h-9 bg-zinc-900 border-b border-zinc-800 px-1 overflow-x-auto">
+        {terminalList.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActiveId(t.id)}
+            className={`
+              px-3 h-8 text-xs flex items-center
+              border-r border-zinc-800
+              ${
                 activeId === t.id
-                  ? "bg-background border"
-                  : "text-muted-foreground hover:bg-background/50"
-              }`}
-            >
-              {t.name}
-            </button>
-          );
-        })}
+                  ? "bg-black text-white"
+                  : "text-zinc-400 hover:bg-zinc-800"
+              }
+            `}
+          >
+            {t.name}
+          </button>
+        ))}
       </div>
 
-      {/* TERMINAL AREA */}
-      <div className="flex-1 relative bg-black overflow-hidden">
+      {/* TERMINALS */}
+      <div className="flex-1 relative bg-black">
         {terminalList.map((t) => (
           <div
             key={t.id}
-            className={`absolute inset-0 ${
-              activeId === t.id ? "block" : "hidden"
-            }`}
+            className={`
+              absolute inset-0 transition-opacity
+              ${
+                activeId === t.id
+                  ? "opacity-100 z-10"
+                  : "opacity-0 z-0 pointer-events-none" 
+              }
+            `}
           >
-            <div className="h-full w-full overflow-auto p-2">
-              <Terminal terminalId={t.id} status="running" name={t.name} />
-            </div>
+            <Terminal
+              terminalId={t.id}
+              status="running"
+              name={t.name}
+              isActive={activeId === t.id}
+            />
           </div>
         ))}
       </div>

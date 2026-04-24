@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { ScrollArea } from "./ui/scroll-area";
 
 export function toReactFlowGraphFromLevels(
   levels: Task[][],
@@ -292,6 +293,7 @@ export function DependencyGraph({
       </div>
 
       {editingTask && (
+       
         <div className="absolute right-0 top-0 h-full w-96 bg-background border-l p-6 overflow-y-auto z-50 flex flex-col">
           {/* HEADER */}
           <div className="flex items-center justify-between mb-6">
@@ -305,7 +307,7 @@ export function DependencyGraph({
               ✕
             </Button>
           </div>
-
+<ScrollArea className="h-full">
           <div className="space-y-5 flex-1">
             {/* TASK NAME */}
             <div className="space-y-1">
@@ -429,7 +431,7 @@ export function DependencyGraph({
               </div>
             )}
           </div>
-
+</ScrollArea>
           {/* ACTIONS */}
           <div className="flex justify-between pt-6 border-t mt-6">
             <Button
@@ -450,7 +452,9 @@ export function DependencyGraph({
             </Button>
           </div>
         </div>
+    
       )}
+     
     </>
   );
 }

@@ -3,7 +3,7 @@ import { DependencyGraph } from "../components/GraphUI";
 
 import UploadYaml from "../components/UploadYaml";
 import { Button } from "../components/ui/button";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Play,
   BarChart3,
@@ -19,6 +19,7 @@ import { useState } from "react";
 import { Task } from "../types";
 import { useWorkflowStore } from "../store/useAppStore";
 import { Input } from "@base-ui/react";
+import { ScrollArea } from "../components/ui/scroll-area";
 
 export default function TasksPage() {
   const { data, refetch } = useTasks();
@@ -36,15 +37,21 @@ export default function TasksPage() {
   const dependencies = data?.dependencies ?? [];
 
   const filteredTasks = tasks.filter((t) =>
-    t.task.toLowerCase().includes(search.toLowerCase())
+    t.task.toLowerCase().includes(search.toLowerCase()),
   );
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col h-screen">
       {/* HEADER */}
       <div className="bg-background w-full h-16 flex items-center justify-between px-4 border-b shrink-0">
         <div className="flex items-center gap-4">
-          <img src="./logo.png" alt="logo" width={160} />
+          <img
+            src="./logo.png"
+            alt="logo"
+            width={160}
+            onClick={() => navigate("/")}
+          />
 
           <div className="flex items-center text-sm">
             <span className="text-muted-foreground">workflows</span>
@@ -81,7 +88,7 @@ export default function TasksPage() {
               }
             }}
           /> */}
-{/* 
+          {/* 
           <Button>
             <NavLink to="/analysis" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
@@ -99,89 +106,90 @@ export default function TasksPage() {
       </div>
 
       {/* MAIN */}
+
       <div className="flex flex-1 overflow-hidden">
         {/* SIDEBAR */}
-        <div
-          className={`border-r bg-card transition-all duration-300 ${
-            sidebarOpen ? "w-72" : "w-12"
-          } flex flex-col`}
-        >
-          {/* HEADER */}
-          <div className="flex items-center justify-between p-2 border-b">
+          <div
+            className={`border-r bg-card transition-all duration-300 ${
+              sidebarOpen ? "w-72" : "w-12"
+            } flex flex-col`}
+          >
+            {/* HEADER */}
+            <div className="flex items-center justify-between p-2 border-b">
+              {sidebarOpen && (
+                <span className="text-sm font-semibold">Workflow Steps</span>
+              )}
+
+              <Button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                variant="ghost"
+                className="p-1 h-7 w-7"
+              >
+                {sidebarOpen ? (
+                  <ChevronLeft size={16} />
+                ) : (
+                  <ChevronRight size={16} />
+                )}
+              </Button>
+            </div>
+
+            {/* SEARCH */}
             {sidebarOpen && (
-              <span className="text-sm font-semibold">Workflow Steps</span>
+              <div className="p-2 border-b">
+                <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded">
+                  <Search size={14} className="text-muted-foreground" />
+                  <input
+                    className="bg-transparent outline-none text-sm flex-1"
+                    placeholder="Search steps..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+              </div>
             )}
 
-            <Button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              variant="ghost"
-              className="p-1 h-7 w-7"
-            >
-              {sidebarOpen ? (
-                <ChevronLeft size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </Button>
-          </div>
+            {/* TASK LIST */}
+            {sidebarOpen && (
+              <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                {filteredTasks.map((t) => (
+                  <div
+                    key={t.id}
+                    onClick={() => setEditingTask(t)}
+                    className={`p-2 rounded cursor-pointer hover:bg-muted ${
+                      editingTask?.id === t.id ? "bg-muted" : ""
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{t.task}</div>
 
-          {/* SEARCH */}
-          {sidebarOpen && (
-            <div className="p-2 border-b">
-              <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded">
-                <Search size={14} className="text-muted-foreground" />
-                <input
-                  className="bg-transparent outline-none text-sm flex-1"
-                  placeholder="Search steps..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                      <Folder size={12} />
+                      {t.folder}
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-2">
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded ${
+                          t.type === "service"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        {t.type}
+                      </span>
+
+                      {t.command && (
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Terminal size={10} />
+                          {t.command.slice(0, 20)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          )}
-
-          {/* TASK LIST */}
-          {sidebarOpen && (
-            <div className="flex-1 overflow-y-auto p-2 space-y-2">
-              {filteredTasks.map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => setEditingTask(t)}
-                  className={`p-2 rounded cursor-pointer hover:bg-muted ${
-                    editingTask?.id === t.id ? "bg-muted" : ""
-                  }`}
-                >
-                  <div className="font-medium text-sm">{t.task}</div>
-
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                    <Folder size={12} />
-                    {t.folder}
-                  </div>
-
-                  <div className="flex items-center gap-2 mt-2">
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded ${
-                        t.type === "service"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-slate-200 text-slate-700"
-                      }`}
-                    >
-                      {t.type}
-                    </span>
-
-                    {t.command && (
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <Terminal size={10} />
-                        {t.command.slice(0, 20)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
+            )}
+          </div>
+ 
         {/* GRAPH */}
         <div className="flex-1 relative">
           <DependencyGraph
@@ -213,10 +221,9 @@ export default function TasksPage() {
             <div className="flex items-center gap-4">
               <span>
                 Memory:{" "}
-                {(
-                  (systemStats.usedMem / systemStats.totalMem) *
-                  100
-                ).toFixed(1)}
+                {((systemStats.usedMem / systemStats.totalMem) * 100).toFixed(
+                  1,
+                )}
                 % used
               </span>
               <span>Platform: {systemStats.platform}</span>

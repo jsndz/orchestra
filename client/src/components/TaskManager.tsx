@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  Plus,
-  ListTodo,
-  Link,
-  Loader2,
-  FolderOpen,
-} from "lucide-react";
+import { Plus, ListTodo, Link, Loader2, FolderOpen } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
@@ -68,7 +62,6 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
 
     addTask.mutate(task, {
       onSuccess: (newTask) => {
-       
         setLastTaskId(newTask.id);
       },
     });
@@ -104,7 +97,11 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
                 value={taskFolder}
                 readOnly
               />
-              <Button type="button" variant="outline" onClick={handlePickFolder}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePickFolder}
+              >
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Browse
               </Button>
@@ -206,13 +203,18 @@ export default function WorkflowControls({ tasks, dependencies }: any) {
         )}
 
         <div className="flex gap-2 bg-card/95 backdrop-blur-sm border rounded-lg p-2 shadow-lg">
-          <Button onClick={() => setMode("add")}>
+          <Button
+            onClick={() => setMode(mode === "add" ? "none" : "add")}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Step
           </Button>
 
+          <Button
+            variant="outline"
+            onClick={() => setMode(mode === "link" ? "none" : "link")}
 
-          <Button variant="outline" onClick={() => setMode("link")}>
+          >
             <Link className="h-4 w-4 mr-2" />
             Link Steps
           </Button>

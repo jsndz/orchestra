@@ -7,9 +7,15 @@ type Props = {
   terminalId: string;
   status: "running" | "success" | "failed";
   name: string;
+  isActive: boolean;
 };
 
-export default function Terminal({ status, name, terminalId }: Props) {
+export default function Terminal({
+  status,
+  name,
+  terminalId,
+  isActive,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -28,7 +34,9 @@ export default function Terminal({ status, name, terminalId }: Props) {
     term.loadAddon(fitAddon);
 
     term.open(containerRef.current);
-    fitAddon.fit();
+
+    // delay fit (important)
+    setTimeout(() => fitAddon.fit(), 0);
 
     termRef.current = term;
     fitRef.current = fitAddon;
@@ -38,9 +46,11 @@ export default function Terminal({ status, name, terminalId }: Props) {
     });
 
     resizeObserver.observe(containerRef.current);
-    term.onData((data)=>{
+
+    term.onData((data) => {
       window.api.sendTerminalInput(terminalId, data);
-    })
+    });
+
     const unsubscribe = window.api.onExecutionEvent((msg) => {
       if (terminalId === msg.terminalId) {
         term.write(msg.data);
@@ -56,10 +66,19 @@ export default function Terminal({ status, name, terminalId }: Props) {
     };
   }, []);
 
+  // refit when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      setTimeout(() => {
+        fitRef.current?.fit();
+      }, 0);
+    }
+  }, [isActive]);
+
   return (
-    <div className="flex flex-col h-full w-full rounded-lg overflow-hidden bg-black border border-zinc-700">
+    <div className="flex flex-col h-full w-full bg-black">
       {/* HEADER */}
-      <div className="flex items-center justify-between px-3 py-2 bg-zinc-800 text-xs text-zinc-300 shrink-0">
+      <div className="flex items-center px-3 py-1 bg-zinc-900 border-b border-zinc-800 text-xs">
         <div className="flex items-center gap-2">
           <span
             className={`h-2 w-2 rounded-full ${
@@ -70,12 +89,12 @@ export default function Terminal({ status, name, terminalId }: Props) {
                 : "bg-red-400"
             }`}
           />
-          <span>{name}</span>
+          <span className="text-zinc-300">{name}</span>
         </div>
       </div>
 
       {/* TERMINAL */}
-      <div ref={containerRef} className="flex-1 w-full" />
+      <div ref={containerRef} className="flex-1 w-full h-full" />
     </div>
   );
 }
