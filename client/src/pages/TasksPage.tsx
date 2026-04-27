@@ -1,12 +1,9 @@
 import { useTasks } from "../hooks/useTasks";
 import { DependencyGraph } from "../components/GraphUI";
-
-import UploadYaml from "../components/UploadYaml";
 import { Button } from "../components/ui/button";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Play,
-  BarChart3,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -19,10 +16,9 @@ import { useState } from "react";
 import { Task } from "../types";
 import { useWorkflowStore } from "../store/useAppStore";
 import { Input } from "@base-ui/react";
-import { ScrollArea } from "../components/ui/scroll-area";
 
 export default function TasksPage() {
-  const { data, refetch } = useTasks();
+  const { data } = useTasks();
   const { data: systemStats } = useSystemStats();
 
   const workflowName = useWorkflowStore((s) => s.workflowName);
@@ -46,13 +42,19 @@ export default function TasksPage() {
       {/* HEADER */}
       <div className="bg-background w-full h-16 flex items-center justify-between px-4 border-b shrink-0">
         <div className="flex items-center gap-4">
-          <img
-            src="./logo.png"
-            alt="logo"
-            width={160}
-            onClick={() => navigate("/")}
-          />
-
+          <div className="flex  justify-center items-center gap-1">
+            {" "}
+            <img
+              src="./logo.png"
+              alt="logo"
+              width={50}
+              height={25}
+              onClick={() => navigate("/")}
+            />
+            <h1 className="text-4xl font-semibold tracking-tight uppercase">
+              ORCHESTRA
+            </h1>
+          </div>
           <div className="flex items-center text-sm">
             <span className="text-muted-foreground">workflows</span>
             <span className="mx-1 text-muted-foreground">/</span>
@@ -107,89 +109,102 @@ export default function TasksPage() {
 
       {/* MAIN */}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden ">
         {/* SIDEBAR */}
-          <div
-            className={`border-r bg-card transition-all duration-300 ${
-              sidebarOpen ? "w-72" : "w-12"
-            } flex flex-col`}
-          >
-            {/* HEADER */}
-            <div className="flex items-center justify-between p-2 border-b">
-              {sidebarOpen && (
-                <span className="text-sm font-semibold">Workflow Steps</span>
-              )}
-
-              <Button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                variant="ghost"
-                className="p-1 h-7 w-7"
-              >
-                {sidebarOpen ? (
-                  <ChevronLeft size={16} />
-                ) : (
-                  <ChevronRight size={16} />
-                )}
-              </Button>
-            </div>
-
-            {/* SEARCH */}
+        <div
+          className={`border-r bg-background transition-all duration-300 ${
+            sidebarOpen ? "w-72" : "w-12"
+          } flex flex-col`}
+        >
+          {/* HEADER */}
+          <div className="flex items-center justify-between p-2 ">
             {sidebarOpen && (
-              <div className="p-2 border-b">
-                <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded">
-                  <Search size={14} className="text-muted-foreground" />
-                  <input
-                    className="bg-transparent outline-none text-sm flex-1"
-                    placeholder="Search steps..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-              </div>
+              <span className="text-sm font-semibold">Workflow Steps</span>
             )}
 
-            {/* TASK LIST */}
-            {sidebarOpen && (
-              <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                {filteredTasks.map((t) => (
+            <Button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              variant="ghost"
+              className="p-1 h-7 w-7"
+            >
+              {sidebarOpen ? (
+                <ChevronLeft size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </Button>
+          </div>
+
+          {/* SEARCH */}
+          {sidebarOpen && (
+            <div className="p-2 ">
+              <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded">
+                <Search size={14} className="text-muted-foreground" />
+                <input
+                  className="bg-transparent outline-none text-sm flex-1"
+                  placeholder="Search steps..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* TASK LIST */}
+          {sidebarOpen && (
+            <div className="flex-1 overflow-y-auto p-2 space-y-2">
+              {filteredTasks.map((t) => {
+                const isActive = editingTask?.id === t.id;
+                const isService = t.type === "service";
+
+                return (
                   <div
                     key={t.id}
                     onClick={() => setEditingTask(t)}
-                    className={`p-2 rounded cursor-pointer hover:bg-muted ${
-                      editingTask?.id === t.id ? "bg-muted" : ""
-                    }`}
+                    className={`
+            cursor-pointer bg-card border transition-all
+            px-3 py-3
+            ${
+              isActive
+                ? "border-accent bg-muted"
+                : "border-border/30 hover:border-border hover:bg-muted/50"
+            }
+          `}
                   >
-                    <div className="font-medium text-sm">{t.task}</div>
+                    {/* Title */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-medium text-sm truncate uppercase tracking-wide">
+                        {t.task}
+                      </div>
 
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                      <Folder size={12} />
-                      {t.folder}
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-2">
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded ${
-                          t.type === "service"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-slate-200 text-slate-700"
-                        }`}
-                      >
-                        {t.type}
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {isService ? "SRV" : "JOB"}
                       </span>
-
-                      {t.command && (
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <Terminal size={10} />
-                          {t.command.slice(0, 20)}
-                        </div>
-                      )}
                     </div>
+
+                    {/* Folder */}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2 truncate">
+                      <Folder size={12} className="shrink-0" />
+                      <span className="truncate">{t.folder}</span>
+                    </div>
+
+                    {/* Command */}
+                    {t.command && (
+                      <div className="flex items-center gap-1 text-[11px] text-foreground mt-3 truncate border-t border-border/20 pt-2">
+                        <Terminal
+                          size={11}
+                          className="shrink-0 text-muted-foreground"
+                        />
+                        <span className="truncate">{t.command}</span>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
- 
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* GRAPH */}
         <div className="flex-1 relative">
           <DependencyGraph

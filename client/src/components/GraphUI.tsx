@@ -9,10 +9,11 @@ import ReactFlow, {
   EdgeChange,
   applyNodeChanges,
   applyEdgeChanges,
+  Position,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-import { Dependency, ReadyWhen, Task } from "../types";
+import { Dependency, nodeTypes, ReadyWhen, Task } from "../types";
 import { useCallback, useEffect, useState } from "react";
 import {
   useDeleteTask,
@@ -50,38 +51,20 @@ export function toReactFlowGraphFromLevels(
     levelTasks.forEach((task, i) => {
       nodes.push({
         id: task.id,
-        type: "default",
+        type: "custom",
         position: {
           x: levelIndex * horizontalSpacing,
           y: startY + i * verticalSpacing,
         },
+        sourcePosition: Position.Right,
+  targetPosition: Position.Left,
         data: {
           label: (
-            <div className="text-left">
-              <div className="font-semibold text-slate-800">{task.task}</div>
-              <div className="text-xs text-slate-500">{task.folder}</div>
-
-              {task.type === "service" && (
-                <div className="text-[10px] mt-1 px-2 py-0.5 inline-block bg-blue-100 text-blue-600 rounded">
-                  service
-                </div>
-              )}
-
-              {task.command && (
-                <div className="text-xs text-slate-400 mt-1 truncate">
-                  {task.command}
-                </div>
-              )}
-            </div>
+           task.task
           ),
-        },
-        style: {
-          border: "2px solid #2563eb",
-          borderRadius: "10px",
-          background: "#ffffff",
-          padding: "10px",
-          width: 240,
-          boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+          subLabel: task.folder,
+          type: task.type,
+          command: task.command,
         },
       });
     });
@@ -271,6 +254,7 @@ export function DependencyGraph({
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodesDelete={onNodesDelete}
@@ -293,7 +277,6 @@ export function DependencyGraph({
       </div>
 
       {editingTask && (
-       
         <div className="absolute right-0 top-0 h-full w-96 bg-background border-l p-6 overflow-y-auto z-50 flex flex-col">
           {/* HEADER */}
           <div className="flex items-center justify-between mb-6">
@@ -307,131 +290,131 @@ export function DependencyGraph({
               ✕
             </Button>
           </div>
-<ScrollArea className="h-full">
-          <div className="space-y-5 flex-1">
-            {/* TASK NAME */}
-            <div className="space-y-1">
-              <Label className="text-sm font-medium text-muted-foreground">
-                Task Name
-              </Label>
-              <Input
-                className="w-full border p-2 rounded"
-                value={taskName}
-                onChange={(e) => setTaskName(e.target.value)}
-              />
-            </div>
-
-            {/* FOLDER */}
-            <div className="space-y-1">
-              <Label className="text-sm font-medium text-muted-foreground">
-                Folder
-              </Label>
-              <Input
-                className="w-full border p-2 rounded"
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-              />
-            </div>
-
-            {/* COMMAND */}
-            <div className="space-y-1">
-              <Label className="text-sm font-medium text-muted-foreground">
-                Command
-              </Label>
-              <Textarea
-                className="w-full border p-2 rounded resize-none"
-                value={command}
-                onChange={(e) => setCommand(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            {/* TYPE */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">
-                Step Type
-              </Label>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setTaskType("job")}
-                  variant={taskType === "job" ? "default" : "outline"}
-                  className="flex-1"
-                >
-                  JOB
-                </Button>
-                <Button
-                  onClick={() => setTaskType("service")}
-                  variant={taskType === "service" ? "default" : "outline"}
-                  className="flex-1"
-                >
-                  SERVICE
-                </Button>
-              </div>
-            </div>
-
-            {/* READY CONDITION */}
-            {taskType === "service" && (
-              <div className="space-y-3 border rounded p-3">
+          <ScrollArea className="h-full">
+            <div className="space-y-5 flex-1">
+              {/* TASK NAME */}
+              <div className="space-y-1">
                 <Label className="text-sm font-medium text-muted-foreground">
-                  Ready Condition
+                  Task Name
+                </Label>
+                <Input
+                  className="w-full border p-2 rounded"
+                  value={taskName}
+                  onChange={(e) => setTaskName(e.target.value)}
+                />
+              </div>
+
+              {/* FOLDER */}
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Folder
+                </Label>
+                <Input
+                  className="w-full border p-2 rounded"
+                  value={folderName}
+                  onChange={(e) => setFolderName(e.target.value)}
+                />
+              </div>
+
+              {/* COMMAND */}
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Command
+                </Label>
+                <Textarea
+                  className="w-full border p-2 rounded resize-none"
+                  value={command}
+                  onChange={(e) => setCommand(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              {/* TYPE */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Step Type
                 </Label>
 
-                <Select
-                  value={readyKind}
-                  onValueChange={(value) =>
-                    setReadyKind(value as "exit" | "port" | "log")
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select ready condition" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="exit">Process exits</SelectItem>
-                    <SelectItem value="port">Port open</SelectItem>
-                    <SelectItem value="log">Log match</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setTaskType("job")}
+                    variant={taskType === "job" ? "default" : "outline"}
+                    className="flex-1"
+                  >
+                    JOB
+                  </Button>
+                  <Button
+                    onClick={() => setTaskType("service")}
+                    variant={taskType === "service" ? "default" : "outline"}
+                    className="flex-1"
+                  >
+                    SERVICE
+                  </Button>
+                </div>
+              </div>
 
-                {readyKind === "port" && (
-                  <Input
-                    type="number"
-                    className="w-full border p-2 rounded"
-                    value={readyPort}
-                    onChange={(e) => setReadyPort(Number(e.target.value))}
-                    placeholder="Port number"
-                  />
-                )}
+              {/* READY CONDITION */}
+              {taskType === "service" && (
+                <div className="space-y-3 border rounded p-3">
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Ready Condition
+                  </Label>
 
-                {readyKind === "log" && (
-                  <div className="space-y-2">
+                  <Select
+                    value={readyKind}
+                    onValueChange={(value) =>
+                      setReadyKind(value as "exit" | "port" | "log")
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select ready condition" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="exit">Process exits</SelectItem>
+                      <SelectItem value="port">Port open</SelectItem>
+                      <SelectItem value="log">Log match</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {readyKind === "port" && (
                     <Input
+                      type="number"
                       className="w-full border p-2 rounded"
-                      value={readyLogMatch}
-                      onChange={(e) => setReadyLogMatch(e.target.value)}
-                      placeholder={
-                        logMatchType === "regex"
-                          ? "e.g. server.*started"
-                          : "e.g. server started"
-                      }
+                      value={readyPort}
+                      onChange={(e) => setReadyPort(Number(e.target.value))}
+                      placeholder="Port number"
                     />
+                  )}
 
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={logMatchType === "regex"}
-                        onChange={(e) =>
-                          setLogMatchType(e.target.checked ? "regex" : "text")
+                  {readyKind === "log" && (
+                    <div className="space-y-2">
+                      <Input
+                        className="w-full border p-2 rounded"
+                        value={readyLogMatch}
+                        onChange={(e) => setReadyLogMatch(e.target.value)}
+                        placeholder={
+                          logMatchType === "regex"
+                            ? "e.g. server.*started"
+                            : "e.g. server started"
                         }
                       />
-                      Use regex
-                    </label>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-</ScrollArea>
+
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={logMatchType === "regex"}
+                          onChange={(e) =>
+                            setLogMatchType(e.target.checked ? "regex" : "text")
+                          }
+                        />
+                        Use regex
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
           {/* ACTIONS */}
           <div className="flex justify-between pt-6 border-t mt-6">
             <Button
@@ -452,9 +435,7 @@ export function DependencyGraph({
             </Button>
           </div>
         </div>
-    
       )}
-     
     </>
   );
 }

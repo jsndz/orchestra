@@ -1,3 +1,5 @@
+import CustomNode from "../components/Node";
+
 export interface Task {
   id: string;
   task: string;
@@ -118,3 +120,9 @@ export type TerminalUIState = {
 };
 
 export type TerminalsState = Record<string, TerminalUIState>;
+
+
+
+export const nodeTypes = {
+  custom: CustomNode,
+};
