@@ -40,92 +40,89 @@ export default function TasksPage() {
   return (
     <div className="flex flex-col h-screen">
       {/* HEADER */}
-      <div className="bg-background w-full h-16 flex items-center justify-between px-4 border-b shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex  justify-center items-center gap-1">
-            {" "}
-            <img
-              src="./logo.png"
-              alt="logo"
-              width={50}
-              height={25}
-              onClick={() => navigate("/")}
-            />
-            <h1 className="text-4xl font-semibold tracking-tight uppercase">
-              ORCHESTRA
-            </h1>
-          </div>
-          <div className="flex items-center text-sm">
-            <span className="text-muted-foreground">workflows</span>
-            <span className="mx-1 text-muted-foreground">/</span>
-
-            {editingName ? (
-              <Input
-                autoFocus
-                className="border rounded px-1 text-sm w-40 h-8"
-                value={workflowName}
-                onChange={(e) => setWorkflowName(e.target.value)}
-                onBlur={() => setEditingName(false)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") setEditingName(false);
-                }}
-              />
-            ) : (
-              <span
-                className="font-medium cursor-pointer hover:underline"
-                onClick={() => setEditingName(true)}
-              >
-                {workflowName}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* <UploadYaml
-            onSuccess={(fileName) => {
-              refetch();
-              if (fileName) {
-                setWorkflowName(fileName.replace(".yaml", ""));
-              }
-            }}
-          /> */}
-          {/* 
-          <Button>
-            <NavLink to="/analysis" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Analysis
-            </NavLink>
-          </Button> */}
-
-          <Button>
-            <NavLink to="/execution" className="flex items-center gap-2">
-              <Play className="w-4 h-4" />
-              Run Workflow
-            </NavLink>
-          </Button>
-        </div>
+      <div className="bg-background w-full h-14 flex items-center justify-between px-6 border-b border-border/40 shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.4)] z-50">
+  <div className="flex items-center gap-8">
+    <div className="flex justify-center items-center gap-3 cursor-pointer group" onClick={() => navigate("/")}>
+      <div className=" p-1 rounded-none transition-none">
+        <img
+          src="./logo.png"
+          alt="logo"
+          width={32}
+          height={32}
+        />
       </div>
+      <h1 className="text-xl font-black tracking-tighter uppercase text-foreground">
+        ORCHESTRA
+      </h1>
+    </div>
+
+    <div className="flex items-center font-mono text-[10px] uppercase tracking-[0.2em]">
+      <span className="text-muted-foreground/60">Workflows</span>
+      <span className="mx-3 text-muted-foreground/30">/</span>
+
+      {editingName ? (
+        <div className="relative">
+          <Input
+            autoFocus
+            className=" border border-accent/40 rounded-none px-2 h-7 w-48 text-[11px] font-mono focus-visible:ring-0 text-accent uppercase"
+            value={workflowName}
+            onChange={(e) => setWorkflowName(e.target.value)}
+            onBlur={() => setEditingName(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") setEditingName(false);
+            }}
+          />
+          <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-accent/30 animate-pulse" />
+        </div>
+      ) : (
+        <span
+          className="text-accent font-bold cursor-pointer hover:bg-accent hover:text-background px-2 py-0.5 transition-none border border-transparent hover:border-accent"
+          onClick={() => setEditingName(true)}
+        >
+          {workflowName || "UNTITLED_SEQUENCE"}
+        </span>
+      )}
+    </div>
+  </div>
+
+  <div className="flex items-center gap-px  p-0.5">
+    <NavLink to="/execution">
+      <Button className="rounded-none text-background hover:bg-btn-primary-hover font-mono text-[10px] font-black uppercase tracking-widest h-9 px-6 flex items-center gap-2 group transition-none ">
+        <Play className="w-3 h-3 fill-current" />
+        Run Workflow
+      </Button>
+    </NavLink>
+  </div>
+</div>
 
       {/* MAIN */}
 
-      <div className="flex flex-1 overflow-hidden ">
-        {/* SIDEBAR */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* SIDEBAR - Tech Panel Style */}
         <div
-          className={`border-r bg-background transition-all duration-300 ${
-            sidebarOpen ? "w-72" : "w-12"
+          className={`border-r border-border bg-background transition-all duration-300 ${
+            sidebarOpen ? "w-80" : "w-14"
           } flex flex-col`}
         >
-          {/* HEADER */}
-          <div className="flex items-center justify-between p-2 ">
+          {/* HEADER - Industrial Control Bar */}
+          <div className="flex items-center justify-between p-3 bg-card/30 border-b border-border/20 h-14">
             {sidebarOpen && (
-              <span className="text-sm font-semibold">Workflow Steps</span>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
+                  Registry
+                </span>
+                <span className="text-[9px] font-mono text-muted-foreground uppercase">
+                  Total_Steps: {filteredTasks.length}
+                </span>
+              </div>
             )}
 
             <Button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               variant="ghost"
-              className="p-1 h-7 w-7"
+              className={`p-0 h-8 w-8 rounded-none border border-border/20 hover:bg-accent hover:text-accent-foreground transition-colors ${
+                !sidebarOpen && "mx-auto"
+              }`}
             >
               {sidebarOpen ? (
                 <ChevronLeft size={16} />
@@ -135,14 +132,14 @@ export default function TasksPage() {
             </Button>
           </div>
 
-          {/* SEARCH */}
+          {/* SEARCH - Command Line Style */}
           {sidebarOpen && (
-            <div className="p-2 ">
-              <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded">
+            <div className="p-3 border-b border-border/10 bg-black/20">
+              <div className="flex items-center gap-2 bg-card border border-border/40 px-3 py-1.5 focus-within:border-accent transition-colors">
                 <Search size={14} className="text-muted-foreground" />
                 <input
-                  className="bg-transparent outline-none text-sm flex-1"
-                  placeholder="Search steps..."
+                  className="bg-transparent outline-none text-xs font-mono flex-1 placeholder:text-muted-foreground/50"
+                  placeholder="FILTER_PROCESSES..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -152,60 +149,84 @@ export default function TasksPage() {
 
           {/* TASK LIST */}
           {sidebarOpen && (
-            <div className="flex-1 overflow-y-auto p-2 space-y-2">
-              {filteredTasks.map((t) => {
-                const isActive = editingTask?.id === t.id;
-                const isService = t.type === "service";
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <div className="flex flex-col">
+                {filteredTasks.map((t) => {
+                  const isActive = editingTask?.id === t.id;
+                  const isService = t.type === "service";
 
-                return (
-                  <div
-                    key={t.id}
-                    onClick={() => setEditingTask(t)}
-                    className={`
-            cursor-pointer bg-card border transition-all
-            px-3 py-3
-            ${
-              isActive
-                ? "border-accent bg-muted"
-                : "border-border/30 hover:border-border hover:bg-muted/50"
-            }
-          `}
-                  >
-                    {/* Title */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="font-medium text-sm truncate uppercase tracking-wide">
-                        {t.task}
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => setEditingTask(t)}
+                      className={`
+                  relative cursor-pointer transition-all border-b border-border/10
+                  px-4 py-4 group
+                  ${
+                    isActive
+                      ? "bg-accent/5 border-l-4 border-l-accent"
+                      : "bg-transparent border-l-4 border-l-transparent hover:bg-card/50"
+                  }
+                `}
+                    >
+                      {/* Active Indicator Glow */}
+                      {isActive && (
+                        <div className="absolute inset-0 bg-accent/5 animate-pulse pointer-events-none" />
+                      )}
+
+                      {/* Title & Type */}
+                      <div className="flex items-center justify-between gap-2 relative z-10">
+                        <div
+                          className={`font-mono text-xs font-bold truncate uppercase tracking-tight ${
+                            isActive ? "text-accent" : "text-foreground"
+                          }`}
+                        >
+                          {t.task}
+                        </div>
+
+                        <span
+                          className={`text-[9px] font-mono px-1 border ${
+                            isService
+                              ? "border-accent/40 text-accent bg-accent/5"
+                              : "border-muted-foreground/30 text-muted-foreground"
+                          }`}
+                        >
+                          {isService ? "SERVICE" : "JOB"}
+                        </span>
                       </div>
 
-                      <span className="text-[10px] text-muted-foreground shrink-0">
-                        {isService ? "SRV" : "JOB"}
-                      </span>
-                    </div>
-
-                    {/* Folder */}
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2 truncate">
-                      <Folder size={12} className="shrink-0" />
-                      <span className="truncate">{t.folder}</span>
-                    </div>
-
-                    {/* Command */}
-                    {t.command && (
-                      <div className="flex items-center gap-1 text-[11px] text-foreground mt-3 truncate border-t border-border/20 pt-2">
-                        <Terminal
-                          size={11}
-                          className="shrink-0 text-muted-foreground"
-                        />
-                        <span className="truncate">{t.command}</span>
+                      {/* Metadata Row */}
+                      <div className="flex items-center gap-3 mt-2 relative z-10">
+                        <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground    tracking-tighter shrink-0">
+                          <Folder
+                            size={10}
+                            className="text-muted-foreground/40"
+                          />
+                          <span>{t.folder || "root"}</span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+
+                      {/* Command Preview - Mini Terminal */}
+                      {t.command && (
+                        <div className="mt-3 relative z-10">
+                          <div className="flex items-start gap-2 bg-black/40 p-2 border border-border/10">
+                            <Terminal
+                              size={10}
+                              className="mt-0.5 text-muted-foreground/50 shrink-0"
+                            />
+                            <code className="text-[10px] font-mono text-muted-foreground group-hover:text-foreground transition-colors truncate">
+                              {t.command}
+                            </code>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
-
-        {/* GRAPH */}
         <div className="flex-1 relative">
           <DependencyGraph
             apiData={{ tasks, dependencies }}
@@ -213,14 +234,13 @@ export default function TasksPage() {
             setEditingTask={setEditingTask}
           />
 
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
             <WorkflowControls tasks={tasks} dependencies={dependencies} />
           </div>
         </div>
       </div>
-
       {/* FOOTER */}
-      <footer className="w-full h-8 bg-card border-t px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0">
+      <footer className="w-full h-8 bg-background border-t px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0">
         {systemStats ? (
           <>
             <div className="flex items-center gap-4">

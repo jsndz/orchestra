@@ -78,10 +78,10 @@ export function toReactFlowGraphFromLevels(
     animated: true, // optional but looks good
     markerEnd: {
       type: MarkerType.ArrowClosed,
-      color: "#2563eb",
+      color: "#e1f4f3",
     },
     style: {
-      stroke: "#2563eb",
+      stroke: "#e1f4f3",
       strokeWidth: 2,
     },
   }));
@@ -276,166 +276,176 @@ export function DependencyGraph({
         </ReactFlow>
       </div>
 
-      {editingTask && (
-        <div className="absolute right-0 top-0 h-full w-96 bg-background border-l p-6 overflow-y-auto z-50 flex flex-col">
-          {/* HEADER */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-semibold text-lg">Edit Step</h2>
+     {editingTask && (
+  <div className="absolute right-0 top-0 h-full w-96 bg-background border-l border-border p-0 overflow-hidden z-50 flex flex-col shadow-2xl">
+    {/* HEADER - Tech Slate Style */}
+    <div className="flex items-center justify-between px-6 py-4 border-b border-border/20 bg-card/30">
+      <div className="flex flex-col">
+        <h2 className="font-mono font-bold text-sm tracking-tighter uppercase text-accent">
+           Edit Step
+        </h2>
+      </div>
 
+      <Button
+        onClick={() => setEditingTask(null)}
+        variant="ghost"
+        className="p-1 rounded-none hover:bg-accent hover:text-accent-foreground transition-colors h-8 w-8 border border-transparent hover:border-accent"
+      >
+        ✕
+      </Button>
+    </div>
+
+    <ScrollArea className="flex-1 px-6">
+      <div className="space-y-8 py-6">
+        
+        {/* TASK NAME */}
+        <div className="space-y-2 group">
+          <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground group-focus-within:text-accent transition-colors">
+            01. Task Name
+          </Label>
+          <Input
+            className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm"
+            value={taskName}
+            onChange={(e) => setTaskName(e.target.value)}
+          />
+        </div>
+
+        {/* FOLDER */}
+        <div className="space-y-2">
+          <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+            02. Namespace / Folder
+          </Label>
+          <Input
+            className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm"
+            value={folderName}
+            onChange={(e) => setFolderName(e.target.value)}
+          />
+        </div>
+
+        {/* TYPE SELECTOR - Toggle Style */}
+        <div className="space-y-3">
+          <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+            03. Execution Type
+          </Label>
+          <div className="flex p-1 bg-card border border-border/20 gap-1">
             <Button
-              onClick={() => setEditingTask(null)}
-              variant="ghost"
-              className="p-1 rounded hover:bg-muted h-7 w-7"
+              onClick={() => setTaskType("job")}
+              className={`flex-1 rounded-none font-mono text-xs h-8 ${
+                taskType === "job" 
+                ? "bg-accent text-accent-foreground shadow-[0_0_10px_rgba(225,244,243,0.3)]" 
+                : "bg-transparent text-muted-foreground hover:text-foreground"
+              }`}
             >
-              ✕
+              JOB
             </Button>
-          </div>
-          <ScrollArea className="h-full">
-            <div className="space-y-5 flex-1">
-              {/* TASK NAME */}
-              <div className="space-y-1">
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Task Name
-                </Label>
-                <Input
-                  className="w-full border p-2 rounded"
-                  value={taskName}
-                  onChange={(e) => setTaskName(e.target.value)}
-                />
-              </div>
-
-              {/* FOLDER */}
-              <div className="space-y-1">
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Folder
-                </Label>
-                <Input
-                  className="w-full border p-2 rounded"
-                  value={folderName}
-                  onChange={(e) => setFolderName(e.target.value)}
-                />
-              </div>
-
-              {/* COMMAND */}
-              <div className="space-y-1">
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Command
-                </Label>
-                <Textarea
-                  className="w-full border p-2 rounded resize-none"
-                  value={command}
-                  onChange={(e) => setCommand(e.target.value)}
-                  rows={3}
-                />
-              </div>
-
-              {/* TYPE */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Step Type
-                </Label>
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setTaskType("job")}
-                    variant={taskType === "job" ? "default" : "outline"}
-                    className="flex-1"
-                  >
-                    JOB
-                  </Button>
-                  <Button
-                    onClick={() => setTaskType("service")}
-                    variant={taskType === "service" ? "default" : "outline"}
-                    className="flex-1"
-                  >
-                    SERVICE
-                  </Button>
-                </div>
-              </div>
-
-              {/* READY CONDITION */}
-              {taskType === "service" && (
-                <div className="space-y-3 border rounded p-3">
-                  <Label className="text-sm font-medium text-muted-foreground">
-                    Ready Condition
-                  </Label>
-
-                  <Select
-                    value={readyKind}
-                    onValueChange={(value) =>
-                      setReadyKind(value as "exit" | "port" | "log")
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select ready condition" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="exit">Process exits</SelectItem>
-                      <SelectItem value="port">Port open</SelectItem>
-                      <SelectItem value="log">Log match</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {readyKind === "port" && (
-                    <Input
-                      type="number"
-                      className="w-full border p-2 rounded"
-                      value={readyPort}
-                      onChange={(e) => setReadyPort(Number(e.target.value))}
-                      placeholder="Port number"
-                    />
-                  )}
-
-                  {readyKind === "log" && (
-                    <div className="space-y-2">
-                      <Input
-                        className="w-full border p-2 rounded"
-                        value={readyLogMatch}
-                        onChange={(e) => setReadyLogMatch(e.target.value)}
-                        placeholder={
-                          logMatchType === "regex"
-                            ? "e.g. server.*started"
-                            : "e.g. server started"
-                        }
-                      />
-
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={logMatchType === "regex"}
-                          onChange={(e) =>
-                            setLogMatchType(e.target.checked ? "regex" : "text")
-                          }
-                        />
-                        Use regex
-                      </label>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-          {/* ACTIONS */}
-          <div className="flex justify-between pt-6 border-t mt-6">
             <Button
-              variant="destructive"
-              onClick={() => {
-                deleteTaskMutation.mutate(editingTask.id);
-                setEditingTask(null);
-              }}
+              onClick={() => setTaskType("service")}
+              className={`flex-1 rounded-none font-mono text-xs h-8 ${
+                taskType === "service" 
+                ? "bg-accent text-accent-foreground shadow-[0_0_10px_rgba(225,244,243,0.3)]" 
+                : "bg-transparent text-muted-foreground hover:text-foreground"
+              }`}
             >
-              Delete
-            </Button>
-
-            <Button
-              onClick={handleUpdateTask}
-              disabled={updateTaskMutation.isPending}
-            >
-              Save
+              SERVICE
             </Button>
           </div>
         </div>
-      )}
+
+        {/* COMMAND */}
+        <div className="space-y-2">
+          <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+            04. Shell Command
+          </Label>
+          <div className="relative">
+            <Textarea
+              className="w-full bg-black border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-xs min-h-[100px] p-3 leading-relaxed text-emerald-400/90"
+              value={command}
+              onChange={(e) => setCommand(e.target.value)}
+            />
+            <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+          </div>
+        </div>
+
+        {/* READY CONDITION - Service Only */}
+        {taskType === "service" && (
+          <div className="space-y-4 border-l-2 border-accent/30 pl-4 py-2 bg-accent/5">
+            <Label className="text-[10px] uppercase tracking-widest font-bold text-accent">
+              Health Check Condition
+            </Label>
+
+            <Select
+              value={readyKind}
+              onValueChange={(value) => setReadyKind(value as "exit" | "port" | "log")}
+            >
+              <SelectTrigger className="w-full bg-card border-border/40 rounded-none font-mono text-xs">
+                <SelectValue placeholder="Select condition" />
+              </SelectTrigger>
+              <SelectContent className="rounded-none border-border/40 bg-card font-mono text-xs">
+                <SelectItem value="exit">Wait for Exit</SelectItem>
+                <SelectItem value="port">Listen on Port</SelectItem>
+                <SelectItem value="log">Parse Log Stream</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {readyKind === "port" && (
+              <div className="flex items-center gap-3">
+                 <span className="text-[10px] font-mono text-muted-foreground">PORT:</span>
+                 <Input
+                    type="number"
+                    className="flex-1 bg-card border-border/40 rounded-none h-8 font-mono text-sm"
+                    value={readyPort}
+                    onChange={(e) => setReadyPort(Number(e.target.value))}
+                  />
+              </div>
+            )}
+
+            {readyKind === "log" && (
+              <div className="space-y-3">
+                <Input
+                  className="w-full bg-card border-border/40 rounded-none h-8 font-mono text-xs"
+                  value={readyLogMatch}
+                  onChange={(e) => setReadyLogMatch(e.target.value)}
+                  placeholder="Pattern string..."
+                />
+                <label className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground cursor-pointer hover:text-accent transition-colors">
+                  <input
+                    type="checkbox"
+                    className="accent-accent"
+                    checked={logMatchType === "regex"}
+                    onChange={(e) => setLogMatchType(e.target.checked ? "regex" : "text")}
+                  />
+                  ENABLE_REGEX_PARSING
+                </label>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </ScrollArea>
+
+    {/* ACTIONS - Pinned to bottom */}
+    <div className="grid grid-cols-2 gap-px bg-border/20 border-t border-border/20">
+      <Button
+        variant="ghost"
+        className="rounded-none h-14 bg-card text-red-400 hover:bg-red-950/30 font-mono text-xs uppercase tracking-widest"
+        onClick={() => {
+          deleteTaskMutation.mutate(editingTask.id);
+          setEditingTask(null);
+        }}
+      >
+         CANCEL 
+      </Button>
+
+      <Button
+        className="rounded-none h-14 bg-accent text-accent-foreground hover:bg-accent/90 font-mono text-xs uppercase tracking-widest font-bold disabled:opacity-50"
+        onClick={handleUpdateTask}
+        disabled={updateTaskMutation.isPending}
+      >
+        {updateTaskMutation.isPending ? "Syncing..." : "Save Changes"}
+      </Button>
+    </div>
+  </div>
+)}
     </>
   );
 }
