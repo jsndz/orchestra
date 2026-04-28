@@ -23,19 +23,36 @@ export default function Terminal({
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Theming XTerm for Tech-Noir (Emerald text for logs)
     const term = new XTerm({
       cursorBlink: true,
+      cursorStyle: 'block',
+      fontFamily: 'JetBrains Mono, Fira Code, monospace',
+      fontSize: 13,
+      letterSpacing: 0,
+      lineHeight: 1.2,
       scrollback: 2000,
       convertEol: true,
-      theme: { background: "#000000" },
+      theme: { 
+        background: "#0d0d0d",
+        foreground: "#34d399", // Terminal Emerald
+        cursor: "#e1f4f3",     // Accent Color
+        selectionBackground: "rgba(225, 244, 243, 0.3)",
+        black: "#0d0d0d",
+        red: "#ef4444",
+        green: "#34d399",
+        yellow: "#facc15",
+        blue: "#3b82f6",
+        magenta: "#d946ef",
+        cyan: "#e1f4f3",
+        white: "#ffffff",
+      },
     });
 
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
-
     term.open(containerRef.current);
 
-    // delay fit (important)
     setTimeout(() => fitAddon.fit(), 0);
 
     termRef.current = term;
@@ -44,7 +61,6 @@ export default function Terminal({
     const resizeObserver = new ResizeObserver(() => {
       fitAddon.fit();
     });
-
     resizeObserver.observe(containerRef.current);
 
     term.onData((data) => {
@@ -66,35 +82,41 @@ export default function Terminal({
     };
   }, []);
 
-  // refit when tab becomes active
   useEffect(() => {
     if (isActive) {
-      setTimeout(() => {
-        fitRef.current?.fit();
-      }, 0);
+      setTimeout(() => fitRef.current?.fit(), 0);
     }
   }, [isActive]);
 
   return (
-    <div className="flex flex-col h-full w-full bg-black">
-      {/* HEADER */}
-      <div className="flex items-center px-3 py-1 bg-zinc-900 border-b border-zinc-800 text-xs">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2 w-2 rounded-full ${
+    <div className="flex flex-col h-full w-full bg-background">
+      {/* NODE HEADER - Hardware Style */}
+      <div className="flex items-center justify-between px-4 py-1.5 bg-card border-b border-border/10">
+        <div className="flex items-center gap-3">
+          {/* Status Indicator: Square, no rounding */}
+          <div
+            className={`h-2 w-2 ${
               status === "running"
-                ? "bg-yellow-400"
+                ? "bg-yellow-500 animate-pulse"
                 : status === "success"
-                ? "bg-green-400"
-                : "bg-red-400"
+                ? "bg-emerald-500"
+                : "bg-red-500"
             }`}
           />
-          <span className="text-zinc-300">{name}</span>
+          <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+            STREAM::{name}
+          </span>
+        </div>
+        <div className="font-mono text-[9px] text-muted-foreground/30 uppercase tracking-[0.2em]">
+          ID_{terminalId.split('-')[0]}
         </div>
       </div>
 
-      {/* TERMINAL */}
-      <div ref={containerRef} className="flex-1 w-full h-full" />
+      {/* TERMINAL OUTPUT */}
+      <div 
+        ref={containerRef} 
+        className="flex-1 w-full h-full p-2 bg-black overflow-hidden" 
+      />
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { useTerminalStore } from "../store/useTerminalStore";
 export const TerminalPage = () => {
   const terminals = useTerminalStore((s) => s.terminals);
   const createTerminal = useTerminalStore((s) => s.createTerminal);
-
   const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -15,42 +14,48 @@ export const TerminalPage = () => {
         setActiveId(config.terminalId);
       }
     });
-
     return () => unsubscribe();
   }, [createTerminal, terminals]);
 
   const terminalList = Object.values(terminals);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* TABS */}
-      <div className="flex items-center h-9 bg-zinc-900 border-b border-zinc-800 px-1 overflow-x-auto">
+    <div className="flex flex-col h-full overflow-hidden bg-background">
+      {/* TABS - Tech-Noir Style */}
+      <div className="flex items-center h-10 bg-black border-b border-border/20 px-0 overflow-x-auto">
         {terminalList.map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveId(t.id)}
             className={`
-              px-3 h-8 text-xs flex items-center
-              border-r border-zinc-800
+              px-4 h-full text-[10px] font-mono tracking-widest uppercase flex items-center transition-none
+              border-r border-border/10 relative
               ${
                 activeId === t.id
-                  ? "bg-black text-white"
-                  : "text-zinc-400 hover:bg-zinc-800"
+                  ? "bg-card text-accent border-b-2 border-b-accent"
+                  : "text-muted-foreground hover:bg-zinc-900 hover:text-foreground"
               }
             `}
           >
+            {/* Terminal prefix icon */}
+            <span className="mr-2 opacity-50">$</span>
             {t.name}
           </button>
         ))}
+        {terminalList.length === 0 && (
+          <div className="px-4 text-[10px] font-mono text-muted-foreground/40 uppercase tracking-widest italic">
+            // NO_ACTIVE_STREAMS
+          </div>
+        )}
       </div>
 
-      {/* TERMINALS */}
+      {/* TERMINALS CONTAINER */}
       <div className="flex-1 relative bg-black">
         {terminalList.map((t) => (
           <div
             key={t.id}
             className={`
-              absolute inset-0 transition-opacity
+              absolute inset-0 
               ${
                 activeId === t.id
                   ? "opacity-100 z-10"
