@@ -185,11 +185,9 @@ export function inputcommand(
 
   wc: Electron.WebContents,
 ) {
-  console.log(data);
   const taskId = terminalManager.getTaskIdByTerminalId(terminalId);
   if (data === "\x03") {
     const task = tasks.find((t) => t.id === taskId);
-    console.log(data);
 
     if (task) {
       updateTaskState(task, "stopped", wc);

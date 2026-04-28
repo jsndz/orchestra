@@ -46,9 +46,7 @@ export default function ExecutionDashboard() {
   }, [showYamlModal, workflowName]);
 
   useEffect(() => {
-    
     execute();
-
   }, []);
   const handleStop = async () => {
     if (status !== "idle") return;
@@ -62,7 +60,8 @@ export default function ExecutionDashboard() {
     }
   };
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
+    await handleStop();
     window.location.reload();
   };
 
@@ -88,24 +87,39 @@ export default function ExecutionDashboard() {
         </div>
       </div>
       {/* VIEW SWITCHER */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div className="bg-card border shadow-xl rounded-full px-2 py-2 flex gap-2">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-black border border-border/40 shadow-[0_0_30px_-5px_rgba(0,0,0,0.8)] flex p-1 gap-1">
+          {/* TERMINAL TOGGLE */}
           <Button
             onClick={() => setView("terminal")}
-            className={`px-4 py-1 rounded-full text-sm ${
-              view === "terminal" ? "bg-primary text-white"  : "bg-transparent hover:bg-muted"
-            }`}
+            className={`
+        px-6 py-1 h-9 rounded-none font-mono text-[10px] tracking-[0.2em] uppercase transition-none
+        ${
+          view === "terminal"
+            ? "bg-accent text-background font-bold shadow-[0_0_10px_rgba(225,244,243,0.3)]"
+            : "bg-transparent text-muted-foreground hover:bg-card hover:text-foreground border border-transparent"
+        }
+      `}
           >
-            Terminal
+            TERMINAL
           </Button>
 
+          {/* SEPARATOR (Visual "Hardware" Notch) */}
+          <div className="w-[1px] bg-border/20 my-2" />
+
+          {/* GRAPH TOGGLE */}
           <Button
             onClick={() => setView("graph")}
-            className={`px-4 py-1 rounded-full text-sm ${
-              view === "graph" ? "bg-primary text-white" : "bg-transparent hover:bg-muted"
-            }`}
+            className={`
+        px-6 py-1 h-9 rounded-none font-mono text-[10px] tracking-[0.2em] uppercase transition-none
+        ${
+          view === "graph"
+            ? "bg-accent text-background font-bold shadow-[0_0_10px_rgba(225,244,243,0.3)]"
+            : "bg-transparent text-muted-foreground hover:bg-card hover:text-foreground border border-transparent"
+        }
+      `}
           >
-            Graph
+            GRAPH
           </Button>
         </div>
       </div>

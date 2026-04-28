@@ -4,119 +4,90 @@ import ReactFlow, {
   MarkerType,
   type Node,
   type Edge,
-  ReactFlowInstance,
-  useReactFlow,
+  Position,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-import { Dependency, StepState, Task } from "../types";
+import { Dependency, Task } from "../types";
 import { useEffect, useRef, useState } from "react";
 import { analyze } from "../api/tasks";
+import ExecNode from "./ExecNode";
 
-function getStateStyle(state: StepState, isSelected: boolean) {
-  const base = {
-    borderRadius: "10px",
-    padding: "10px",
-    width: 240,
-    color: "#ffffff",
-    fontWeight: 500,
-  };
-
-  const styles: Record<StepState, any> = {
-    idle: {
-      background: "#9ca3af",
-      border: "2px solid #6b7280",
-    },
-
-    starting: {
-      background: "#f59e0b",
-      border: "2px solid #d97706",
-    },
-
-    ready: {
-      background: "#22c55e",
-      border: "2px solid #16a34a",
-    },
-
-    running: {
-      background: "#3b82f6",
-      border: "2px solid #2563eb",
-    },
-
-    completed: {
-      background: "#15803d",
-      border: "2px solid #166534",
-    },
-
-    failed: {
-      background: "#ef4444",
-      border: "2px solid #b91c1c",
-    },
-
-    stopped: {
-      background: "#6b7280",
-      border: "2px solid #4b5563",
-    },
-  };
-
-  const selected = isSelected
-    ? { boxShadow: "0 0 0 5px rgba(0,0,0,0.25)" }
-    : {};
-
-  return { ...base, ...styles[state], ...selected };
-}
+const nodeTypes = {
+  custom: ExecNode,
+};
 
 function toReactFlowGraphFromLevels(
   levels: Task[][],
   deps: Dependency[],
   selectedId: string | null,
+  allTasks: Task[]
 ) {
-  const horizontalSpacing = 400; 
+  const horizontalSpacing = 400;
   const verticalSpacing = 160;
-
   const nodes: Node[] = [];
 
   levels.forEach((levelTasks, levelIndex) => {
     const totalHeight = levelTasks.length * verticalSpacing;
     const startY = -totalHeight / 2;
-
     levelTasks.forEach((task, i) => {
-      const isSelected = task.id === selectedId;
-
       nodes.push({
         id: task.id,
-        position: {
-          x: levelIndex * horizontalSpacing,
-          y: startY + i * verticalSpacing,
-        },
+        type: "custom",
+        position: { x: levelIndex * horizontalSpacing, y: startY + i * verticalSpacing },
+        sourcePosition: Position.Right,
+        targetPosition: Position.Left,
         data: {
-          label: (
-            <div>
-              <div className="font-semibold">{task.task}</div>
-              <div className="text-xs text-muted-foreground">{task.folder}</div>
-            </div>
-          ),
+          label: task.task,
+          subLabel: task.folder,
+          type: task.type,
+          command: task.command,
+          state: task.state,
+          isSelected: task.id === selectedId,
         },
-        style: getStateStyle(task.state, isSelected),
       });
     });
   });
 
-  const edges: Edge[] = deps.map((d) => ({
-    id: `${d.from}->${d.to}`,
-    source: d.from,
-    target: d.to,
-    type: "smoothstep",
-    animated: true,
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      color: "#2563eb",
-    },
-    style: {
-      stroke: "#2563eb",
-      strokeWidth: 2,
-    },
-  }));
+  const edges: Edge[] = deps.map((d) => {
+    const source = allTasks.find((t) => t.id === d.from);
+    const dest = allTasks.find((t) => t.id === d.to);
+
+
+    let edgeColor = "#4b5563";
+    let animated = false;
+
+    if (source?.state === "failed") {
+      edgeColor = "#ef4444"; 
+    } 
+    else if (dest?.state === "completed") {
+      edgeColor = "#22c55e";
+    }
+    else if (source?.state === "completed" || source?.state === "ready") {
+      edgeColor = "#22c55e"; 
+    } 
+    else if (source?.state === "running" || source?.state === "starting") {
+      edgeColor = "#3b82f6"; 
+      animated = true;
+    }
+
+    return {
+      id: `${d.from}->${d.to}`,
+      source: d.from,
+      target: d.to,
+      type: "smoothstep",
+      animated,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: edgeColor,
+      },
+      style: {
+        stroke: edgeColor,
+        strokeWidth: source?.state === "failed" ? 3 : 2,
+        transition: "stroke 0.5s ease, stroke-width 0.5s ease",
+      },
+    };
+  });
 
   return { nodes, edges };
 }
@@ -134,7 +105,7 @@ export function ExecGraph({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   
-  const rfInstance =  useRef<any>(null);
+  const rfInstance = useRef<any>(null);
 
   useEffect(() => {
     analyze("parallel").then((res) => {
@@ -147,8 +118,8 @@ export function ExecGraph({
       levels,
       apiData.dependencies,
       selectedId,
+      apiData.tasks
     );
-
     setNodes(newNodes);
     setEdges(newEdges);
 
@@ -164,17 +135,18 @@ export function ExecGraph({
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        // 3. Capture the instance here
+        nodeTypes={nodeTypes}
         onInit={(instance) => {
           rfInstance.current = instance;
         }}
         fitView
         nodesDraggable={false}
         nodesConnectable={false}
-        elementsSelectable={false}
+        elementsSelectable={true}
         onNodeClick={(_, node) => onNodeClick(node.id)}
+        proOptions={{ hideAttribution: true }}
       >
-        <Background />
+        <Background color="#1a1a1a" gap={20} />
         <Controls />
       </ReactFlow>
     </div>

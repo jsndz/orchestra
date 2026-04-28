@@ -22,8 +22,6 @@ export default function Terminal({
 
   useEffect(() => {
     if (!containerRef.current) return;
-
-    // Theming XTerm for Tech-Noir (Emerald text for logs)
     const term = new XTerm({
       cursorBlink: true,
       cursorStyle: 'block',
@@ -35,8 +33,8 @@ export default function Terminal({
       convertEol: true,
       theme: { 
         background: "#0d0d0d",
-        foreground: "#34d399", // Terminal Emerald
-        cursor: "#e1f4f3",     // Accent Color
+        foreground: "#34d399", 
+        cursor: "#e1f4f3", 
         selectionBackground: "rgba(225, 244, 243, 0.3)",
         black: "#0d0d0d",
         red: "#ef4444",
@@ -87,6 +85,7 @@ export default function Terminal({
       setTimeout(() => fitRef.current?.fit(), 0);
     }
   }, [isActive]);
+console.log(name,status);
 
   return (
     <div className="flex flex-col h-full w-full bg-background">

@@ -116,7 +116,6 @@ export default function WorkflowControls({
         {/* --- ADD TASK PANEL --- */}
         {mode === "add" && (
           <Card className="absolute bottom-full mb-8 w-[420px] bg-background border border-border/60 rounded-none shadow-[0_35px_60px_-15px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-            {/* Header — matches Edit Step */}
             <div className={techHeaderStyle}>
               <div className="flex flex-col">
                 <h2 className="font-mono font-bold text-sm tracking-tighter uppercase text-accent">
@@ -213,7 +212,6 @@ export default function WorkflowControls({
                 </div>
               </div>
 
-              {/* Health Check Condition — service only, matches Edit Step exactly */}
               {taskType === "service" && (
                 <div className="space-y-4 border-l-2 border-accent/30 pl-4 py-2 bg-accent/5">
                   <Label className="text-[10px] uppercase tracking-widest font-bold text-accent">
@@ -274,7 +272,6 @@ export default function WorkflowControls({
               )}
             </div>
 
-            {/* Footer — matches Edit Step pinned action bar */}
             <div className="grid grid-cols-1 gap-px bg-border/20 border-t border-border/20">
               <Button
                 className="rounded-none h-14 bg-accent text-accent-foreground hover:bg-accent/90 font-mono text-xs uppercase tracking-widest font-bold disabled:opacity-50"

@@ -58,10 +58,6 @@ export const stopExecution = async () => {
   return await window.api.stopExecution();
 };
 
-export const stopProcess = async (id: string) => {
-  return await window.api.stopTask(id);
-};
-
 export const uploadYaml = async (file: File) => {
   const text = await file.text();
   return await window.api.importYaml(text);
