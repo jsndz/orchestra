@@ -41,59 +41,57 @@ export default function TasksPage() {
     <div className="flex flex-col h-screen">
       {/* HEADER */}
       <div className="bg-background w-full h-14 flex items-center justify-between px-6 border-b border-border/40 shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.4)] z-50">
-  <div className="flex items-center gap-8">
-    <div className="flex justify-center items-center gap-3 cursor-pointer group" onClick={() => navigate("/")}>
-      <div className=" p-1 rounded-none transition-none">
-        <img
-          src="./logo.png"
-          alt="logo"
-          width={32}
-          height={32}
-        />
-      </div>
-      <h1 className="text-xl font-black tracking-tighter uppercase text-foreground">
-        ORCHESTRA
-      </h1>
-    </div>
+        <div className="flex items-center gap-8">
+          <div
+            className="flex justify-center items-center gap-3 cursor-pointer group"
+            onClick={() => navigate("/")}
+          >
+            <div className=" p-1 rounded-none transition-none">
+              <img src="./logo.png" alt="logo" width={32} height={32} />
+            </div>
+            <h1 className="text-xl font-black tracking-tighter uppercase text-foreground">
+              ORCHESTRA
+            </h1>
+          </div>
 
-    <div className="flex items-center font-mono text-[10px] uppercase tracking-[0.2em]">
-      <span className="text-muted-foreground/60">Workflows</span>
-      <span className="mx-3 text-muted-foreground/30">/</span>
+          <div className="flex items-center font-mono text-[10px] uppercase tracking-[0.2em]">
+            <span className="text-muted-foreground/60">Workflows</span>
+            <span className="mx-3 text-muted-foreground/30">/</span>
 
-      {editingName ? (
-        <div className="relative">
-          <Input
-            autoFocus
-            className=" border border-accent/40 rounded-none px-2 h-7 w-48 text-[11px] font-mono focus-visible:ring-0 text-accent uppercase"
-            value={workflowName}
-            onChange={(e) => setWorkflowName(e.target.value)}
-            onBlur={() => setEditingName(false)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") setEditingName(false);
-            }}
-          />
-          <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-accent/30 animate-pulse" />
+            {editingName ? (
+              <div className="relative">
+                <Input
+                  autoFocus
+                  className=" border border-accent/40 rounded-none px-2 h-7 w-48 text-[11px] font-mono focus-visible:ring-0 text-accent uppercase"
+                  value={workflowName}
+                  onChange={(e) => setWorkflowName(e.target.value)}
+                  onBlur={() => setEditingName(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") setEditingName(false);
+                  }}
+                />
+                <div className="absolute -bottom-1 left-0 w-full h-[1px] bg-accent/30 animate-pulse" />
+              </div>
+            ) : (
+              <span
+                className="text-accent font-bold cursor-pointer hover:bg-accent hover:text-background px-2 py-0.5 transition-none border border-transparent hover:border-accent"
+                onClick={() => setEditingName(true)}
+              >
+                {workflowName || "UNTITLED_SEQUENCE"}
+              </span>
+            )}
+          </div>
         </div>
-      ) : (
-        <span
-          className="text-accent font-bold cursor-pointer hover:bg-accent hover:text-background px-2 py-0.5 transition-none border border-transparent hover:border-accent"
-          onClick={() => setEditingName(true)}
-        >
-          {workflowName || "UNTITLED_SEQUENCE"}
-        </span>
-      )}
-    </div>
-  </div>
 
-  <div className="flex items-center gap-px  p-0.5">
-    <NavLink to="/execution">
-      <Button className="rounded-none text-background hover:bg-btn-primary-hover font-mono text-[10px] font-black uppercase tracking-widest h-9 px-6 flex items-center gap-2 group transition-none ">
-        <Play className="w-3 h-3 fill-current" />
-        Run Workflow
-      </Button>
-    </NavLink>
-  </div>
-</div>
+        <div className="flex items-center gap-px  p-0.5">
+          <NavLink to="/execution">
+            <Button className="rounded-none text-background hover:bg-btn-primary-hover font-mono text-[10px] font-black uppercase tracking-widest h-9 px-6 flex items-center gap-2 group transition-none ">
+              <Play className="w-3 h-3 fill-current" />
+              Run Workflow
+            </Button>
+          </NavLink>
+        </div>
+      </div>
 
       {/* MAIN */}
 

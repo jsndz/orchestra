@@ -134,7 +134,7 @@ export default function ExecutionDashboard() {
           </div>
         </div>
       )}
-      <footer className="w-full h-8 bg-card border-t px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0">
+      <footer className="w-full h-8 bg-background border-t px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0">
         {systemStats ? (
           <>
             <div className="flex items-center gap-4">

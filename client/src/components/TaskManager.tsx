@@ -281,7 +281,7 @@ export default function WorkflowControls({
                 onClick={handleAddTask}
                 disabled={addTask.isPending}
               >
-                {addTask.isPending ? "Syncing..." : "Commit Step"}
+                {addTask.isPending ? "Syncing..." : "Add Step"}
               </Button>
             </div>
           </Card>
