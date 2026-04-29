@@ -10,13 +10,13 @@ import {
   Search,
 } from "lucide-react";
 import { ExecGraph } from "./ExecGraph";
-import LogViewer from "./LogView";
+import LogViewer, { LogEntry } from "./LogView";
 import { Button } from "./ui/button";
 
 export default function LogPage() {
   const { data } = useTasks();
   const { data: systemStats } = useSystemStats();
-  const [logsMap, setLogsMap] = useState<Record<string, string[]>>({});
+  const [logsMap, setLogsMap] = useState<Record<string, LogEntry[]>>({});
   const navigate = useNavigate();
 
   const [status, setStatus] = useState<"idle" | "loading" | "stopped">("idle");
@@ -29,7 +29,7 @@ export default function LogPage() {
   const dependencies = data?.dependencies ?? [];
 
   const { data: logsData } = useLogs(selectedTaskId);
-
+  
   useEffect(() => {
     if (data?.tasks) {
       setLocalTasks(data.tasks);
@@ -52,9 +52,14 @@ export default function LogPage() {
     const cleanup = window.api.onTaskLog((log) => {
       setLogsMap((prev) => {
         const taskLogs = prev[log.taskId] || [];
+        const newEntry: LogEntry = {
+          message: log.message,
+          color: log.color,
+          label: log.label,
+        };
         return {
           ...prev,
-          [log.taskId]: [...taskLogs, log.message].slice(-1000),
+          [log.taskId]: [...taskLogs, newEntry].slice(-1000),
         };
       });
     });

@@ -33,7 +33,14 @@ declare global {
       onExecutionEvent: (cb: (data: any) => void) => () => void;
       onTaskStateChange: (cb: (data: any) => void) => () => void;
       onGlobalStateChange: (cb: (data: any) => void) => () => void;
-      onTaskLog: (cb: (data: any) => void) => () => void;
+      onTaskLog: (cb: (data: {
+        taskId: string;
+        message: string;
+        ts: number;
+        color?: string;
+        ruleId?: string;
+        label?: string;
+      }) => void) => () => void;
       onTerminalCreated: (cb: (config: any) => void) => () => void;
       terminalReady: (id: string) => void;
       // YAML

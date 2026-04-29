@@ -1,8 +1,14 @@
 import { useEffect, useRef } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 
+export interface LogEntry {
+  message: string;
+  color?: string;
+  label?: string;
+}
+
 interface LogProps {
-  logs: string[];
+  logs: LogEntry[];
 }
 
 export default function LogViewer({ logs }: LogProps) {
@@ -36,12 +42,6 @@ export default function LogViewer({ logs }: LogProps) {
         <div className="font-mono text-[9px] text-muted-foreground/40 uppercase tracking-widest">
           {logs.length} LINES_BUFFERED
         </div>
-
-        {/* <div className="flex gap-1">
-          <div className="w-1.5 h-1.5 bg-accent/20" />
-          <div className="w-1.5 h-1.5 bg-accent/40" />
-          <div className="w-1.5 h-1.5 bg-accent animate-pulse shadow-[0_0_8px_rgba(225,244,243,0.5)]" />
-        </div> */}
       </div>
 
       {/* LOG CONTENT */}
@@ -56,15 +56,21 @@ export default function LogViewer({ logs }: LogProps) {
               Waiting for sequence execution...
             </div>
           ) : (
-            logs.map((line, i) => (
+            logs.map((log, i) => (
               <div
                 key={i}
-                className="whitespace-pre-wrap break-words text-[13px] leading-relaxed mb-0.5 text-[#34d399]"
+                className="whitespace-pre-wrap break-words text-[13px] leading-relaxed mb-0.5"
+                style={{ color: log.color || "#34d399" }}
               >
                 <span className="mr-3 text-muted-foreground/20 select-none text-[10px]">
                   {String(i + 1).padStart(4, "0")}
                 </span>
-                {line}
+                {log.label && (
+                  <span className="mr-2 px-1 border border-current text-[10px] font-bold uppercase">
+                    {log.label}
+                  </span>
+                )}
+                {log.message}
               </div>
             ))
           )}

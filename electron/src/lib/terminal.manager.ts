@@ -33,7 +33,7 @@ export class TerminalManager {
     shell.onData((data) => {
       if (this.isReady.get(id)) {
         wc.send("terminal:data", { terminalId: id, data });
-        this.handleLogChunk(task.id, data, wc);
+        this.handleLogChunk(data, wc, task);
       } else {
         this.buffers.get(id)?.push(data);
       }
@@ -161,25 +161,50 @@ export class TerminalManager {
 
   private logBuffers = new Map<string, string>();
 
-  private handleLogChunk(id: string, chunk: string, wc: Electron.WebContents) {
+  private handleLogChunk(chunk: string, wc: Electron.WebContents, task: Task) {
     const cleaned = cleanChunk(chunk);
 
-    const prev = this.logBuffers.get(id) || "";
+    const prev = this.logBuffers.get(task.id) || "";
     const combined = prev + cleaned;
 
     const lines = combined.split("\n");
-    this.logBuffers.set(id, lines.pop() || "");
+    this.logBuffers.set(task.id, lines.pop() || "");
+    const rules = task.logRules?.filter((r) => r.enabled) ?? [];
 
     for (const line of lines) {
       const clean = line.trim();
       if (!clean) continue;
       if (isNoise(clean)) continue;
+      if (rules?.length === 0) {
+        wc.send("task:log", {
+          taskId: task.id,
+          message: clean,
+          ts: Date.now(),
+        });
+        continue;
+      }
+      for (const rule of rules) {
+        let matched = false;
+        if (rule.isRegex) {
+          const regex =
+            rule.match instanceof RegExp ? rule.match : new RegExp(rule.match);
+          matched = regex.test(clean);
+        } else {
+          matched = clean.includes(String(rule.match));
+        }
+        if (!matched) continue;
 
-      wc.send("task:log", {
-        taskId: id,
-        message: clean,
-        ts: Date.now(),
-      });
+        wc.send("task:log", {
+          taskId: task.id,
+          message: clean,
+          ts: Date.now(),
+          color: rule.color,
+          ruleId: rule.id,
+          label: rule.label,
+        });
+
+        break;
+      }
     }
   }
 }
