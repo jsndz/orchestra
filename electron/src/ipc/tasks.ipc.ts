@@ -39,6 +39,7 @@ export function registerTaskIPC() {
       type: body.type,
       state: "idle",
       ready: body.ready || { kind: "exit" },
+      logRules: body.logRules || [],
     };
 
     tasks.push(t);

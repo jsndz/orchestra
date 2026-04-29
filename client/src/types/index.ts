@@ -9,7 +9,17 @@ export interface Task {
   type: "job" | "service";
   state: StepState;
   ready?: ReadyWhen;
+  logRules?: LogRule[];
 }
+
+export type LogRule = {
+  id: string;
+  label: string;
+  match: string | RegExp;
+  isRegex: boolean;
+  color?: string;
+  enabled: boolean;
+};
 export type StepState =
   | "idle"
   | "starting"
@@ -32,6 +42,7 @@ export type TaskRequest = {
   command: string;
   type: "job" | "service";
   ready?: ReadyWhen;
+  logRules?: LogRule[];
 };
 export interface Dependency {
   from: string;
@@ -120,8 +131,6 @@ export type TerminalUIState = {
 };
 
 export type TerminalsState = Record<string, TerminalUIState>;
-
-
 
 export const nodeTypes = {
   custom: CustomNode,

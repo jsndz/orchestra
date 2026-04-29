@@ -1,7 +1,7 @@
 import { Task, Dependency, TaskRequest } from "../types";
 
 type UpdateTaskPayload = Partial<
-  Pick<Task, "task" | "folder" | "command" | "type" | "ready">
+  Pick<Task, "task" | "folder" | "command" | "type" | "ready" | "logRules">
 >;
 
 export const fetchTasks = async (): Promise<{

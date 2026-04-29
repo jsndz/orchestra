@@ -2,7 +2,7 @@ type TaskState =
   | "idle"
   | "starting"
   | "ready" // service is ready
-  | "running" 
+  | "running"
   | "completed" // job completed
   | "failed"
   | "stopped"; // manually stop
@@ -22,6 +22,7 @@ export type Task = {
   state: TaskState;
   ready?: ReadyWhen;
   failureReason?: string;
+  logRules?: LogRule[];
 };
 export type Dependency = { from: string; to: string };
 export const tasks: Task[] = [];
@@ -32,3 +33,13 @@ export function setGlobalState(state: globalState) {
   GlobalState = state;
 }
 export const EXIT_SENTINEL = "/::TASK_EXIT:(\d+)::/"
+
+
+export type LogRule = {
+  id: string;
+  label: string;
+  match: string | RegExp;
+  isRegex: boolean;
+  color?: string;
+  enabled: boolean;
+}
