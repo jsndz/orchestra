@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Terminal from "./Terminal";
-import { useTerminalStore } from "../store/useTerminalStore";
+import { useTerminalStore } from "@/store/useTerminalStore";
 
 export const TerminalPage = () => {
   const terminals = useTerminalStore((s) => s.terminals);

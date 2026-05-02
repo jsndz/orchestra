@@ -1,8 +1,8 @@
 import { useEffect, useReducer, useRef } from "react";
-import { Events, TerminalUIState } from "../types";
+import { Events, TerminalUIState } from "@/types";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { useQueryClient } from "@tanstack/react-query";
-import { terminalsReducer } from "../lib/handleEvents";
+import { terminalsReducer } from "@/lib/handleEvents";
 
 
 export function useTerminals() {

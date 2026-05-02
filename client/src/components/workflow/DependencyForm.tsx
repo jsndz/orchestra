@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { ArrowRight, Link2, Plus, Loader2 } from "lucide-react";
-import { useAddDependency } from "../hooks/useTasks";
-import { Task, Dependency } from "../types";
+import { useAddDependency } from "@/hooks/useTasks";
+import { Task, Dependency } from "@/types";
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
-import { Separator } from "./ui/separator";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Label } from "./ui/label";
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export default function DependencyForm({
   tasks,

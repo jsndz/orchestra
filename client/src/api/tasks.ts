@@ -1,4 +1,4 @@
-import { Task, Dependency, TaskRequest } from "../types";
+import { Task, Dependency, TaskRequest } from "@/types";
 
 type UpdateTaskPayload = Partial<
   Pick<Task, "task" | "folder" | "command" | "type" | "ready" | "logRules">

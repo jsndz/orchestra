@@ -1,4 +1,4 @@
-import CustomNode from "../components/Node";
+import CustomNode from "@/components/workflow/Node";
 
 export interface Task {
   id: string;

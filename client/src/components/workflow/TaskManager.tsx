@@ -12,21 +12,21 @@ import {
   Activity,
 } from "lucide-react";
 
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Card } from "./ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
-import { useAddTask, useAddDependency } from "../hooks/useTasks";
-import { TaskRequest, Task, Dependency, ReadyWhen, LogRule } from "../types";
+import { useAddTask, useAddDependency } from "@/hooks/useTasks";
+import { TaskRequest, Task, Dependency, ReadyWhen, LogRule } from "@/types";
 
 export default function WorkflowControls({
   tasks,

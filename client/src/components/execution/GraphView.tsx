@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTasks, useSystemStats, useLogs } from "../hooks/useTasks";
-import { stopExecution } from "../api/tasks";
+import { useTasks, useSystemStats, useLogs } from "@/hooks/useTasks";
+import { stopExecution } from "@/api/tasks";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { ExecGraph } from "./ExecGraph";
 import LogViewer, { LogEntry } from "./LogView";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 
 export default function LogPage() {
   const { data } = useTasks();

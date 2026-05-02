@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import { analyze } from "../api/tasks";
-import { useAppStore } from "../store/useAppStore";
+import { analyze } from "@/api/tasks";
+import { useAppStore } from "@/store/useAppStore";
 
 export type AnalysisVariables = { type: string; from?: string; to?: string };
 

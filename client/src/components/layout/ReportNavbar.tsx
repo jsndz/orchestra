@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { Button } from "./ui/button";
-import { useWorkflowStore } from "../store/useAppStore";
+import { Button } from "@/components/ui/button";
+import { useWorkflowStore } from "@/store/useAppStore";
 import { useState } from "react";
-import { Input } from "./ui/input";
+import { Input } from "@/components/ui/input";
 
 type Props = {
   onStop: () => void;

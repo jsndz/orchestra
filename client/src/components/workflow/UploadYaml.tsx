@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Upload } from "lucide-react";
-import { Button } from "./ui/button";
-import { uploadYaml } from "../api/tasks";
+import { Button } from "@/components/ui/button";
+import { uploadYaml } from "@/api/tasks";
 
 interface UploadYamlProps {
   onSuccess: (fileName?: string) => void;

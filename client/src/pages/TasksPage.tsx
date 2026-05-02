@@ -1,6 +1,6 @@
-import { useTasks } from "../hooks/useTasks";
-import { DependencyGraph } from "../components/GraphUI";
-import { Button } from "../components/ui/button";
+import { useTasks } from "@/hooks/useTasks";
+import { DependencyGraph } from "@/components/workflow/GraphUI";
+import { Button } from "@/components/ui/button";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Play,
@@ -10,11 +10,11 @@ import {
   Folder,
   Terminal,
 } from "lucide-react";
-import WorkflowControls from "../components/TaskManager";
-import { useSystemStats } from "../hooks/useTasks";
+import WorkflowControls from "@/components/workflow/TaskManager";
+import { useSystemStats } from "@/hooks/useTasks";
 import { useState } from "react";
-import { Task } from "../types";
-import { useWorkflowStore } from "../store/useAppStore";
+import { Task } from "@/types";
+import { useWorkflowStore } from "@/store/useAppStore";
 import { Input } from "@base-ui/react";
 
 export default function TasksPage() {

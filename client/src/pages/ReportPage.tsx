@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { downloadYaml, execute, stopExecution } from "../api/tasks";
-import ExecutionNavbar from "../components/ExecutionNavbar";
-import ReportNavbar from "../components/ReportNavbar";
-import { useSystemStats } from "../hooks/useTasks";
-import { useWorkflowStore } from "../store/useAppStore";
+import { downloadYaml, execute, stopExecution } from "@/api/tasks";
+import ExecutionNavbar from "@/components/layout/ExecutionNavbar";
+import ReportNavbar from "@/components/layout/ReportNavbar";
+import { useSystemStats } from "@/hooks/useTasks";
+import { useWorkflowStore } from "@/store/useAppStore";
 
 export const ReportPage = () => {
   const { data: systemStats } = useSystemStats();

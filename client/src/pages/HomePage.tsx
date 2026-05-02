@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import UploadYaml from "../components/UploadYaml";
-import { Button } from "../components/ui/button";
+import UploadYaml from "@/components/workflow/UploadYaml";
+import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 
 export default function HomePage() {

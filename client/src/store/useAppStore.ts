@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { StateCounts, StepState } from "../types";
+import { StateCounts, StepState } from "@/types";
 
 
 type WorkflowState = {

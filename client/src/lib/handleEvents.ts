@@ -1,4 +1,4 @@
-import { Events, TerminalUIState } from "../types";
+import { Events, TerminalUIState } from "@/types";
 
 type State = Record<string, TerminalUIState>;
 

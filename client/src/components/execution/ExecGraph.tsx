@@ -8,9 +8,9 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-import { Dependency, Task } from "../types";
+import { Dependency, Task } from "@/types";
 import { useEffect, useRef, useState } from "react";
-import { analyze } from "../api/tasks";
+import { analyze } from "@/api/tasks";
 import ExecNode from "./ExecNode";
 
 const nodeTypes = {

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { TerminalPage } from "../components/TerminalView";
-import LogPage from "../components/GraphView";
-import { useSystemStats } from "../hooks/useTasks";
-import ExecutionNavbar from "../components/ExecutionNavbar";
-import { downloadYaml, execute, stopExecution } from "../api/tasks";
-import { useWorkflowStore } from "../store/useAppStore";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import { TerminalPage } from "@/components/execution/TerminalView";
+import LogPage from "@/components/execution/GraphView";
+import { useSystemStats } from "@/hooks/useTasks";
+import ExecutionNavbar from "@/components/layout/ExecutionNavbar";
+import { downloadYaml, execute, stopExecution } from "@/api/tasks";
+import { useWorkflowStore } from "@/store/useAppStore";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type ViewMode = "terminal" | "graph";
 

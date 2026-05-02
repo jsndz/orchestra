@@ -1,6 +1,6 @@
 import { Handle, Position } from "reactflow";
 import { Server, Briefcase, Terminal, Activity } from "lucide-react";
-import { StepState } from "../types";
+import { StepState } from "@/types";
 
 const stateConfig: Record<StepState, { color: string; label: string; glow: boolean }> = {
   idle: { color: "border-muted-foreground/40", label: "IDLE", glow: false },

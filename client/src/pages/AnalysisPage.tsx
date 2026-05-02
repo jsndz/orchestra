@@ -1,5 +1,5 @@
-import AnalysisPanel from "../components/AnalysisPanel";
-import { useTasks } from "../hooks/useTasks";
+import AnalysisPanel from "@/components/analysis/AnalysisPanel";
+import { useTasks } from "@/hooks/useTasks";
 
 export default function AnalysisPage() {
   const { data } = useTasks();
