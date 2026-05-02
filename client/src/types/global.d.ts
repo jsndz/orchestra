@@ -33,14 +33,17 @@ declare global {
       onExecutionEvent: (cb: (data: any) => void) => () => void;
       onTaskStateChange: (cb: (data: any) => void) => () => void;
       onGlobalStateChange: (cb: (data: any) => void) => () => void;
-      onTaskLog: (cb: (data: {
-        taskId: string;
-        message: string;
-        ts: number;
-        color?: string;
-        ruleId?: string;
-        label?: string;
-      }) => void) => () => void;
+
+      onTaskLog: (
+        cb: (data: {
+          taskId: string;
+          message: string;
+          ts: number;
+          color?: string;
+          ruleId?: string;
+          label?: string;
+        }) => void,
+      ) => () => void;
       onTerminalCreated: (cb: (config: any) => void) => () => void;
       terminalReady: (id: string) => void;
       // YAML
@@ -49,7 +52,7 @@ declare global {
 
       // SYSTEM
       getSystemStats: () => Promise<any>;
-
+      openExternal: (url: string) => Promise<any>;
       // LOGS
       getTaskLogs: (taskId: string) => Promise<string[]>;
     };

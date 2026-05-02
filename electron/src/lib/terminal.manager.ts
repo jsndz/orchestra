@@ -1,6 +1,7 @@
 import * as pty from "node-pty";
 import stripAnsi from "strip-ansi";
 import { Task } from "../store/index.js";
+import { getSystemStats } from "./os.js";
 type Terminal = {
   id: string;
   process: pty.IPty;
@@ -17,9 +18,22 @@ export class TerminalManager {
   private buffers = new Map<string, string[]>();
   private isReady = new Map<string, boolean>();
   private terminalToTask = new Map<string, string>();
+  private system = getSystemStats().platform;
+  private getShell(): string {
+    switch (this.system) {
+      case "win32":
+        return "powershell.exe"; 
+      case "darwin":
+        return "/bin/zsh"; 
+      case "linux":
+        return "/bin/bash";
+      default:
+        return "bash";
+    }
+  }
   create(folder: string, wc: Electron.WebContents, task: Task): string {
     const id = `term-${crypto.randomUUID()}`;
-    const shell = pty.spawn("bash", [], {
+    const shell = pty.spawn(this.getShell(), [], {
       name: "xterm-color",
       cwd: folder,
       env: process.env,

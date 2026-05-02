@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 const servicesPath = path.join(__dirname, "electron/dist");
 
 // dynamic imports for local files
+
 const tasksIPC = await import(path.join(servicesPath, "ipc/tasks.ipc.js"));
 const graphIPC = await import(path.join(servicesPath, "ipc/graph.ipc.js"));
 

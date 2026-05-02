@@ -4,6 +4,7 @@ import { useWorkflowStore } from "../store/useAppStore";
 import { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { useTerminalStore } from "../store/useTerminalStore";
+import { stopExecution } from "../api/tasks";
 
 type Props = {
   onStop: () => void;
@@ -24,7 +25,7 @@ export default function ExecutionNavbar({
   const removeAllTerminals = useTerminalStore((s) => s.removeAllTerminals);
   const [editingName, setEditingName] = useState(false);
   const [globalState, setGlobalState] = useState<
-    "idle" | "running" | "completed" | "failed" | "stopped" 
+    "idle" | "running" | "completed" | "failed" | "stopped"
   >("idle");
 
   const getButtonText = () => {
@@ -42,12 +43,18 @@ export default function ExecutionNavbar({
   // Helper to determine status badge colors based on Tech-Noir palette
   const getStatusStyles = () => {
     switch (globalState) {
-      case "running": return "border-accent text-accent animate-pulse";
-      case "failed": return "border-red-500 text-red-500";
-      case "completed": return "border-emerald-400 text-emerald-400";
-      case "stopped": return "border-muted text-muted-foreground";
-      case "idle": return "border-muted-foreground/40 text-muted-foreground";
-      default: return "border-muted-foreground/40 text-muted-foreground";
+      case "running":
+        return "border-accent text-accent animate-pulse";
+      case "failed":
+        return "border-red-500 text-red-500";
+      case "completed":
+        return "border-emerald-400 text-emerald-400";
+      case "stopped":
+        return "border-muted text-muted-foreground";
+      case "idle":
+        return "border-muted-foreground/40 text-muted-foreground";
+      default:
+        return "border-muted-foreground/40 text-muted-foreground";
     }
   };
 
@@ -57,9 +64,17 @@ export default function ExecutionNavbar({
         {/* LOGO */}
         <div
           className="flex justify-center items-center gap-3 cursor-pointer group"
-          onClick={() => navigate("/")}
+          onClick={() => {
+            removeAllTerminals();
+            onStop();
+            navigate("/");
+          }}
         >
-          <img src="./logo.png" alt="logo" className="w-7 h-7 grayscale brightness-200" />
+          <img
+            src="./logo.png"
+            alt="logo"
+            className="w-7 h-7 grayscale brightness-200"
+          />
           <h1 className="text-lg font-black tracking-[0.2em] uppercase text-foreground">
             ORCHESTRA
           </h1>
@@ -92,20 +107,27 @@ export default function ExecutionNavbar({
         </div>
 
         {/* STATUS BADGE - Hardware Style */}
-        <div className={`flex items-center gap-2 px-3 py-1 border font-mono text-[10px] tracking-tighter ${getStatusStyles()}`}>
-          <div className={`w-1.5 h-1.5 bg-current ${globalState === 'running' ? 'animate-ping' : ''}`} />
+        <div
+          className={`flex items-center gap-2 px-3 py-1 border font-mono text-[10px] tracking-tighter ${getStatusStyles()}`}
+        >
+          <div
+            className={`w-1.5 h-1.5 bg-current ${globalState === "running" ? "animate-ping" : ""}`}
+          />
           {globalState.toUpperCase()}
         </div>
       </div>
 
       {/* ACTIONS */}
       <div className="flex gap-2">
-        {(globalState === "failed" || globalState === "completed" || globalState === "stopped") && (
+        {(globalState === "failed" ||
+          globalState === "completed" ||
+          globalState === "stopped") && (
           <Button
             variant="outline"
             className="rounded-none border-border/40 font-mono text-[10px] tracking-widest uppercase hover:bg-white hover:text-black h-9"
             onClick={() => {
               removeAllTerminals();
+              onStop();
               navigate("/tasks");
             }}
           >
@@ -129,9 +151,11 @@ export default function ExecutionNavbar({
           }}
           disabled={status === "loading" || status === "stopped"}
           className={`rounded-none font-mono text-[10px] tracking-widest uppercase h-9 transition-all
-            ${status === "stopped" 
-              ? "bg-muted text-muted-foreground border border-border/20" 
-              : "bg-red-950/20 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white"}`}
+            ${
+              status === "stopped"
+                ? "bg-muted text-muted-foreground border border-border/20"
+                : "bg-red-950/20 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+            }`}
         >
           {getButtonText()}
         </Button>

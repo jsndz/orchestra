@@ -8,16 +8,14 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-background text-foreground">
-      
       <div className="w-full max-w-4xl flex flex-col items-center">
-        
         {/* Header Section */}
         <div className="w-full max-w-md flex flex-col items-center gap-6 mb-12">
           <div className="flex items-center justify-center">
             <img
               src="./logo.png"
               alt="logo"
-              className="w-48 h-48 object-contain" 
+              className="w-48 h-48 object-contain"
             />
           </div>
 
@@ -48,7 +46,7 @@ export default function HomePage() {
         </div>
 
         {/* Recent Section */}
-        <section className="w-full">
+        {/* <section className="w-full">
           <div className="flex justify-between border-b border-border pb-2 mb-4">
             <h2 className="text-xs tracking-widest text-muted-foreground uppercase">
               Recent Workflows
@@ -72,17 +70,24 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
       </div>
 
       {/* Footer */}
-      <footer className="fixed bottom-0 left-0 w-full p-4 flex justify-between bg-background/90 backdrop-blur-sm border-t border-border">
-        <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-          System Ready
-        </span>
-        <span className="text-[10px] text-muted-foreground/40 uppercase tracking-widest">
-          SECURE ACCESS PROTOCOL
-        </span>
+      <footer className="fixed bottom-0 left-0 w-full border-t border-border bg-background/95 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-[11px] text-muted-foreground">
+              Workflow orchestration desktop platform
+            </span>
+          </div>
+
+    
+
+          <div className="text-[11px] text-muted-foreground">
+            Version 1.0.0 • © 2026
+          </div>
+        </div>
       </footer>
     </main>
   );

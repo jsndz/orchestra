@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require("electron");
+const { shell } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
   selectFolder: () => ipcRenderer.invoke("select:folder"),
@@ -40,7 +41,8 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.removeListener("execution:event", listener);
     };
   },
-  sendTerminalInput: (terminalId,data)=> ipcRenderer.send("terminal:input", { terminalId, data }),
+  sendTerminalInput: (terminalId, data) =>
+    ipcRenderer.send("terminal:input", { terminalId, data }),
   stopTask: (id) => ipcRenderer.invoke("task:stop", id),
 
   onTerminalCreated: (callback) => {
@@ -58,7 +60,7 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("task:state", listener);
     return () => ipcRenderer.removeListener("task:state", listener);
   },
-    onGlobalStateChange: (callback) => {
+  onGlobalStateChange: (callback) => {
     const listener = (_, data) => callback(data);
     ipcRenderer.on("global:state", listener);
     return () => ipcRenderer.removeListener("global:state", listener);
@@ -68,7 +70,8 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("task:log", listener);
 
     return () => ipcRenderer.removeListener("task:log", listener);
-  },  
+  },
+
   terminalReady: (taskId) => ipcRenderer.invoke("terminal:ready", taskId),
 
   importYaml: (yaml) => ipcRenderer.invoke("yaml:import", yaml),
@@ -76,6 +79,11 @@ contextBridge.exposeInMainWorld("api", {
   exportYaml: (workflow) => ipcRenderer.invoke("yaml:export", workflow),
 
   getSystemStats: () => ipcRenderer.invoke("system:stats"),
+  openExternal: async (url) => {
+    console.log("opening");
+    
+     shell.openExternal(url);
+  },
 
   // getTaskLogs: (taskId) => ipcRenderer.invoke("task:logs", taskId),
 });
