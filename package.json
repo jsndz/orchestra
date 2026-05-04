@@ -8,10 +8,14 @@
   "main": "main.js",
   "scripts": {
     "electron:build": "tsc -p electron",
-    "start": "npm run electron:build && electron ."
+    "client:build": "cd client && npm run build",
+    "build": "npm run electron:build && npm run client:build",
+    "start": "npm run electron:build && electron .",
+    "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
     "electron": "^41.0.4",
+    "electron-builder": "^26.8.1",
     "typescript": "^6.0.2"
   },
   "dependencies": {
@@ -19,5 +23,31 @@
     "node-pty": "^1.1.0",
     "strip-ansi": "^7.2.0",
     "yaml": "^2.8.3"
+  },
+  "build": {
+    "appId": "com.orchestra.app",
+    "productName": "Orchestra",
+    "directories": {
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "electron/dist/**/*",
+      "electron/preload.js",
+      "client/dist/**/*",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/logo.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/logo.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    }
   }
 }
