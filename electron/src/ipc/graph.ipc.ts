@@ -1,4 +1,3 @@
-
 import { ipcMain } from "electron";
 import { tasks, dependencies } from "../store/index.js";
 import {
@@ -30,14 +29,10 @@ export function registerGraphIPC() {
   });
 
   ipcMain.handle("graph:terminal", () => {
-    return terminalNodes(dependencies, tasks).map(
-      (i) => tasks[i].task
-    );
+    return terminalNodes(dependencies, tasks).map((i) => tasks[i].task);
   });
 
   ipcMain.handle("graph:unreachable", () => {
-    return unreachableNodes(dependencies, tasks).map(
-      (i) => tasks[i].task
-    );
+    return unreachableNodes(dependencies, tasks).map((i) => tasks[i].task);
   });
 }

@@ -1,36 +1,40 @@
-import { ipcMain, BrowserWindow, ipcRenderer, dialog } from "electron";
+import { ipcMain, dialog } from "electron";
 import crypto from "crypto";
-import type { Task, Dependency, ReadyWhen } from "../store/index.js";
 import { tasks, dependencies } from "../store/index.js";
-import { inputcommand, forceStopExecution, CloseTerminal, terminalReady } from "../lib/process.js";
+import { Task, Dependency } from "../types/index.js";
+import {
+  handleTerminalInput,
+  stopAllTasks,
+  stopTask,
+  handleTerminalReady,
+} from "../services/execution/runner.js";
 import {
   yamlToDag,
   dagToWorkflow,
   dagToYaml,
-  WorkFlowToDAG,
+  workflowToDag,
 } from "../services/parser.js";
-import { getSystemStats } from "../lib/os.js";
-import { execute } from "../services/execution.js";
+import { getSystemStats } from "../utils/os.js";
+import { executeWorkflow } from "../services/execution/index.js";
 
 export function registerTaskIPC() {
   ipcMain.handle("tasks:get", () => {
     return { tasks, dependencies };
   });
+
   ipcMain.handle("select:folder", async () => {
     const result = await dialog.showOpenDialog({
       properties: ["openDirectory"],
     });
-
-    if (result.canceled) return null;
-
-    return result.filePaths[0];
+    return result.canceled ? null : result.filePaths[0];
   });
+
   ipcMain.handle("task:create", (_, body: Partial<Task>) => {
     if (!body.task || !body.command || !body.folder || !body.type) {
       throw new Error("Missing required fields");
     }
 
-    const t: Task = {
+    const newTask: Task = {
       id: crypto.randomUUID(),
       task: body.task,
       command: body.command,
@@ -42,8 +46,8 @@ export function registerTaskIPC() {
       logRules: body.logRules || [],
     };
 
-    tasks.push(t);
-    return t;
+    tasks.push(newTask);
+    return newTask;
   });
 
   ipcMain.handle(
@@ -68,22 +72,17 @@ export function registerTaskIPC() {
         dependencies.splice(i, 1);
       }
     }
-
     return { ok: true };
   });
 
   ipcMain.handle("dependency:add", (_, dep: Dependency) => {
-    if (!dep.from || !dep.to) {
-      throw new Error("Invalid dependency");
-    }
+    if (!dep.from || !dep.to) throw new Error("Invalid dependency");
 
     dependencies.push(dep);
-
-    const t = tasks.find((t) => t.id === dep.to);
-    if (t && !t.dependency.includes(dep.from)) {
-      t.dependency.push(dep.from);
+    const targetTask = tasks.find((t) => t.id === dep.to);
+    if (targetTask && !targetTask.dependency.includes(dep.from)) {
+      targetTask.dependency.push(dep.from);
     }
-
     return { ok: true };
   });
 
@@ -91,58 +90,50 @@ export function registerTaskIPC() {
     "dependency:remove",
     (_, { from, to }: { from: string; to: string }) => {
       const idx = dependencies.findIndex((d) => d.from === from && d.to === to);
-
       if (idx === -1) throw new Error("Dependency not found");
 
       dependencies.splice(idx, 1);
-
-      const task = tasks.find((t) => t.id === to);
-      if (task) {
-        task.dependency = task.dependency.filter((d) => d !== from);
+      const targetTask = tasks.find((t) => t.id === to);
+      if (targetTask) {
+        targetTask.dependency = targetTask.dependency.filter((id) => id !== from);
       }
-
       return { ok: true };
     },
   );
 
   ipcMain.handle("execution:start", async (event) => {
-    const wc = event.sender;
-    execute(wc);
+    return executeWorkflow(event.sender);
   });
 
   ipcMain.handle("execution:stop", async (event) => {
-    const wc = event.sender;
-    forceStopExecution(wc);
+    stopAllTasks(event.sender);
   });
+
   ipcMain.handle("terminal:ready", async (event, id: string) => {
-    const wc = event.sender;
-    terminalReady(id, wc);
+    handleTerminalReady(id, event.sender);
   });
 
   ipcMain.handle("task:stop", (event, id: string) => {
-    return CloseTerminal(id, event.sender);
+    return stopTask(id, event.sender);
   });
 
   ipcMain.handle("yaml:import", (_, yaml: string) => {
     if (!yaml) throw new Error("Missing yaml");
-
     const dag = yamlToDag(yaml);
     const { tasks: newTasks, dependencies: newDeps } = dagToWorkflow(dag);
 
     tasks.length = 0;
     dependencies.length = 0;
-
-    tasks.push(...(newTasks as Task[]));
-    dependencies.push(...(newDeps as Dependency[]));
+    tasks.push(...newTasks);
+    dependencies.push(...newDeps);
 
     return { ok: true };
   });
 
   ipcMain.handle("yaml:export", (_, workflow: string) => {
     if (!workflow) throw new Error("Missing workflow name");
-    const dag = WorkFlowToDAG(tasks, dependencies, workflow, 1);
-    const res = dagToYaml(dag);
-    return res;
+    const dag = workflowToDag(tasks, dependencies, workflow, 1);
+    return dagToYaml(dag);
   });
 
   ipcMain.handle("system:stats", () => {
@@ -150,6 +141,6 @@ export function registerTaskIPC() {
   });
 
   ipcMain.on("terminal:input", (event, { terminalId, data }) => {
-    return inputcommand(terminalId, data, event.sender);
+    handleTerminalInput(terminalId, data, event.sender);
   });
 }

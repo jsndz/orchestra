@@ -1,5 +1,5 @@
-import { type Dependency, type Task } from "../store/index.js";
 import { parse, stringify } from "yaml";
+import { Dependency, Task } from "../types/index.js";
 
 interface DagLogRule {
   id: string;
@@ -30,7 +30,7 @@ type Dag = {
   tasks: Record<string, DagTask>;
 };
 
-function normalizeId(name: string) {
+function normalizeId(name: string): string {
   return name
     .trim()
     .toLowerCase()
@@ -40,50 +40,50 @@ function normalizeId(name: string) {
 function serializeReady(ready?: Task["ready"]): DagTask["ready"] {
   if (!ready) return undefined;
 
-  if (ready.kind === "port") {
-    return { kind: "port", port: ready.port };
+  switch (ready.kind) {
+    case "port":
+      return { kind: "port", port: ready.port };
+    case "log":
+      return {
+        kind: "log",
+        match: typeof ready.match === "string" ? ready.match : ready.match.source,
+        isRegex: ready.isRegex,
+      };
+    default:
+      return { kind: "exit" };
   }
-
-  if (ready.kind === "log") {
-    return {
-      kind: "log",
-      match: typeof ready.match === "string" ? ready.match : ready.match.source,
-      isRegex: ready.isRegex,
-    };
-  }
-
-  return { kind: "exit" };
 }
 
 function deserializeReady(ready?: DagTask["ready"]): Task["ready"] {
   if (!ready) return undefined;
 
-  if (ready.kind === "port") {
-    return { kind: "port", port: ready.port! };
+  switch (ready.kind) {
+    case "port":
+      return { kind: "port", port: ready.port ?? 0 };
+    case "log":
+      return {
+        kind: "log",
+        match: ready.match ?? "",
+        isRegex: !!ready.isRegex,
+      };
+    default:
+      return { kind: "exit" };
   }
-
-  if (ready.kind === "log") {
-    return { kind: "log", match: ready.match! ,isRegex: ready.isRegex!};
-  }
-
-  return { kind: "exit" };
 }
 
 function serializeLogRules(rules?: Task["logRules"]): DagLogRule[] | undefined {
-  if (!rules) return undefined;
-  return rules.map((r) => ({
+  return rules?.map((r) => ({
     id: r.id,
     label: r.label,
     match: typeof r.match === "string" ? r.match : r.match.source,
     color: r.color,
     enabled: r.enabled,
-    isRegex: r.match instanceof RegExp,
+    isRegex: r.isRegex || r.match instanceof RegExp,
   }));
 }
 
 function deserializeLogRules(rules?: DagLogRule[]): Task["logRules"] | undefined {
-  if (!rules) return undefined;
-  return rules.map((r) => ({
+  return rules?.map((r) => ({
     id: r.id,
     label: r.label,
     match: r.isRegex ? new RegExp(r.match) : r.match,
@@ -93,7 +93,7 @@ function deserializeLogRules(rules?: DagLogRule[]): Task["logRules"] | undefined
   }));
 }
 
-export function WorkFlowToDAG(
+export function workflowToDag(
   tasks: Task[],
   deps: Dependency[],
   workflowName: string,
@@ -103,7 +103,6 @@ export function WorkFlowToDAG(
 
   for (const t of tasks) {
     const id = normalizeId(t.task);
-
     taskRecord[id] = {
       folder: t.folder,
       command: t.command,
@@ -115,23 +114,20 @@ export function WorkFlowToDAG(
   }
 
   for (const d of deps) {
-    const fromTask = tasks.find((t) => t.id === d.from)!;
-    const toTask = tasks.find((t) => t.id === d.to)!;
+    const fromTask = tasks.find((t) => t.id === d.from);
+    const toTask = tasks.find((t) => t.id === d.to);
 
-    const from = normalizeId(fromTask.task);
-    const to = normalizeId(toTask.task);
-
-    taskRecord[to]!.dependsOn!.push(from);
+    if (fromTask && toTask) {
+      const from = normalizeId(fromTask.task);
+      const to = normalizeId(toTask.task);
+      taskRecord[to]?.dependsOn?.push(from);
+    }
   }
 
-  return {
-    version,
-    name: workflowName,
-    tasks: taskRecord,
-  };
+  return { version, name: workflowName, tasks: taskRecord };
 }
 
-export function dagToWorkflow(dag: Dag) {
+export function dagToWorkflow(dag: Dag): { tasks: Task[]; dependencies: Dependency[] } {
   const tasks: Task[] = [];
   const dependencies: Dependency[] = [];
 
@@ -152,9 +148,8 @@ export function dagToWorkflow(dag: Dag) {
   for (const [to, t] of Object.entries(dag.tasks)) {
     for (const from of t.dependsOn ?? []) {
       dependencies.push({ from, to });
-
-      const task = tasks.find((x) => x.id === to)!;
-      task.dependency.push(from);
+      const task = tasks.find((x) => x.id === to);
+      task?.dependency.push(from);
     }
   }
 

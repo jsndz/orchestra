@@ -5,23 +5,15 @@ type TaskTiming = {
   endTime: Date;
 };
 
-class Report {
-  status: "success" | "failure" | "running" | "stopped" | "pending";
-  timing: Map<string, TaskTiming>;
-  totalDuration: number;
-  taskSuccessCount: number;
-  taskFailureCount: number;
-  parallelEfficiency: number;
-  constructor() {
-    this.status = "pending";
-    this.timing = new Map<string, TaskTiming>();
-    this.totalDuration = 0;
-    this.taskSuccessCount = 0;
-    this.taskFailureCount = 0;
-    this.parallelEfficiency = 0;
-  }
+export class ExecutionReport {
+  public status: "success" | "failure" | "running" | "stopped" | "pending" = "pending";
+  public timing = new Map<string, TaskTiming>();
+  public totalDuration = 0;
+  public taskSuccessCount = 0;
+  public taskFailureCount = 0;
+  public parallelEfficiency = 0;
 
-  CalculateStatus() {
+  updateStatus() {
     let hasFailure = false;
     let hasRunning = false;
 
@@ -29,7 +21,7 @@ class Report {
       if (task.state === "failed" || task.state === "stopped") {
         hasFailure = true;
       }
-      if (task.state === "running") {
+      if (task.state === "running" || task.state === "starting") {
         hasRunning = true;
       }
     }
@@ -38,76 +30,65 @@ class Report {
     else if (hasRunning) this.status = "running";
     else this.status = "success";
   }
-  updateTiming(taskId: string, start: Date, end: Date) {
+
+  recordTiming(taskId: string, start: Date, end: Date) {
     this.timing.set(taskId, { startTime: start, endTime: end });
   }
 
-  calculateTotalTime() {
-    let total = 0;
-    for (const [, timing] of this.timing) {
-      total += (timing.endTime.getTime() - timing.startTime.getTime()) / 1000;
-    }
-    this.totalDuration = total;
-    return total;
+  calculateMetrics() {
+    this.calculateTaskCounts();
+    this.totalDuration = this.calculateMakespan();
+    this.parallelEfficiency = this.calculateParallelEfficiency();
   }
-  calculateTaskCounts() {
+
+  private calculateTaskCounts() {
+    this.taskSuccessCount = 0;
+    this.taskFailureCount = 0;
     for (const task of tasks) {
       if (task.state === "completed" || task.state === "ready") {
-        this.taskSuccessCount += 1;
+        this.taskSuccessCount++;
       } else if (task.state === "failed" || task.state === "stopped") {
-        this.taskFailureCount += 1;
+        this.taskFailureCount++;
       }
     }
   }
-  calculateWork(): number {
+
+  private calculateWork(): number {
     let work = 0;
-    for (const [, t] of this.timing) {
-      work += (t.endTime.getTime() - t.startTime.getTime()) / 1000;
+    for (const timing of this.timing.values()) {
+      work += (timing.endTime.getTime() - timing.startTime.getTime()) / 1000;
     }
     return work;
   }
 
-  calculateMakespan(): number {
+  private calculateMakespan(): number {
     if (this.timing.size === 0) return 0;
 
     let minStart = Infinity;
     let maxEnd = -Infinity;
 
-    for (const [, t] of this.timing) {
-      const s = t.startTime.getTime();
-      const e = t.endTime.getTime();
-      if (s < minStart) minStart = s;
-      if (e > maxEnd) maxEnd = e;
+    for (const timing of this.timing.values()) {
+      minStart = Math.min(minStart, timing.startTime.getTime());
+      maxEnd = Math.max(maxEnd, timing.endTime.getTime());
     }
 
     return (maxEnd - minStart) / 1000;
   }
 
-  calculateParallelEfficiency(): number {
+  private calculateParallelEfficiency(): number {
     const work = this.calculateWork();
     const makespan = this.calculateMakespan();
-    const N = this.timing.size;
+    const n = this.timing.size;
 
-    if (makespan === 0 || N === 0) return 0;
+    if (makespan === 0 || n === 0) return 0;
 
     const parallelism = work / makespan;
-    const efficiency = parallelism / N;
-
-    return efficiency * 100;
+    return (parallelism / n) * 100;
   }
-  getDurations(): number[] {
-    const durations: number[] = [];
 
-    for (const [, t] of this.timing) {
-      durations.push((t.endTime.getTime() - t.startTime.getTime()) / 1000);
-    }
-
-    return durations;
-  }
   getAverageLatency(): number {
-    const d = this.getDurations();
-    if (d.length === 0) return 0;
-
-    return d.reduce((a, b) => a + b, 0) / d.length;
+    if (this.timing.size === 0) return 0;
+    const work = this.calculateWork();
+    return work / this.timing.size;
   }
 }
