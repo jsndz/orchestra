@@ -110,37 +110,54 @@ async function waitForReadiness(
   }
 }
 
-function pollPort(
+
+const HOSTS = ["127.0.0.1", "::1", "localhost"];
+
+function tryConnect(port: number, host: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const socket = new net.Socket();
+
+    socket.setTimeout(1000);
+
+    socket.once("connect", () => {
+      socket.destroy();
+      resolve();
+    });
+
+    socket.once("timeout", () => {
+      socket.destroy();
+      reject(new Error(`Timeout: ${host}:${port}`));
+    });
+
+    socket.once("error", (err) => {
+      socket.destroy();
+      reject(err);
+    });
+
+    socket.connect(port, host);
+  });
+}
+
+export async function pollPort(
   port: number,
-  host = "127.0.0.1",
   timeout = 30000,
 ): Promise<void> {
-  const startTime = Date.now();
-  return new Promise((resolve, reject) => {
-    const attempt = () => {
-      const socket = new net.Socket();
-      socket.setTimeout(1000);
-      socket
-        .on("connect", () => {
-          socket.destroy();
-          resolve();
-        })
-        .on("error", () => {
-          socket.destroy();
-          if (Date.now() - startTime > timeout) {
-            reject(new Error("Timeout waiting for port"));
-          } else {
-            setTimeout(attempt, 200);
-          }
-        })
-        .on("timeout", () => {
-          socket.destroy();
-          attempt();
-        })
-        .connect(port, host);
-    };
-    attempt();
-  });
+  const start = Date.now();
+
+  while (Date.now() - start < timeout) {
+    for (const host of HOSTS) {
+      try {
+        await tryConnect(port, host);
+        return;
+      } catch {
+        // continue
+      }
+    }
+
+    await new Promise((r) => setTimeout(r, 200));
+  }
+
+  throw new Error(`Timeout waiting for port ${port}`);
 }
 
 function updateTaskStatus(
