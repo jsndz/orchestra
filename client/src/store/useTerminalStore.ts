@@ -15,7 +15,7 @@ type Store = {
   setActive: (id: string) => void;
 };
 
-export const useTerminalStore = create<Store>((set, get) => ({
+export const useTerminalStore = create<Store>((set,_) => ({
   terminals: {},
   createTerminal: (id: string,name:string) => {
   set((state) => {

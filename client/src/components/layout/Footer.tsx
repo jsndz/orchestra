@@ -47,7 +47,7 @@ export function Footer() {
                   href="#"
                   className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
                 >
-                  <img src="./logo.png" alt="logo" width={200} height={220} />
+                  <img src="./icon.png" alt="logo" width={200} height={220} />
                 </a>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">

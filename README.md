@@ -1,135 +1,121 @@
 # Orchestra
 
-Orchestra is an Electron + React application for building and running workflow DAGs (directed acyclic graphs) made of **jobs** and **services**.
+Orchestra is a powerful Electron + React application designed for building and executing workflow Directed Acyclic Graphs (DAGs). It simplifies the management of complex task dependencies with a visual editor and a robust execution engine.
 
-It provides a visual task/dependency editor, execution dashboard, terminal stream view, graph/log view, and YAML import/export for workflows.
 
 ## Features
 
-- Build workflows as nodes and dependencies
-- Edit task metadata (command, folder, type, readiness)
-- Analyze graph properties (order, cycle detection, parallel levels, terminal/unreachable nodes)
-- Run workflow execution from the desktop app
-- Stream per-task terminal output during execution
-- Stop individual tasks or full execution
-- Import workflow from YAML and export workflow to YAML
-- View system stats (CPU, memory, platform)
+- **Visual Workflow Editor:** Build and manage DAGs using an intuitive node-based interface.
+- **Task Management:** Define task metadata, including commands, working directories, and execution types.
+- **Graph Analysis:** Automatically detect cycles, calculate execution order, and identify unreachable nodes.
+- **Real-time Execution:** Monitor workflow progress with live terminal streams for each task.
+- **YAML Support:** Seamlessly import and export workflow configurations in standard YAML format.
+- **System Monitoring:** Integrated view of CPU, memory, and platform statistics.
+- **Local-First:** Direct access to the local environment with zero-latency task orchestration.
 
 ## Tech Stack
 
-- **Desktop shell:** Electron
-- **Frontend:** React + TypeScript + Vite + Tailwind
-- **State/UI:** Zustand, React Query, shadcn/ui-style components
-- **Execution/runtime:** Node.js child processes + `node-pty`
-- **Workflow format:** YAML
+- **Shell:** [Electron](https://www.electronjs.org/)
+- **Frontend:** [React](https://reactjs.org/) + [TypeScript](https://www.typescriptlang.org/) + [Vite](https://vitejs.dev/)
+- **Styling:** [Tailwind CSS 4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
+- **State Management:** [Zustand](https://github.com/pmndrs/zustand)
+- **Workflow Engine:** Node.js child processes + [`node-pty`](https://github.com/microsoft/node-pty)
+- **Visualization:** [React Flow](https://reactflow.dev/)
 
 ## Project Structure
 
 ```text
 orchestra/
-├── main.js                 # Electron main entry
-├── electron/               # Main-process services, IPC handlers, execution logic
-├── client/                 # React renderer app (Vite)
-└── docs/                   # Internal docs and implementation notes
+├── main.js                 # Electron main process entry
+├── electron/               # Main-process services, IPC handlers, and execution logic
+│   ├── src/                # TypeScript source for Electron services
+│   └── preload.js          # Preload script for secure IPC bridge
+├── client/                 # React renderer application
+│   └── src/                # Frontend source code
+└── assets/                 # Application icons and static resources
 ```
 
 ## Prerequisites
 
-- Node.js 20+
-- npm 10+
-- Linux/macOS/Windows (development is currently configured for local dev mode)
+- **Node.js:** 20.x or higher
+- **npm:** 10.x or higher
+- **Platforms:** Linux, macOS, Windows
 
-## Install
+## Installation
 
-Install dependencies in both root and renderer app:
+Install dependencies for both the root and the client application:
 
 ```bash
-# from repository root
+# Install root and Electron dependencies
 npm install
 
-# install renderer dependencies
+# Install frontend dependencies
 cd client && npm install
 ```
 
-## Run in Development
+## Development
 
-The app runs in **two processes**:
+The application requires two concurrent processes during development:
 
-1. Vite dev server (renderer) on port `6080`
-2. Electron main process
+1. **Frontend Dev Server:**
 
-Open two terminals from the repository root:
+   ```bash
+   cd client
+   npm run dev
+   ```
 
-```bash
-# Terminal 1
-cd client
-npm run dev
-```
+2. **Electron App:** (In a new terminal)
+   ```bash
+   npm start
+   ```
 
-```bash
-# Terminal 2
-npm start
-```
+Electron will automatically load the frontend from `http://localhost:6080`.
 
-Then Electron opens and loads the renderer from `http://localhost:6080`.
+##  Building & Packaging
 
-## Build
-
-### Build Electron TypeScript only
+### Compile Electron
 
 ```bash
 npm run electron:build
 ```
 
-### Build renderer assets
+### Build Frontend
 
 ```bash
-cd client
+npm run client:build
+```
+
+### Full Build (Electron + Frontend)
+
+```bash
 npm run build
 ```
 
-> Note: `main.js` is currently set to `isDev = true`, so packaged/static loading is not yet the default runtime path.
+### Create Distribution Package
+
+To package the application for your current platform:
+
+```bash
+npm run dist
+```
+
+Distributables will be generated in the `dist/` directory.
 
 ## Scripts
 
-### Root (`package.json`)
+### Root Project
 
-- `npm run electron:build` — compile `electron/src` to `electron/dist`
-- `npm start` — build Electron TypeScript, then launch Electron
+- `npm start`: Builds Electron and launches the app.
+- `npm run build`: Compiles both Electron and Frontend assets.
+- `npm run dist`: Packages the application for distribution using `electron-builder`.
 
-### Client (`client/package.json`)
+### Client Project
 
-- `npm run dev` — start Vite dev server (port 6080)
-- `npm run build` — build production frontend bundle
-- `npm run preview` — preview built frontend
-- `npm run lint` — run ESLint
-- `npm run typecheck` — run TypeScript type checks
-
-## IPC Surface (high level)
-
-The preload bridge (`electron/preload.js`) exposes APIs such as:
-
-- task CRUD + dependency CRUD
-- graph analysis operations
-- execution start/stop
-- terminal and execution event subscriptions
-- YAML import/export
-- system stats
-
-## Documentation
-
-See the `docs/` folder:
-
-- `docs/execution.md` — process execution and stream behavior notes
-- `docs/DataModeling.md` — modeling guidance used in the project
-- `docs/fixingTerminalView.md` — terminal view implementation notes
-
-## Current Notes
-
-- Home route (`/`) is currently minimal.
-- Main user flows are available via `/tasks` and `/execution`.
-- Electron opens DevTools by default in `main.js`.
+- `npm run dev`: Starts the Vite development server.
+- `npm run build`: Generates the production bundle for the frontend.
+- `npm run lint`: Runs ESLint for code quality checks.
+- `npm run typecheck`: Validates TypeScript types.
 
 ## License
 
-ISC
+This project is licensed under the [MIT License](LICENSE).

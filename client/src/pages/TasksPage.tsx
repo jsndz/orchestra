@@ -47,7 +47,7 @@ export default function TasksPage() {
             onClick={() => navigate("/")}
           >
             <div className=" p-1 rounded-none transition-none">
-              <img src="./logo.png" alt="logo" width={32} height={32} />
+              <img src="./icon.png" alt="logo" width={32} height={32} />
             </div>
             <h1 className="text-xl font-black tracking-tighter uppercase text-foreground">
               ORCHESTRA

@@ -2,7 +2,7 @@
   "name": "orchestra",
   "version": "1.0.0",
   "description": "",
-  "license": "ISC",
+  "license": "MIT",
   "author": "",
   "type": "module",
   "main": "main.js",
@@ -39,11 +39,11 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/logo.ico"
+      "icon": "assets/icon.ico"
     },
     "mac": {
       "target": "dmg",
-      "icon": "assets/logo.icns"
+      "icon": "assets/icon.icns"
     },
     "linux": {
       "target": "AppImage",

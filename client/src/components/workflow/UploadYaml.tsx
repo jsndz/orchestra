@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { uploadYaml } from "@/api/tasks";
+import { useWorkflowStore } from "@/store/useAppStore";
 
 interface UploadYamlProps {
   onSuccess: (fileName?: string) => void;
@@ -9,6 +10,7 @@ interface UploadYamlProps {
 
 export default function UploadYaml({ onSuccess }: UploadYamlProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const setWorkflowName = useWorkflowStore((s) => s.setWorkflowName);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
@@ -17,6 +19,9 @@ export default function UploadYaml({ onSuccess }: UploadYamlProps) {
 
     try {
       await uploadYaml(file);
+      const workflowName = file.name.replace(/\.(yaml|yml)$/i, "");
+
+      setWorkflowName(workflowName);
       if (onSuccess) {
         onSuccess(file.name);
       }

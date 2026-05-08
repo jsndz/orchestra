@@ -71,7 +71,7 @@ export default function ExecutionNavbar({
           }}
         >
           <img
-            src="./logo.png"
+            src="./icon.png"
             alt="logo"
             className="w-7 h-7 grayscale brightness-200"
           />

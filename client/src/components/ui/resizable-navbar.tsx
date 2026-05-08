@@ -180,7 +180,7 @@ export const MobileNavToggle = ({
 export const NavbarLogo = () => {
   return (
     <a href="#" className="relative z-10 flex items-center px-2 py-1">
-      <img src="./logo.png" alt="logo" width={160} />
+      <img src="./icon.png" alt="logo" width={160} />
     </a>
   );
 };

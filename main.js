@@ -44,9 +44,8 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
-  // ✅ macOS dock icon
   if (process.platform === "darwin") {
-    app.dock.setIcon(path.join(__dirname, "assets/logo.icns"));
+    app.dock.setIcon(path.join(__dirname, "assets/icon.icns"));
   }
 });
 

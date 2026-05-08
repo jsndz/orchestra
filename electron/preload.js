@@ -79,11 +79,7 @@ contextBridge.exposeInMainWorld("api", {
   exportYaml: (workflow) => ipcRenderer.invoke("yaml:export", workflow),
 
   getSystemStats: () => ipcRenderer.invoke("system:stats"),
-  openExternal: async (url) => {
-    console.log("opening");
-    
-     shell.openExternal(url);
-  },
+  openExternal: (url) => ipcRenderer.invoke("app:open-external", url),
 
   // getTaskLogs: (taskId) => ipcRenderer.invoke("task:logs", taskId),
 });

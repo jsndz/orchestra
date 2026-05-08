@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from "electron";
+import { ipcMain, dialog, shell } from "electron";
 import crypto from "crypto";
 import { tasks, dependencies } from "../store/index.js";
 import { Task, Dependency } from "../types/index.js";
@@ -20,6 +20,10 @@ import { executeWorkflow } from "../services/execution/index.js";
 export function registerTaskIPC() {
   ipcMain.handle("tasks:get", () => {
     return { tasks, dependencies };
+  });
+
+  ipcMain.handle("app:open-external", async (_, url: string) => {
+    return await shell.openExternal(url);
   });
 
   ipcMain.handle("select:folder", async () => {

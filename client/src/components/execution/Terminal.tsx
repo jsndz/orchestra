@@ -21,20 +21,22 @@ export default function Terminal({
   const fitRef = useRef<FitAddon | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
     const term = new XTerm({
       cursorBlink: true,
-      cursorStyle: 'block',
-      fontFamily: 'JetBrains Mono, Fira Code, monospace',
+      cursorStyle: "block",
+      fontFamily: "JetBrains Mono, Fira Code, monospace",
       fontSize: 13,
       letterSpacing: 0,
       lineHeight: 1.2,
       scrollback: 2000,
       convertEol: true,
-      theme: { 
+      theme: {
         background: "#0d0d0d",
-        foreground: "#34d399", 
-        cursor: "#e1f4f3", 
+        foreground: "#34d399",
+        cursor: "#e1f4f3",
         selectionBackground: "rgba(225, 244, 243, 0.3)",
         black: "#0d0d0d",
         red: "#ef4444",
@@ -49,17 +51,42 @@ export default function Terminal({
 
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
-    term.open(containerRef.current);
+    term.open(container);
 
     setTimeout(() => fitAddon.fit(), 0);
 
     termRef.current = term;
     fitRef.current = fitAddon;
 
+    // Enable copy to clipboard via shortcuts
+    term.attachCustomKeyEventHandler((event) => {
+      // Ctrl+C or Cmd+C (standard) or Ctrl+Shift+C (common in terminals)
+      const isCopy =
+        ((event.ctrlKey || event.metaKey) && event.code === "KeyC") ||
+        (event.ctrlKey && event.shiftKey && event.code === "KeyC");
+
+      if (isCopy) {
+        if (term.hasSelection()) {
+          navigator.clipboard.writeText(term.getSelection());
+          return false;
+        }
+      }
+      return true;
+    });
+
+    // Right-click to copy selected text
+    const handleContextMenu = (e: MouseEvent) => {
+      if (term.hasSelection()) {
+        e.preventDefault();
+        navigator.clipboard.writeText(term.getSelection());
+      }
+    };
+    container.addEventListener("contextmenu", handleContextMenu);
+
     const resizeObserver = new ResizeObserver(() => {
       fitAddon.fit();
     });
-    resizeObserver.observe(containerRef.current);
+    resizeObserver.observe(container);
 
     term.onData((data) => {
       window.api.sendTerminalInput(terminalId, data);
@@ -75,17 +102,17 @@ export default function Terminal({
 
     return () => {
       resizeObserver.disconnect();
+      container.removeEventListener("contextmenu", handleContextMenu);
       unsubscribe?.();
       term.dispose();
     };
-  }, []);
+  }, [terminalId]);
 
   useEffect(() => {
     if (isActive) {
       setTimeout(() => fitRef.current?.fit(), 0);
     }
   }, [isActive]);
-console.log(name,status);
 
   return (
     <div className="flex flex-col h-full w-full bg-background">
@@ -98,8 +125,8 @@ console.log(name,status);
               status === "running"
                 ? "bg-yellow-500 animate-pulse"
                 : status === "success"
-                ? "bg-emerald-500"
-                : "bg-red-500"
+                  ? "bg-emerald-500"
+                  : "bg-red-500"
             }`}
           />
           <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
@@ -107,14 +134,14 @@ console.log(name,status);
           </span>
         </div>
         <div className="font-mono text-[9px] text-muted-foreground/30 uppercase tracking-[0.2em]">
-          ID_{terminalId.split('-')[0]}
+          ID_{terminalId.split("-")[0]}
         </div>
       </div>
 
       {/* TERMINAL OUTPUT */}
-      <div 
-        ref={containerRef} 
-        className="flex-1 w-full h-full p-2 bg-black overflow-hidden" 
+      <div
+        ref={containerRef}
+        className="flex-1 w-full h-full p-2 bg-black overflow-hidden"
       />
     </div>
   );

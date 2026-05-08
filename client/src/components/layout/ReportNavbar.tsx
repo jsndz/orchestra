@@ -33,7 +33,7 @@ export default function ReportNavbar({
     <div className="w-full flex justify-between items-center px-4 h-16 border-b border-zinc-800 bg-zinc-950">
       {/* LOGO */}
       <div className="flex items-center space-x-2">
-        <img src="./logo.png" alt="logo" width={180} />
+        <img src="./icon.png" alt="logo" width={180} />
         <div className="flex items-center text-sm">
           <span className="text-muted-foreground">workflows</span>
 
