@@ -98,23 +98,37 @@ export default function Page() {
             </p>
           </div>
 
-          {/* Download Buttons */}
-          <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-3 gap-3">
-            <DownloadButton 
-              label="macOS" 
-              subLabel="Universal Binary"
-              icon={<Monitor className="h-4 w-4" />}
-            />
-            <DownloadButton 
-              label="Windows" 
-              subLabel="x64 Installer"
-              icon={<LayoutGrid className="h-4 w-4" />}
-            />
-            <DownloadButton 
-              label="Linux" 
-              subLabel=".AppImage / .deb"
-              icon={<Terminal className="h-4 w-4" />}
-            />
+          {/* Download Buttons Section */}
+          <div className="flex flex-col items-center gap-4 w-full">
+            <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-3 gap-3">
+              <DownloadButton 
+                label="macOS" 
+                subLabel="Apple Silicon"
+                icon={<Monitor className="h-4 w-4" />}
+                href="https://github.com/jsndz/orchestra/releases/download/v1.0.0/Orchestra-1.0.0-arm64.dmg"
+              />
+              <DownloadButton 
+                label="Windows" 
+                subLabel="x64 Installer"
+                icon={<LayoutGrid className="h-4 w-4" />}
+                href="https://github.com/jsndz/orchestra/releases/download/v1.0.0/Orchestra.Setup.1.0.0.exe"
+              />
+              <DownloadButton 
+                label="Linux" 
+                subLabel=".AppImage"
+                icon={<Terminal className="h-4 w-4" />}
+                href="https://github.com/jsndz/orchestra/releases/download/v1.0.0/Orchestra-1.0.0.AppImage"
+              />
+            </div>
+            
+            <a 
+              href="https://github.com/jsndz/orchestra/releases/tag/v1.0.0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[8px] font-mono text-muted-foreground/60 uppercase tracking-[0.3em] hover:text-accent transition-colors"
+            >
+              View all release assets
+            </a>
           </div>
         </div>
       </section>
@@ -152,7 +166,7 @@ export default function Page() {
 
           <div className="flex items-center gap-8">
              <span className="hidden md:inline text-[7px] font-mono text-muted-foreground/60 uppercase tracking-[0.2em]">
-              Orchestra_v1.0.0-Beta
+              Orchestra_v1.0.0
             </span>
             <span className="text-[7px] font-mono text-muted-foreground/40 uppercase tracking-[0.2em]">
               MIT License
@@ -164,20 +178,22 @@ export default function Page() {
   )
 }
 
-function DownloadButton({ label, subLabel, icon }: { label: string, subLabel: string, icon: React.ReactNode }) {
+function DownloadButton({ label, subLabel, icon, href }: { label: string, subLabel: string, icon: React.ReactNode, href: string }) {
   return (
-    <Button className="group h-16 bg-card border border-border/10 rounded-none flex flex-col items-center justify-center gap-1 hover:bg-accent hover:text-background transition-all duration-300 relative overflow-hidden">
-      <div className="flex items-center gap-2">
-        <span className="text-accent group-hover:text-background transition-colors">{icon}</span>
-        <span className="font-mono text-[9px] font-bold uppercase tracking-widest">{label}</span>
-      </div>
-      <span className="text-[7px] font-mono text-muted-foreground group-hover:text-background/70 uppercase tracking-tighter">
-        {subLabel}
-      </span>
-      <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Download className="h-3 w-3" />
-      </div>
-    </Button>
+    <a href={href} target="_blank" rel="noopener noreferrer" className="block w-full">
+      <Button className="group w-full h-16 bg-card border border-border/10 rounded-none flex flex-col items-center justify-center gap-1 hover:bg-accent hover:text-background transition-all duration-300 relative overflow-hidden">
+        <div className="flex items-center gap-2">
+          <span className="text-accent group-hover:text-background transition-colors">{icon}</span>
+          <span className="font-mono text-[9px] font-bold uppercase tracking-widest">{label}</span>
+        </div>
+        <span className="text-[7px] font-mono text-muted-foreground group-hover:text-background/70 uppercase tracking-tighter">
+          {subLabel}
+        </span>
+        <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Download className="h-3 w-3" />
+        </div>
+      </Button>
+    </a>
   )
 }
 
