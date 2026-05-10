@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: #0d0d0d;
+  --foreground: #ffffff;
+
+  --card: #1f1f1f;
+  --card-foreground: #ffffff;
+
+  --popover: #1f1f1f;
+  --popover-foreground: #ffffff;
+
+  --muted: #1f1f1f;
+  --muted-foreground: #bfbfbf;
+
+  --secondary: #1f1f1f;
+  --secondary-foreground: #ffffff;
+
+  --accent: #e1f4f3;
+  --accent-foreground: #0d0d0d;
+
+  --border: #BFBFBF;
+  --input: #bfbfbf;
+  --ring: #e1f4f3;
+
+  --radius: 0px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-accent/20;
+  }
+  body {
+    @apply font-sans bg-background text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  .dot-grid {
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(225, 244, 243, 0.2);
+  }
+}
