@@ -26,6 +26,7 @@
   },
   "build": {
     "appId": "com.orchestra.app",
+    "asar": true,
     "productName": "Orchestra",
     "directories": {
       "buildResources": "assets"
@@ -35,19 +36,27 @@
       "electron/dist/**/*",
       "electron/preload.js",
       "client/dist/**/*",
-      "assets/**/*"
+      "assets/**/*",
+      "node_modules/**/*",
+      "package.json"
     ],
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
     },
     "mac": {
-      "target": "dmg",
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.developer-tools",
       "icon": "assets/icon.icns"
     },
     "linux": {
-      "target": "AppImage",
-      "icon": "assets/icon.png"
+      "target": [
+        "AppImage"
+      ],
+      "icon": "assets/icon.png",
+      "category": "Development"
     }
   }
 }
