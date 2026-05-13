@@ -25,7 +25,10 @@ export class TerminalService {
   private terminalToTask = new Map<string, string>();
   private logBuffers = new Map<string, string>();
   private platform = getSystemStats().platform;
-
+  private commandMap = new Map<
+    string,
+    { original: string; wrapped: string }
+  >();
   private getShell(): string {
     switch (this.platform) {
       case "win32":
@@ -35,7 +38,7 @@ export class TerminalService {
       case "linux":
         return "/bin/bash";
       default:
-        return "bash";
+        return "/bin/sh";
     }
   }
 
@@ -55,16 +58,35 @@ export class TerminalService {
     });
 
     shell.onData((data) => {
+      let cleanedData = data.replace(EXIT_SENTINEL_PATTERN, "");
+
+      const commandInfo = this.commandMap.get(id);
+
+      if (commandInfo) {
+        cleanedData = cleanedData.replace(
+          commandInfo.wrapped,
+          commandInfo.original,
+        );
+
+        if (!cleanedData.includes(commandInfo.wrapped)) {
+          this.commandMap.delete(id);
+        }
+      }
       if (this.isReady.get(id)) {
-        wc.send("terminal:data", { terminalId: id, data });
-        this.handleLogChunk(data, wc, task);
+        if (cleanedData.length > 0) {
+          wc.send("terminal:data", {
+            terminalId: id,
+            data: cleanedData,
+          });
+        }
+
+        this.handleLogChunk(cleanedData, wc, task);
       } else {
         const buffer = this.buffers.get(id) || [];
-        buffer.push(data);
+        buffer.push(cleanedData);
         this.buffers.set(id, buffer);
       }
     });
-
     this.terminalToTask.set(id, task.id);
     this.terminals.set(id, { id, process: shell });
     return id;
@@ -74,10 +96,15 @@ export class TerminalService {
     const terminal = this.terminals.get(id);
     if (!terminal) return;
 
-    // Use the sentinel to detect completion
-    terminal.process.write(
-      `(${command}); EXIT_CODE=$?; echo "::TASK_EXIT:$EXIT_CODE::"\r`,
-    );
+    const wrappedCommand =
+      this.platform === "win32"
+        ? `${command}; if ($null -eq $LASTEXITCODE) { $EXIT_CODE = 0 } else { $EXIT_CODE = $LASTEXITCODE }; Write-Output "::TASK_EXIT:$EXIT_CODE::"\r`
+        : `${command}; EXIT_CODE=$?; echo "::TASK_EXIT:$EXIT_CODE::"\r`;
+    this.commandMap.set(id, {
+      original: command,
+      wrapped: wrappedCommand.trim(),
+    });
+    terminal.process.write(wrappedCommand);
   }
 
   write(id: string, data: string) {
@@ -125,14 +152,17 @@ export class TerminalService {
 
     return new Promise((resolve) => {
       let buffer = "";
-      const handler = (data: string) => {
+
+      const disposable = terminal.process.onData((data: string) => {
         buffer += data;
+
         const match = buffer.match(EXIT_SENTINEL_PATTERN);
+
         if (match) {
+          disposable.dispose();
           resolve(Number(match[1]));
         }
-      };
-      terminal.process.onData(handler);
+      });
     });
   }
 
@@ -147,18 +177,23 @@ export class TerminalService {
 
     return new Promise((resolve, reject) => {
       let buffer = "";
+
       const safeRegex =
         isRegEx && match instanceof RegExp
           ? new RegExp(match.source, match.flags.replace("g", ""))
           : null;
 
       const timer = setTimeout(() => {
+        disposable.dispose();
         reject(new Error("log readiness timeout"));
       }, timeout);
 
-      const handler = (data: string) => {
+      const disposable = terminal.process.onData((data: string) => {
         buffer += data;
-        if (buffer.length > 5000) buffer = buffer.slice(-5000);
+
+        if (buffer.length > 5000) {
+          buffer = buffer.slice(-5000);
+        }
 
         const found = isRegEx
           ? safeRegex!.test(buffer)
@@ -166,11 +201,10 @@ export class TerminalService {
 
         if (found) {
           clearTimeout(timer);
+          disposable.dispose();
           resolve();
         }
-      };
-
-      terminal.process.onData(handler);
+      });
     });
   }
 

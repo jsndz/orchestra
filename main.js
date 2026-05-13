@@ -6,9 +6,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const servicesPath = path.join(__dirname, "electron/dist");
+import { pathToFileURL } from "url";
+const tasksIPC = await import(
+  pathToFileURL(
+    path.join(servicesPath, "ipc/tasks.ipc.js")
+  ).href
+);
 
-const tasksIPC = await import(path.join(servicesPath, "ipc/tasks.ipc.js"));
-const graphIPC = await import(path.join(servicesPath, "ipc/graph.ipc.js"));
+const graphIPC = await import(
+  pathToFileURL(
+    path.join(servicesPath, "ipc/graph.ipc.js")
+  ).href
+);
 
 tasksIPC.registerTaskIPC();
 graphIPC.registerGraphIPC();
