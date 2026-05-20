@@ -3,11 +3,16 @@ import stripAnsi from "strip-ansi";
 import crypto from "crypto";
 import { Task } from "../types/index.js";
 import { getSystemStats } from "../utils/os.js";
-import { EXIT_SENTINEL_PATTERN } from "../constants.js";
+import {
+  EXIT_SENTINEL_PATTERN,
+  EXIT_SENTINEL_PREFIX,
+  START_SENTINEL,
+} from "../constants.js";
 
 type Terminal = {
   id: string;
   process: pty.IPty;
+  wc: Electron.WebContents;
 };
 
 function cleanChunk(chunk: string): string {
@@ -18,6 +23,15 @@ function isNoise(line: string): boolean {
   return /^[⠙⠹⠸⠼⠴⠦⠧⠇⠏⠋]+$/.test(line.trim());
 }
 
+/**
+ * Creates a regex that matches a string even if it has ANSI escape sequences between characters.
+ */
+function createMarkerRegex(str: string): RegExp {
+  const escaped = str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = escaped.split("").join("(?:\\x1b\\[[0-9;]*m)*");
+  return new RegExp(pattern);
+}
+
 export class TerminalService {
   private terminals = new Map<string, Terminal>();
   private buffers = new Map<string, string[]>();
@@ -25,10 +39,11 @@ export class TerminalService {
   private terminalToTask = new Map<string, string>();
   private logBuffers = new Map<string, string>();
   private platform = getSystemStats().platform;
-  private commandMap = new Map<
-    string,
-    { original: string; wrapped: string }
-  >();
+
+  private filteringStates = new Map<string, "hiding" | "showing" | "idle">();
+  private parseBuffers = new Map<string, string>();
+  private exitCodeResolvers = new Map<string, (code: number) => void>();
+
   private getShell(): string {
     switch (this.platform) {
       case "win32":
@@ -58,52 +73,140 @@ export class TerminalService {
     });
 
     shell.onData((data) => {
-      let cleanedData = data.replace(EXIT_SENTINEL_PATTERN, "");
+      let state = this.filteringStates.get(id) || "idle";
 
-      const commandInfo = this.commandMap.get(id);
+      if (state === "hiding") {
+        const buffer = (this.parseBuffers.get(id) || "") + data;
+        const markerRegex = createMarkerRegex(START_SENTINEL);
+        const match = buffer.match(markerRegex);
 
-      if (commandInfo) {
-        cleanedData = cleanedData.replace(
-          commandInfo.wrapped,
-          commandInfo.original,
-        );
-
-        if (!cleanedData.includes(commandInfo.wrapped)) {
-          this.commandMap.delete(id);
+        if (match) {
+          this.filteringStates.set(id, "showing");
+          const endOfMatch = (match.index || 0) + match[0].length;
+          let remaining = buffer.slice(endOfMatch);
+          // Strip leading newline
+          remaining = remaining.replace(/^(\r\n|\n|\r)/, "");
+          this.parseBuffers.set(id, "");
+          if (remaining.length > 0) {
+            this.processTerminalData(id, remaining, wc, task);
+          }
+        } else {
+          // Keep only the end of the buffer to avoid missing split markers,
+          // but limit growth to prevent memory issues if marker is never seen.
+          const maxKeep = START_SENTINEL.length * 2;
+          this.parseBuffers.set(id, buffer.slice(-maxKeep));
         }
+        return;
       }
-      if (this.isReady.get(id)) {
-        if (cleanedData.length > 0) {
-          wc.send("terminal:data", {
-            terminalId: id,
-            data: cleanedData,
-          });
-        }
 
-        this.handleLogChunk(cleanedData, wc, task);
-      } else {
-        const buffer = this.buffers.get(id) || [];
-        buffer.push(cleanedData);
-        this.buffers.set(id, buffer);
+      if (state === "showing") {
+        const buffer = (this.parseBuffers.get(id) || "") + data;
+        const exitMatch = buffer.match(EXIT_SENTINEL_PATTERN);
+
+        if (exitMatch) {
+          const exitIdx = buffer.indexOf(exitMatch[0]);
+          const beforeExit = buffer.slice(0, exitIdx);
+          if (beforeExit.length > 0) {
+            this.processTerminalData(id, beforeExit, wc, task);
+          }
+
+          const code = parseInt(exitMatch[1], 10);
+          const resolver = this.exitCodeResolvers.get(id);
+          if (resolver) {
+            resolver(code);
+            this.exitCodeResolvers.delete(id);
+          }
+
+          this.filteringStates.set(id, "idle");
+          this.parseBuffers.set(id, "");
+          
+          // Process any trailing data after the exit sentinel (like a prompt)
+          const afterExit = buffer.slice(exitIdx + exitMatch[0].length);
+          if (afterExit.length > 0) {
+            this.processTerminalData(id, afterExit, wc, task);
+          }
+        } else {
+          // Send data immediately unless it might be the start of a sentinel.
+          // Sentinels start with '::'.
+          const lastMarkerStart = buffer.lastIndexOf("::");
+          if (lastMarkerStart !== -1) {
+            const toSend = buffer.slice(0, lastMarkerStart);
+            const toKeep = buffer.slice(lastMarkerStart);
+            
+            if (toSend.length > 0) {
+              this.processTerminalData(id, toSend, wc, task);
+            }
+            
+            // If the potential sentinel buffer grows too long without matching,
+            // it's likely normal output, so flush most of it.
+            if (toKeep.length > 128) {
+              this.processTerminalData(id, toKeep.slice(0, -64), wc, task);
+              this.parseBuffers.set(id, toKeep.slice(-64));
+            } else {
+              this.parseBuffers.set(id, toKeep);
+            }
+          } else {
+            // No marker start found, but check for split '::' (ends with ':')
+            if (buffer.endsWith(":")) {
+              const toSend = buffer.slice(0, -1);
+              if (toSend.length > 0) this.processTerminalData(id, toSend, wc, task);
+              this.parseBuffers.set(id, ":");
+            } else {
+              this.processTerminalData(id, buffer, wc, task);
+              this.parseBuffers.set(id, "");
+            }
+          }
+        }
+        return;
       }
+
+      this.processTerminalData(id, data, wc, task);
     });
+
     this.terminalToTask.set(id, task.id);
-    this.terminals.set(id, { id, process: shell });
+    this.terminals.set(id, { id, process: shell, wc });
     return id;
+  }
+
+  private processTerminalData(
+    id: string,
+    data: string,
+    wc: Electron.WebContents,
+    task: Task,
+  ) {
+    if (this.isReady.get(id)) {
+      if (data.length > 0) {
+        wc.send("terminal:data", {
+          terminalId: id,
+          data: data,
+        });
+      }
+      this.handleLogChunk(data, wc, task);
+    } else {
+      const buffer = this.buffers.get(id) || [];
+      buffer.push(data);
+      this.buffers.set(id, buffer);
+    }
   }
 
   run(command: string, id: string) {
     const terminal = this.terminals.get(id);
     if (!terminal) return;
 
+    this.filteringStates.set(id, "hiding");
+    this.parseBuffers.set(id, "");
+
+    // Emit a clean command echo to the UI (Styled as a green prompt)
+    terminal.wc.send("terminal:data", {
+      terminalId: id,
+      data: `\x1b[1;32m$ ${command}\x1b[0m\r\n`,
+    });
+
     const wrappedCommand =
       this.platform === "win32"
-        ? `${command}; if ($null -eq $LASTEXITCODE) { $EXIT_CODE = 0 } else { $EXIT_CODE = $LASTEXITCODE }; Write-Output "::TASK_EXIT:$EXIT_CODE::"\r`
-        : `${command}; EXIT_CODE=$?; echo "::TASK_EXIT:$EXIT_CODE::"\r`;
-    this.commandMap.set(id, {
-      original: command,
-      wrapped: wrappedCommand.trim(),
-    });
+        ? `Write-Output ("::TASK_" + "START::"); ${command}; if ($null -eq $LASTEXITCODE) { $EXIT_CODE = 0 } else { $EXIT_CODE = $LASTEXITCODE }; Write-Output ("::TASK_EXIT:" + $EXIT_CODE + "::")\r`
+        : `{ printf "::TASK_"; printf "START::\\n"; ${command}; } ; EXIT_CODE=$?; printf "::TASK_EXIT:%%s::\\n" "$EXIT_CODE"\r`;
+
     terminal.process.write(wrappedCommand);
   }
 
@@ -122,6 +225,9 @@ export class TerminalService {
     this.isReady.delete(id);
     this.buffers.delete(id);
     this.terminalToTask.delete(id);
+    this.filteringStates.delete(id);
+    this.parseBuffers.delete(id);
+    this.exitCodeResolvers.delete(id);
   }
 
   killAll() {
@@ -147,22 +253,8 @@ export class TerminalService {
   }
 
   async listenForExitCode(id: string): Promise<number> {
-    const terminal = this.terminals.get(id);
-    if (!terminal) throw new Error(`Terminal with id ${id} not found`);
-
     return new Promise((resolve) => {
-      let buffer = "";
-
-      const disposable = terminal.process.onData((data: string) => {
-        buffer += data;
-
-        const match = buffer.match(EXIT_SENTINEL_PATTERN);
-
-        if (match) {
-          disposable.dispose();
-          resolve(Number(match[1]));
-        }
-      });
+      this.exitCodeResolvers.set(id, resolve);
     });
   }
 
