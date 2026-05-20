@@ -100,26 +100,28 @@ export default function Page() {
 
           {/* Download Buttons Section */}
           <div className="flex flex-col items-center gap-4 w-full">
-            <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-3 gap-3">
-              <DownloadButton 
-                label="macOS" 
-                subLabel="Apple Silicon"
-                icon={<Monitor className="h-4 w-4" />}
-                href="https://github.com/jsndz/orchestra/releases/download/v1.0.0/Orchestra-1.0.0-arm64.dmg"
-              />
-              <DownloadButton 
-                label="Windows" 
-                subLabel="x64 Installer"
-                icon={<LayoutGrid className="h-4 w-4" />}
-                href="https://github.com/jsndz/orchestra/releases/download/v1.0.0/Orchestra.Setup.1.0.0.exe"
-              />
-              <DownloadButton 
-                label="Linux" 
-                subLabel=".AppImage"
-                icon={<Terminal className="h-4 w-4" />}
-                href="https://github.com/jsndz/orchestra/releases/download/v1.0.0/Orchestra-1.0.0.AppImage"
-              />
-            </div>
+          <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-3 gap-3">
+            <DownloadButton 
+              label="macOS" 
+              subLabel="Apple Silicon"
+              icon={<Monitor className="h-4 w-4" />}
+              href="https://github.com/jsndz/orchestra/releases/latest/download/Orchestra-1.0.0-arm64.dmg"
+            />
+
+            <DownloadButton 
+              label="Windows" 
+              subLabel="x64 Installer"
+              icon={<LayoutGrid className="h-4 w-4" />}
+              href="https://github.com/jsndz/orchestra/releases/latest/download/Orchestra.Setup.1.0.0.exe"
+            />
+
+            <DownloadButton 
+              label="Linux" 
+              subLabel=".AppImage"
+              icon={<Terminal className="h-4 w-4" />}
+              href="https://github.com/jsndz/orchestra/releases/latest/download/Orchestra-1.0.0.AppImage"
+            />
+          </div>
             
             <a 
               href="https://github.com/jsndz/orchestra/releases/tag/v1.0.0"
