@@ -46,8 +46,8 @@ jobs:
           name: linux-build
           path: |
             dist/*.AppImage
-            dist/*.deb
-
+            dist/*.tar.gz
+            
   mac:
     runs-on: macos-latest
 

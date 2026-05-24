@@ -53,7 +53,8 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "tar.gz"
       ],
       "icon": "assets/icon.png",
       "category": "Development"
