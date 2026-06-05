@@ -1,13 +1,11 @@
 import * as pty from "node-pty";
 import stripAnsi from "strip-ansi";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { Task } from "../types/index.js";
 import { getSystemStats } from "../utils/os.js";
-import {
-  EXIT_SENTINEL_PATTERN,
-  EXIT_SENTINEL_PREFIX,
-  START_SENTINEL,
-} from "../constants.js";
+import { tasks } from "../store/index.js";
 
 type Terminal = {
   id: string;
@@ -23,26 +21,16 @@ function isNoise(line: string): boolean {
   return /^[⠙⠹⠸⠼⠴⠦⠧⠇⠏⠋]+$/.test(line.trim());
 }
 
-/**
- * Creates a regex that matches a string even if it has ANSI escape sequences between characters.
- */
-function createMarkerRegex(str: string): RegExp {
-  const escaped = str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = escaped.split("").join("(?:\\x1b\\[[0-9;]*m)*");
-  return new RegExp(pattern);
-}
-
 export class TerminalService {
   private terminals = new Map<string, Terminal>();
-  private buffers = new Map<string, string[]>();
+  private historyBuffers = new Map<string, string[]>();
   private isReady = new Map<string, boolean>();
   private terminalToTask = new Map<string, string>();
   private logBuffers = new Map<string, string>();
   private platform = getSystemStats().platform;
 
-  private filteringStates = new Map<string, "hiding" | "showing" | "idle">();
-  private parseBuffers = new Map<string, string>();
   private exitCodeResolvers = new Map<string, (code: number) => void>();
+  private exitCodes = new Map<string, number>();
 
   private getShell(): string {
     switch (this.platform) {
@@ -57,12 +45,28 @@ export class TerminalService {
     }
   }
 
+  private getShellArgs(command: string): string[] {
+    switch (this.platform) {
+      case "win32":
+        return ["-Command", command];
+      default:
+        return ["-c", command];
+    }
+  }
+
+  clearAll() {
+    this.killAll();
+    this.historyBuffers.clear();
+    this.exitCodes.clear();
+  }
+
   create(folder: string, wc: Electron.WebContents, task: Task): string {
+    this.resetLogFile(task);
     const id = `term-${crypto.randomUUID()}`;
-    const shell = pty.spawn(this.getShell(), [], {
+    const shell = pty.spawn(this.getShell(), this.getShellArgs(task.command), {
       name: "xterm-color",
       cwd: folder,
-      env: process.env as any,
+      env: Object.assign({}, process.env, task.env) as any,
       cols: 80,
       rows: 24,
     });
@@ -73,94 +77,17 @@ export class TerminalService {
     });
 
     shell.onData((data) => {
-      let state = this.filteringStates.get(id) || "idle";
-
-      if (state === "hiding") {
-        const buffer = (this.parseBuffers.get(id) || "") + data;
-        const markerRegex = createMarkerRegex(START_SENTINEL);
-        const match = buffer.match(markerRegex);
-
-        if (match) {
-          this.filteringStates.set(id, "showing");
-          const endOfMatch = (match.index || 0) + match[0].length;
-          let remaining = buffer.slice(endOfMatch);
-          // Strip leading newline
-          remaining = remaining.replace(/^(\r\n|\n|\r)/, "");
-          this.parseBuffers.set(id, "");
-          if (remaining.length > 0) {
-            this.processTerminalData(id, remaining, wc, task);
-          }
-        } else {
-          // Keep only the end of the buffer to avoid missing split markers,
-          // but limit growth to prevent memory issues if marker is never seen.
-          const maxKeep = START_SENTINEL.length * 2;
-          this.parseBuffers.set(id, buffer.slice(-maxKeep));
-        }
-        return;
-      }
-
-      if (state === "showing") {
-        const buffer = (this.parseBuffers.get(id) || "") + data;
-        const exitMatch = buffer.match(EXIT_SENTINEL_PATTERN);
-
-        if (exitMatch) {
-          const exitIdx = buffer.indexOf(exitMatch[0]);
-          const beforeExit = buffer.slice(0, exitIdx);
-          if (beforeExit.length > 0) {
-            this.processTerminalData(id, beforeExit, wc, task);
-          }
-
-          const code = parseInt(exitMatch[1], 10);
-          const resolver = this.exitCodeResolvers.get(id);
-          if (resolver) {
-            resolver(code);
-            this.exitCodeResolvers.delete(id);
-          }
-
-          this.filteringStates.set(id, "idle");
-          this.parseBuffers.set(id, "");
-          
-          // Process any trailing data after the exit sentinel (like a prompt)
-          const afterExit = buffer.slice(exitIdx + exitMatch[0].length);
-          if (afterExit.length > 0) {
-            this.processTerminalData(id, afterExit, wc, task);
-          }
-        } else {
-          // Send data immediately unless it might be the start of a sentinel.
-          // Sentinels start with '::'.
-          const lastMarkerStart = buffer.lastIndexOf("::");
-          if (lastMarkerStart !== -1) {
-            const toSend = buffer.slice(0, lastMarkerStart);
-            const toKeep = buffer.slice(lastMarkerStart);
-            
-            if (toSend.length > 0) {
-              this.processTerminalData(id, toSend, wc, task);
-            }
-            
-            // If the potential sentinel buffer grows too long without matching,
-            // it's likely normal output, so flush most of it.
-            if (toKeep.length > 128) {
-              this.processTerminalData(id, toKeep.slice(0, -64), wc, task);
-              this.parseBuffers.set(id, toKeep.slice(-64));
-            } else {
-              this.parseBuffers.set(id, toKeep);
-            }
-          } else {
-            // No marker start found, but check for split '::' (ends with ':')
-            if (buffer.endsWith(":")) {
-              const toSend = buffer.slice(0, -1);
-              if (toSend.length > 0) this.processTerminalData(id, toSend, wc, task);
-              this.parseBuffers.set(id, ":");
-            } else {
-              this.processTerminalData(id, buffer, wc, task);
-              this.parseBuffers.set(id, "");
-            }
-          }
-        }
-        return;
-      }
-
       this.processTerminalData(id, data, wc, task);
+    });
+
+    shell.onExit(({ exitCode }) => {
+      const resolver = this.exitCodeResolvers.get(id);
+      if (resolver) {
+        resolver(exitCode);
+        this.exitCodeResolvers.delete(id);
+      } else {
+        this.exitCodes.set(id, exitCode);
+      }
     });
 
     this.terminalToTask.set(id, task.id);
@@ -174,59 +101,71 @@ export class TerminalService {
     wc: Electron.WebContents,
     task: Task,
   ) {
-    if (this.isReady.get(id)) {
-      if (data.length > 0) {
+    const history = this.historyBuffers.get(id) || [];
+    history.push(data);
+    this.historyBuffers.set(id, history);
+
+    if (data.length > 0) {
+      this.writeLogToFile(task, data);
+      if (this.isReady.get(id)) {
         wc.send("terminal:data", {
           terminalId: id,
           data: data,
         });
       }
-      this.handleLogChunk(data, wc, task);
-    } else {
-      const buffer = this.buffers.get(id) || [];
-      buffer.push(data);
-      this.buffers.set(id, buffer);
+    }
+    this.handleLogChunk(data, wc, task);
+  }
+
+  injectSystemLog(id: string, data: string) {
+    const history = this.historyBuffers.get(id) || [];
+    history.push(data);
+    this.historyBuffers.set(id, history);
+
+    const taskId = this.terminalToTask.get(id);
+    if (taskId) {
+      const task = tasks.find((t) => t.id === taskId);
+      if (task) {
+        this.writeLogToFile(task, data);
+      }
+    }
+
+    const terminal = this.terminals.get(id);
+    if (terminal && this.isReady.get(id)) {
+      terminal.wc.send("terminal:data", {
+        terminalId: id,
+        data: data,
+      });
     }
   }
 
   run(command: string, id: string) {
-    const terminal = this.terminals.get(id);
-    if (!terminal) return;
-
-    this.filteringStates.set(id, "hiding");
-    this.parseBuffers.set(id, "");
-
-    // Emit a clean command echo to the UI (Styled as a green prompt)
-    terminal.wc.send("terminal:data", {
-      terminalId: id,
-      data: `\x1b[1;32m$ ${command}\x1b[0m\r\n`,
-    });
-
-    const wrappedCommand =
-      this.platform === "win32"
-        ? `Write-Output ("::TASK_" + "START::"); ${command}; if ($null -eq $LASTEXITCODE) { $EXIT_CODE = 0 } else { $EXIT_CODE = $LASTEXITCODE }; Write-Output ("::TASK_EXIT:" + $EXIT_CODE + "::")\r`
-        : `{ printf "::TASK_"; printf "START::\\n"; ${command}; } ; EXIT_CODE=$?; printf "::TASK_EXIT:%%s::\\n" "$EXIT_CODE"\r`;
-
-    terminal.process.write(wrappedCommand);
+    const echoData = `\x1b[1;32m$ ${command}\x1b[0m\r\n`;
+    this.injectSystemLog(id, echoData);
   }
 
   write(id: string, data: string) {
     const terminal = this.terminals.get(id);
     if (!terminal) return;
-    terminal.process.write(data);
+    try {
+      terminal.process.write(data);
+    } catch (e) {
+      console.error("Failed to write to terminal process", e);
+    }
   }
 
   kill(id: string) {
     const terminal = this.terminals.get(id);
     if (!terminal) return;
 
-    terminal.process.kill();
+    try {
+      terminal.process.kill();
+    } catch (e) {
+      console.error("Failed to kill terminal process", e);
+    }
     this.terminals.delete(id);
     this.isReady.delete(id);
-    this.buffers.delete(id);
     this.terminalToTask.delete(id);
-    this.filteringStates.delete(id);
-    this.parseBuffers.delete(id);
     this.exitCodeResolvers.delete(id);
   }
 
@@ -241,18 +180,22 @@ export class TerminalService {
   }
 
   setReady(id: string, wc: Electron.WebContents) {
-    if (!this.terminals.has(id)) return;
+    if (!this.terminals.has(id) && !this.historyBuffers.has(id)) return;
 
     this.isReady.set(id, true);
 
-    const buffer = this.buffers.get(id) || [];
-    if (buffer.length > 0) {
-      wc.send("terminal:data", { terminalId: id, data: buffer.join("") });
-      this.buffers.set(id, []);
+    const history = this.historyBuffers.get(id) || [];
+    if (history.length > 0) {
+      wc.send("terminal:data", { terminalId: id, data: history.join("") });
     }
   }
 
   async listenForExitCode(id: string): Promise<number> {
+    if (this.exitCodes.has(id)) {
+      const code = this.exitCodes.get(id)!;
+      this.exitCodes.delete(id);
+      return code;
+    }
     return new Promise((resolve) => {
       this.exitCodeResolvers.set(id, resolve);
     });
@@ -353,5 +296,33 @@ export class TerminalService {
         label: rule.label,
       }),
     });
+  }
+
+  private resetLogFile(task: Task) {
+    try {
+      const logDir = path.join(task.folder, ".orchestra-logs");
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+      const logFile = path.join(logDir, `${task.task}.log`);
+      fs.writeFileSync(logFile, "");
+    } catch (e) {
+      console.error("Failed to reset task log file", e);
+    }
+  }
+
+  private writeLogToFile(task: Task, data: string) {
+    try {
+      const cleanData = stripAnsi(data);
+      if (!cleanData) return;
+      const logDir = path.join(task.folder, ".orchestra-logs");
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+      const logFile = path.join(logDir, `${task.task}.log`);
+      fs.appendFileSync(logFile, cleanData);
+    } catch (e) {
+      console.error("Failed to write task log to file", e);
+    }
   }
 }

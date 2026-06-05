@@ -1,7 +1,7 @@
 import { parallelExecution, resolveDependencies } from "../graph.js";
 import { tasks, dependencies } from "../../store/index.js";
 import { Task } from "../../types/index.js";
-import { runTask } from "./runner.js";
+import { runTask, clearTerminalService } from "./runner.js";
 
 /**
  * Checks if all dependencies of a task are satisfied.
@@ -22,6 +22,15 @@ function isTaskRunnable(task: Task): boolean {
  * Executes the workflow by running tasks in parallel levels.
  */
 export async function executeWorkflow(wc: Electron.WebContents) {
+  clearTerminalService();
+  tasks.forEach((task) => {
+    task.state = "idle";
+    delete task.failureReason;
+    if (wc && !wc.isDestroyed()) {
+      wc.send("task:state", { id: task.id, state: "idle" });
+    }
+  });
+
   const dependencyCheck = resolveDependencies(dependencies, tasks);
   if (!dependencyCheck.ok) {
     return { ok: false, error: "Cycle detected in dependencies" };

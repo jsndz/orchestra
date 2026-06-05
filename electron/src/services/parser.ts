@@ -22,6 +22,11 @@ interface DagTask {
   };
   dependsOn?: string[];
   logRules?: DagLogRule[];
+  x?: number;
+  y?: number;
+  retries?: number;
+  timeout?: number;
+  env?: Record<string, string>;
 }
 
 type Dag = {
@@ -110,6 +115,11 @@ export function workflowToDag(
       ready: serializeReady(t.ready),
       dependsOn: [],
       logRules: serializeLogRules(t.logRules),
+      x: t.x,
+      y: t.y,
+      retries: t.retries,
+      timeout: t.timeout,
+      env: t.env,
     };
   }
 
@@ -142,6 +152,11 @@ export function dagToWorkflow(dag: Dag): { tasks: Task[]; dependencies: Dependen
       ready: deserializeReady(t.ready),
       state: "idle",
       logRules: deserializeLogRules(t.logRules),
+      x: t.x,
+      y: t.y,
+      retries: t.retries ?? 0,
+      timeout: t.timeout ?? 0,
+      env: t.env ?? {},
     });
   }
 

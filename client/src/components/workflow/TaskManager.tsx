@@ -46,6 +46,9 @@ export default function WorkflowControls({
   const [taskCommand, setTaskCommand] = useState("");
   const [taskType, setTaskType] = useState<"job" | "service">("job");
   const [logRules, setLogRules] = useState<LogRule[]>([]);
+  const [taskRetries, setTaskRetries] = useState("");
+  const [taskTimeout, setTaskTimeout] = useState("");
+  const [taskEnv, setTaskEnv] = useState("");
 
   // ReadyWhen State
   const [readyKind, setReadyKind] = useState<"exit" | "port" | "log">("exit");
@@ -98,6 +101,16 @@ export default function WorkflowControls({
       }
     }
 
+    const envObj: Record<string, string> = {};
+    taskEnv.split("\n").forEach((line) => {
+      const idx = line.indexOf("=");
+      if (idx !== -1) {
+        const k = line.substring(0, idx).trim();
+        const v = line.substring(idx + 1).trim();
+        if (k) envObj[k] = v;
+      }
+    });
+
     addTask.mutate(
       {
         task: taskName,
@@ -106,6 +119,9 @@ export default function WorkflowControls({
         type: taskType,
         ready,
         logRules: logRules.filter((r) => r.label && r.match),
+        retries: Number(taskRetries) || 0,
+        timeout: Number(taskTimeout) || 0,
+        env: envObj,
       },
       {
         onSuccess: () => {
@@ -113,6 +129,9 @@ export default function WorkflowControls({
           setTaskFolder("");
           setTaskCommand("");
           setLogRules([]);
+          setTaskRetries("");
+          setTaskTimeout("");
+          setTaskEnv("");
           setMode("none");
         },
       },
@@ -231,6 +250,46 @@ export default function WorkflowControls({
                     />
                     <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                   </div>
+                </div>
+
+                {/* RETRIES & TIMEOUT */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className={sectionLabelStyle}>Execution Retries</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm"
+                      value={taskRetries}
+                      onChange={(e) => setTaskRetries(e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={sectionLabelStyle}>Timeout (seconds)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm"
+                      value={taskTimeout}
+                      onChange={(e) => setTaskTimeout(e.target.value)}
+                      placeholder="e.g. 60"
+                    />
+                  </div>
+                </div>
+
+                {/* ENV VARIABLES */}
+                <div className="space-y-2">
+                  <Label className={sectionLabelStyle}>Environment Variables</Label>
+                  <Textarea
+                    className="w-full bg-black border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-xs min-h-[80px] p-3 leading-relaxed text-blue-400"
+                    value={taskEnv}
+                    onChange={(e) => setTaskEnv(e.target.value)}
+                    placeholder="KEY=VALUE&#10;PORT=8080"
+                  />
+                  <span className="text-[9px] text-muted-foreground block font-mono">
+                    Enter one env variable per line. Format: KEY=VALUE
+                  </span>
                 </div>
               </section>
 

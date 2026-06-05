@@ -1,6 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
+import { SearchAddon } from "@xterm/addon-search";
+import { Search, Download, Trash2, ChevronDown, ChevronUp, X } from "lucide-react";
 import "@xterm/xterm/css/xterm.css";
 
 type Props = {
@@ -19,6 +21,10 @@ export default function Terminal({
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
+  const searchAddonRef = useRef<SearchAddon | null>(null);
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const container = containerRef.current;
@@ -51,6 +57,9 @@ export default function Terminal({
 
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
+    const searchAddon = new SearchAddon();
+    term.loadAddon(searchAddon);
+    searchAddonRef.current = searchAddon;
     term.open(container);
 
     setTimeout(() => fitAddon.fit(), 0);
@@ -114,6 +123,49 @@ export default function Terminal({
     }
   }, [isActive]);
 
+  const handleClearLogs = () => {
+    if (termRef.current) {
+      termRef.current.clear();
+    }
+  };
+
+  const handleExportLogs = () => {
+    if (!termRef.current) return;
+    const term = termRef.current;
+    const buffer = term.buffer.active;
+    const linesCount = buffer.length;
+    let lines = [];
+    for (let i = 0; i < linesCount; i++) {
+      const line = buffer.getLine(i);
+      if (line) {
+        lines.push(line.translateToString(true));
+      }
+    }
+    const rawText = lines.join("\n");
+
+    const blob = new Blob([rawText], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${name}_logs.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSearchNext = (q: string) => {
+    if (searchAddonRef.current && q) {
+      searchAddonRef.current.findNext(q, { incremental: true });
+    }
+  };
+
+  const handleSearchPrev = (q: string) => {
+    if (searchAddonRef.current && q) {
+      searchAddonRef.current.findPrevious(q);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full w-full bg-background">
       {/* NODE HEADER - Hardware Style */}
@@ -133,8 +185,68 @@ export default function Terminal({
             STREAM::{name}
           </span>
         </div>
-        <div className="font-mono text-[9px] text-muted-foreground/30 uppercase tracking-[0.2em]">
-          ID_{terminalId.split("-")[0]}
+
+        {/* UTILITIES BAR */}
+        <div className="flex items-center gap-4">
+          {searchOpen ? (
+            <div className="flex items-center gap-1.5 bg-black border border-border/20 px-2 py-0.5 animate-in fade-in slide-in-from-right-2 duration-200">
+              <input
+                autoFocus
+                className="bg-transparent outline-none border-none text-[10px] font-mono w-32 placeholder:text-muted-foreground/45 text-accent"
+                placeholder="FIND_TEXT..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  handleSearchNext(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (e.shiftKey) handleSearchPrev(searchQuery);
+                    else handleSearchNext(searchQuery);
+                  }
+                }}
+              />
+              <button onClick={() => handleSearchPrev(searchQuery)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+                <ChevronUp size={11} />
+              </button>
+              <button onClick={() => handleSearchNext(searchQuery)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+                <ChevronDown size={11} />
+              </button>
+              <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-muted-foreground hover:text-destructive cursor-pointer">
+                <X size={11} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="text-muted-foreground/60 hover:text-accent transition-colors p-1 cursor-pointer"
+              title="Search logs"
+            >
+              <Search size={12} />
+            </button>
+          )}
+
+          <button
+            onClick={handleExportLogs}
+            className="text-muted-foreground/60 hover:text-accent transition-colors p-1 cursor-pointer"
+            title="Export logs"
+          >
+            <Download size={12} />
+          </button>
+
+          <button
+            onClick={handleClearLogs}
+            className="text-muted-foreground/60 hover:text-destructive transition-colors p-1 cursor-pointer"
+            title="Clear terminal"
+          >
+            <Trash2 size={12} />
+          </button>
+
+          <div className="h-3 w-[1px] bg-border/20" />
+
+          <div className="font-mono text-[9px] text-muted-foreground/30 uppercase tracking-[0.2em]">
+            ID_{terminalId.split("-")[0]}
+          </div>
         </div>
       </div>
 

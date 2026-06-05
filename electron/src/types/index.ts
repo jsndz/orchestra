@@ -34,6 +34,11 @@ export type Task = {
   ready?: ReadyWhen;
   failureReason?: string;
   logRules?: LogRule[];
+  x?: number;
+  y?: number;
+  retries?: number;
+  timeout?: number;
+  env?: Record<string, string>;
 };
 
 export type Dependency = {

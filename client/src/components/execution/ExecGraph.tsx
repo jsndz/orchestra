@@ -104,12 +104,16 @@ export function ExecGraph({
   const [levels, setLevels] = useState<Task[][]>([]);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  
+
   const rfInstance = useRef<any>(null);
+  const hasFitRef = useRef(false);
 
   useEffect(() => {
     analyze("parallel").then((res) => {
-      if (res.ok) setLevels(res.levels);
+      if (res.ok) {
+        setLevels(res.levels);
+        hasFitRef.current = false;
+      }
     });
   }, [apiData.tasks, apiData.dependencies]);
 
@@ -123,7 +127,8 @@ export function ExecGraph({
     setNodes(newNodes);
     setEdges(newEdges);
 
-    if (rfInstance.current && newNodes.length > 0) {
+    if (rfInstance.current && newNodes.length > 0 && !hasFitRef.current) {
+      hasFitRef.current = true;
       setTimeout(() => {
         rfInstance.current.fitView({ padding: 0.2 });
       }, 50);
@@ -140,6 +145,8 @@ export function ExecGraph({
           rfInstance.current = instance;
         }}
         fitView
+        minZoom={0.1}
+        maxZoom={4}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}

@@ -12,10 +12,12 @@ import {
 } from "lucide-react";
 import WorkflowControls from "@/components/workflow/TaskManager";
 import { useSystemStats } from "@/hooks/useTasks";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Task } from "@/types";
 import { useWorkflowStore } from "@/store/useAppStore";
 import { Input } from "@base-ui/react";
+import { useQueryClient } from "@tanstack/react-query";
+import { downloadYaml } from "@/api/tasks";
 
 export default function TasksPage() {
   const { data } = useTasks();
@@ -36,6 +38,100 @@ export default function TasksPage() {
     t.task.toLowerCase().includes(search.toLowerCase()),
   );
   const navigate = useNavigate();
+
+  const queryClient = useQueryClient();
+  const [workspaceDir, setWorkspaceDir] = useState<string>(() => localStorage.getItem("workspaceDir") || "");
+  const [workspaceWorkflows, setWorkspaceWorkflows] = useState<string[]>([]);
+  const [yamlOpen, setYamlOpen] = useState(false);
+  const [yamlCode, setYamlCode] = useState("");
+  const [yamlError, setYamlError] = useState<string | null>(null);
+
+  const loadWorkflows = async (dir: string) => {
+    if (!dir) return;
+    try {
+      const list = await window.api.listWorkspace(dir);
+      setWorkspaceWorkflows(list);
+    } catch (e) {
+      console.error("Failed to list workspace workflows:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (workspaceDir) {
+      loadWorkflows(workspaceDir);
+    }
+  }, [workspaceDir]);
+
+  const handleSelectWorkspaceDir = async () => {
+    const dir = await window.api.selectFolder();
+    if (dir) {
+      setWorkspaceDir(dir);
+      localStorage.setItem("workspaceDir", dir);
+    }
+  };
+
+  const handleLoadWorkflow = async (name: string) => {
+    const res = await window.api.loadWorkspaceWorkflow(workspaceDir, name);
+    if (res.ok) {
+      setWorkflowName(name);
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    } else {
+      alert(`Load failed: ${res.error}`);
+    }
+  };
+
+  const handleSaveWorkflow = async () => {
+    if (!workspaceDir) {
+      alert("Please select a workspace directory first.");
+      return;
+    }
+    const name = workflowName || "untitled";
+    const res = await window.api.saveWorkspaceWorkflow(workspaceDir, name);
+    if (res.ok) {
+      alert(`Workflow "${name}" saved successfully to workspace!`);
+      loadWorkflows(workspaceDir);
+    } else {
+      alert(`Save failed: ${res.error}`);
+    }
+  };
+
+  const toggleYamlPanel = async () => {
+    if (!yamlOpen) {
+      try {
+        const text = await downloadYaml(workflowName || "temp-workflow");
+        setYamlCode(text);
+        setYamlError(null);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setYamlOpen(!yamlOpen);
+  };
+
+  const handleYamlChange = async (val: string) => {
+    setYamlCode(val);
+    try {
+      const result = await window.api.importYaml(val);
+      if (result && result.ok) {
+        setYamlError(null);
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      } else {
+        setYamlError("Validation failed");
+      }
+    } catch (e: any) {
+      setYamlError(e.message || "Invalid YAML syntax");
+    }
+  };
+
+  useEffect(() => {
+    if (yamlOpen) {
+      downloadYaml(workflowName || "temp-workflow").then((text) => {
+        if (text.trim() !== yamlCode.trim()) {
+          setYamlCode(text);
+        }
+      });
+    }
+  }, [tasks, dependencies, workflowName, yamlOpen]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -83,9 +179,31 @@ export default function TasksPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-px  p-0.5">
+        <div className="flex items-center gap-2 p-0.5">
+          {workspaceDir && (
+            <Button
+              onClick={handleSaveWorkflow}
+              variant="outline"
+              className="rounded-none font-mono text-[10px] uppercase h-9 px-4 border-border/40 hover:bg-white hover:text-black cursor-pointer"
+            >
+              Save File
+            </Button>
+          )}
+
+          <Button
+            onClick={toggleYamlPanel}
+            variant="outline"
+            className={`rounded-none font-mono text-[10px] uppercase h-9 px-4 border-border/40 cursor-pointer ${
+              yamlOpen
+                ? "bg-accent text-background hover:bg-accent/80 font-bold shadow-[0_0_10px_rgba(225,244,243,0.2)]"
+                : "hover:bg-white hover:text-black"
+            }`}
+          >
+            {yamlOpen ? "Hide YAML" : "View YAML"}
+          </Button>
+
           <NavLink to="/execution">
-            <Button className="rounded-none text-background hover:bg-btn-primary-hover font-mono text-[10px] font-black uppercase tracking-widest h-9 px-6 flex items-center gap-2 group transition-none ">
+            <Button className="rounded-none text-background hover:bg-btn-primary-hover font-mono text-[10px] font-black uppercase tracking-widest h-9 px-6 flex items-center gap-2 group transition-none cursor-pointer">
               <Play className="w-3 h-3 fill-current" />
               Run Workflow
             </Button>
@@ -129,6 +247,47 @@ export default function TasksPage() {
               )}
             </Button>
           </div>
+
+          {/* WORKSPACE DIRECTORY PANEL */}
+          {sidebarOpen && (
+            <div className="p-3 border-b border-border/10 bg-black/40">
+              <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest block mb-2">Workspace Directory</span>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  placeholder="NO_DIRECTORY_SELECTED"
+                  className="bg-card border border-border/40 px-2 py-1 text-[10px] font-mono truncate flex-1 opacity-70"
+                  value={workspaceDir}
+                />
+                <Button
+                  size="sm"
+                  className="rounded-none h-6 px-2 text-[9px] font-mono hover:bg-accent uppercase border border-border/45 cursor-pointer"
+                  onClick={handleSelectWorkspaceDir}
+                >
+                  Browse
+                </Button>
+              </div>
+
+              {workspaceDir && workspaceWorkflows.length > 0 && (
+                <div className="mt-3 space-y-1 max-h-32 overflow-y-auto custom-scrollbar border-t border-border/15 pt-2">
+                  <span className="text-[8px] font-mono text-muted-foreground/60 uppercase tracking-widest block mb-1">Workflows:</span>
+                  {workspaceWorkflows.map((name) => (
+                    <div
+                      key={name}
+                      onClick={() => handleLoadWorkflow(name)}
+                      className={`text-[10px] font-mono px-2 py-1 cursor-pointer truncate uppercase ${
+                        workflowName === name
+                          ? "text-accent font-bold bg-accent/10 border-l border-accent"
+                          : "text-muted-foreground hover:bg-card/40 hover:text-foreground"
+                      }`}
+                    >
+                      {name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* SEARCH - Command Line Style */}
           {sidebarOpen && (
@@ -225,6 +384,29 @@ export default function TasksPage() {
             </div>
           )}
         </div>
+
+        {/* YAML LIVE CODE PANEL */}
+        {yamlOpen && (
+          <div className="w-[420px] border-r border-border bg-black flex flex-col h-full font-mono text-xs z-20">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/20 bg-card/45 h-14 shrink-0">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-accent">YAML LIVE EDITOR</span>
+              {yamlError ? (
+                <span className="text-[9px] text-red-500 font-bold uppercase truncate max-w-[200px]" title={yamlError}>
+                  ERR: {yamlError}
+                </span>
+              ) : (
+                <span className="text-[9px] text-emerald-400 font-bold uppercase">YAML VALID</span>
+              )}
+            </div>
+            <textarea
+              className="flex-1 w-full bg-black/90 p-4 outline-none text-emerald-400/90 font-mono resize-none text-[11px] leading-relaxed custom-scrollbar border-none"
+              value={yamlCode}
+              onChange={(e) => handleYamlChange(e.target.value)}
+              placeholder="# ENTER WORKFLOW YAML DEFINITION HERE..."
+            />
+          </div>
+        )}
+
         <div className="flex-1 relative">
           <DependencyGraph
             apiData={{ tasks, dependencies }}

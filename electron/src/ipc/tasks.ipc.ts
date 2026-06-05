@@ -1,5 +1,7 @@
 import { ipcMain, dialog, shell } from "electron";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { tasks, dependencies } from "../store/index.js";
 import { Task, Dependency } from "../types/index.js";
 import {
@@ -48,6 +50,11 @@ export function registerTaskIPC() {
       state: "idle",
       ready: body.ready || { kind: "exit" },
       logRules: body.logRules || [],
+      x: body.x,
+      y: body.y,
+      retries: body.retries ?? 0,
+      timeout: body.timeout ?? 0,
+      env: body.env ?? {},
     };
 
     tasks.push(newTask);
@@ -63,6 +70,17 @@ export function registerTaskIPC() {
       delete (data as any).id;
 
       Object.assign(task, data);
+      
+      if (task.retries === undefined || task.retries === null) {
+        task.retries = 0;
+      }
+      if (task.timeout === undefined || task.timeout === null) {
+        task.timeout = 0;
+      }
+      if (task.env === undefined || task.env === null) {
+        task.env = {};
+      }
+
       return task;
     },
   );
@@ -146,5 +164,66 @@ export function registerTaskIPC() {
 
   ipcMain.on("terminal:input", (event, { terminalId, data }) => {
     handleTerminalInput(terminalId, data, event.sender);
+  });
+
+  ipcMain.handle("workspace:list", async (_, dirPath: string) => {
+    try {
+      if (!dirPath) return [];
+      const files = await fs.promises.readdir(dirPath);
+      const yamlFiles = files.filter(f => f.endsWith(".yaml") || f.endsWith(".yml"));
+      
+      const workflows = [];
+      for (const file of yamlFiles) {
+        workflows.push(file.replace(/\.(yaml|yml)$/, ""));
+      }
+      return workflows;
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  });
+
+  ipcMain.handle("workspace:load", async (_, { dirPath, name }: { dirPath: string, name: string }) => {
+    try {
+      const filePath = path.join(dirPath, `${name}.yaml`);
+      if (!fs.existsSync(filePath)) {
+        const altFilePath = path.join(dirPath, `${name}.yml`);
+        if (fs.existsSync(altFilePath)) {
+          const content = await fs.promises.readFile(altFilePath, "utf-8");
+          const dag = yamlToDag(content);
+          const { tasks: newTasks, dependencies: newDeps } = dagToWorkflow(dag);
+          tasks.length = 0;
+          dependencies.length = 0;
+          tasks.push(...newTasks);
+          dependencies.push(...newDeps);
+          return { ok: true };
+        }
+        throw new Error("File not found");
+      }
+      const content = await fs.promises.readFile(filePath, "utf-8");
+      const dag = yamlToDag(content);
+      const { tasks: newTasks, dependencies: newDeps } = dagToWorkflow(dag);
+      tasks.length = 0;
+      dependencies.length = 0;
+      tasks.push(...newTasks);
+      dependencies.push(...newDeps);
+      return { ok: true };
+    } catch (e: any) {
+      console.error(e);
+      return { ok: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle("workspace:save", async (_, { dirPath, name }: { dirPath: string, name: string }) => {
+    try {
+      const dag = workflowToDag(tasks, dependencies, name, 1);
+      const content = dagToYaml(dag);
+      const filePath = path.join(dirPath, `${name}.yaml`);
+      await fs.promises.writeFile(filePath, content, "utf-8");
+      return { ok: true };
+    } catch (e: any) {
+      console.error(e);
+      return { ok: false, error: e.message };
+    }
   });
 }

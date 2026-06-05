@@ -81,5 +81,7 @@ contextBridge.exposeInMainWorld("api", {
   getSystemStats: () => ipcRenderer.invoke("system:stats"),
   openExternal: (url) => ipcRenderer.invoke("app:open-external", url),
 
-  // getTaskLogs: (taskId) => ipcRenderer.invoke("task:logs", taskId),
+  listWorkspace: (dirPath) => ipcRenderer.invoke("workspace:list", dirPath),
+  loadWorkspaceWorkflow: (dirPath, name) => ipcRenderer.invoke("workspace:load", { dirPath, name }),
+  saveWorkspaceWorkflow: (dirPath, name) => ipcRenderer.invoke("workspace:save", { dirPath, name }),
 });

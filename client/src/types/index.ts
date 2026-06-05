@@ -10,6 +10,11 @@ export interface Task {
   state: StepState;
   ready?: ReadyWhen;
   logRules?: LogRule[];
+  x?: number;
+  y?: number;
+  retries?: number;
+  timeout?: number;
+  env?: Record<string, string>;
 }
 
 export type LogRule = {
@@ -43,6 +48,11 @@ export type TaskRequest = {
   type: "job" | "service";
   ready?: ReadyWhen;
   logRules?: LogRule[];
+  x?: number;
+  y?: number;
+  retries?: number;
+  timeout?: number;
+  env?: Record<string, string>;
 };
 export interface Dependency {
   from: string;

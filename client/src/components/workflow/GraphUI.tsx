@@ -50,13 +50,16 @@ export function toReactFlowGraphFromLevels(
     const startY = -totalHeight / 2;
 
     levelTasks.forEach((task, i) => {
+      const hasCoords = typeof task.x === "number" && typeof task.y === "number";
       nodes.push({
         id: task.id,
         type: "custom",
-        position: {
-          x: levelIndex * horizontalSpacing,
-          y: startY + i * verticalSpacing,
-        },
+        position: hasCoords
+          ? { x: task.x!, y: task.y! }
+          : {
+              x: levelIndex * horizontalSpacing,
+              y: startY + i * verticalSpacing,
+            },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
         data: {
@@ -109,6 +112,11 @@ export function DependencyGraph({
   const [readyLogMatch, setReadyLogMatch] = useState("");
   const [levels, setLevels] = useState<Task[][]>([]);
   const [logMatchType, setLogMatchType] = useState<"text" | "regex">("text");
+
+  const [retries, setRetries] = useState<number | string>("");
+  const [timeoutVal, setTimeoutVal] = useState<number | string>("");
+  const [envStr, setEnvStr] = useState<string>("");
+
   useEffect(() => {
     if (!editingTask) return;
 
@@ -116,6 +124,14 @@ export function DependencyGraph({
     setFolderName(editingTask.folder);
     setCommand(editingTask.command ?? "");
     setTaskType(editingTask.type);
+
+    setRetries(editingTask.retries !== undefined && editingTask.retries !== null ? editingTask.retries : "");
+    setTimeoutVal(editingTask.timeout !== undefined && editingTask.timeout !== null ? editingTask.timeout : "");
+    const envObj = editingTask.env || {};
+    const serializedEnv = Object.entries(envObj)
+      .map(([k, v]) => `${k}=${v}`)
+      .join("\n");
+    setEnvStr(serializedEnv);
 
     if (editingTask.ready) {
       setReadyKind(editingTask.ready.kind);
@@ -187,16 +203,58 @@ export function DependencyGraph({
     [deleteDependencyMutation],
   );
 
+  const introducesCycle = useCallback((fromId: string, toId: string) => {
+    const adj: Record<string, string[]> = {};
+    for (const dep of apiData.dependencies) {
+      if (!adj[dep.from]) adj[dep.from] = [];
+      adj[dep.from].push(dep.to);
+    }
+    const visited = new Set<string>();
+    const queue = [toId];
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      if (curr === fromId) return true;
+      visited.add(curr);
+      for (const neighbor of adj[curr] ?? []) {
+        if (!visited.has(neighbor)) {
+          queue.push(neighbor);
+        }
+      }
+    }
+    return false;
+  }, [apiData.dependencies]);
+
+  const onNodeDragStop = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      const task = apiData.tasks.find((t) => t.id === node.id);
+      if (task) {
+        updateTaskMutation.mutate({
+          id: task.id,
+          updates: {
+            x: Math.round(node.position.x),
+            y: Math.round(node.position.y),
+          },
+        });
+      }
+    },
+    [apiData.tasks, updateTaskMutation],
+  );
+
   const onConnect = useCallback(
     (params: Connection) => {
       if (!params.source || !params.target) return;
+
+      if (introducesCycle(params.source, params.target)) {
+        alert("Error: Connecting these nodes would introduce a dependency cycle/loop!");
+        return;
+      }
 
       addDependencyMutation.mutate({
         from: params.source,
         to: params.target,
       });
     },
-    [addDependencyMutation],
+    [addDependencyMutation, introducesCycle],
   );
 
   const onNodeClick = useCallback(
@@ -242,6 +300,16 @@ export function DependencyGraph({
           : String(rule.match),
       })) ?? [];
 
+    const envObj: Record<string, string> = {};
+    envStr.split("\n").forEach((line) => {
+      const idx = line.indexOf("=");
+      if (idx !== -1) {
+        const k = line.substring(0, idx).trim();
+        const v = line.substring(idx + 1).trim();
+        if (k) envObj[k] = v;
+      }
+    });
+
     updateTaskMutation.mutate({
       id: editingTask.id,
       updates: {
@@ -251,6 +319,11 @@ export function DependencyGraph({
         type: taskType,
         ready,
         logRules,
+        x: editingTask.x,
+        y: editingTask.y,
+        retries: retries === "" ? 0 : (Number(retries) || 0),
+        timeout: timeoutVal === "" ? 0 : (Number(timeoutVal) || 0),
+        env: envObj,
       },
     });
 
@@ -269,13 +342,15 @@ export function DependencyGraph({
           onEdgesDelete={onEdgesDelete}
           onNodeClick={onNodeClick}
           onConnect={onConnect}
+          onNodeDragStop={onNodeDragStop}
           fitView
+          minZoom={0.1}
+          maxZoom={4}
           nodesDraggable
           elementsSelectable
           nodesConnectable
           deleteKeyCode={["Backspace", "Delete"]}
-          panOnScroll
-          zoomOnScroll
+          zoomOnScroll={true}
           defaultEdgeOptions={{ type: "smoothstep" }}
           proOptions={{ hideAttribution: true }}
         >
@@ -371,6 +446,52 @@ export function DependencyGraph({
                     />
                     <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                   </div>
+                </div>
+
+                {/* RETRIES & TIMEOUT */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      Execution Retries
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm"
+                      value={retries}
+                      onChange={(e) => setRetries(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      Timeout (seconds)
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm"
+                      value={timeoutVal}
+                      onChange={(e) => setTimeoutVal(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="e.g. 60"
+                    />
+                  </div>
+                </div>
+
+                {/* ENV VARIABLES */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                    Environment Variables
+                  </Label>
+                  <Textarea
+                    className="w-full bg-black border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-xs min-h-[80px] p-3 leading-relaxed text-blue-400"
+                    value={envStr}
+                    onChange={(e) => setEnvStr(e.target.value)}
+                    placeholder="KEY=VALUE&#10;PORT=8080"
+                  />
+                  <span className="text-[9px] text-muted-foreground block font-mono">
+                    Enter one env variable per line. Format: KEY=VALUE
+                  </span>
                 </div>
 
                 {/* 05. LOG RULES (Sync with Add Panel Design) */}

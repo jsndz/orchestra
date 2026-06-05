@@ -26,6 +26,9 @@ let mainWindow;
 
 const isDev = !app.isPackaged;
 
+// Enable High-DPI support on systems with scaling (such as Linux)
+app.commandLine.appendSwitch("high-dpi-support", "1");
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -39,6 +42,19 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  // Reset zoom factor to 1.0 to clear any saved Chromium zoom settings
+  mainWindow.webContents.on("did-finish-load", () => {
+    mainWindow.webContents.setZoomFactor(1.0);
+  });
+
+  // Disable Ctrl/Cmd + (+/-/_/0) shortcuts to lock the zoom factor
+  mainWindow.webContents.on("before-input-event", (event, input) => {
+    const isControlOrMeta = process.platform === "darwin" ? input.meta : input.control;
+    if (isControlOrMeta && (input.key === "=" || input.key === "-" || input.key === "0")) {
+      event.preventDefault();
+    }
   });
 
   const indexPath = path.join(__dirname, "client/dist/index.html");
