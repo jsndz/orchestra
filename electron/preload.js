@@ -84,4 +84,5 @@ contextBridge.exposeInMainWorld("api", {
   listWorkspace: (dirPath) => ipcRenderer.invoke("workspace:list", dirPath),
   loadWorkspaceWorkflow: (dirPath, name) => ipcRenderer.invoke("workspace:load", { dirPath, name }),
   saveWorkspaceWorkflow: (dirPath, name) => ipcRenderer.invoke("workspace:save", { dirPath, name }),
+  importEnv: () => ipcRenderer.invoke("env:import"),
 });

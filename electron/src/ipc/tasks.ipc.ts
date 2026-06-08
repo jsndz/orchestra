@@ -226,4 +226,27 @@ export function registerTaskIPC() {
       return { ok: false, error: e.message };
     }
   });
+
+  ipcMain.handle("env:import", async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: "Select .env file to import",
+        properties: ["openFile"],
+        filters: [
+          { name: "Environment Files", extensions: ["env"] },
+          { name: "All Files", extensions: ["*"] },
+        ],
+      });
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return null;
+      }
+
+      const content = await fs.promises.readFile(result.filePaths[0], "utf-8");
+      return content;
+    } catch (e) {
+      console.error("Failed to import .env file:", e);
+      return null;
+    }
+  });
 }

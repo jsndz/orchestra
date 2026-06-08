@@ -10,6 +10,8 @@ import ReactFlow, {
   applyNodeChanges,
   applyEdgeChanges,
   Position,
+  ReactFlowProvider,
+  useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
@@ -20,6 +22,7 @@ import {
   useDeleteDependency,
   useAddDependency,
   useUpdateTask,
+  useAddTask,
 } from "@/hooks/useTasks";
 import { analyze } from "@/api/tasks";
 import { Button } from "@/components/ui/button";
@@ -34,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X } from "lucide-react";
+import { X, FolderOpen, Upload, Plus } from "lucide-react";
 
 export function toReactFlowGraphFromLevels(
   levels: Task[][],
@@ -76,8 +79,8 @@ export function toReactFlowGraphFromLevels(
     id: `${d.from}->${d.to}`,
     source: d.from,
     target: d.to,
-    type: "smoothstep", // curved
-    animated: true, // optional but looks good
+    type: "smoothstep",
+    animated: true,
     markerEnd: {
       type: MarkerType.ArrowClosed,
       color: "#e1f4f3",
@@ -90,7 +93,8 @@ export function toReactFlowGraphFromLevels(
 
   return { nodes, edges };
 }
-export function DependencyGraph({
+
+function DependencyGraphInner({
   apiData,
   editingTask,
   setEditingTask,
@@ -99,23 +103,38 @@ export function DependencyGraph({
   editingTask: Task | null;
   setEditingTask: (task: Task | null) => void;
 }) {
+  const reactFlowInstance = useReactFlow();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
+  // --- Edit Mode Form State ---
   const [taskName, setTaskName] = useState("");
   const [folderName, setFolderName] = useState("");
   const [command, setCommand] = useState("");
-
   const [taskType, setTaskType] = useState<"job" | "service">("job");
   const [readyKind, setReadyKind] = useState<"exit" | "port" | "log">("exit");
   const [readyPort, setReadyPort] = useState<number>(3000);
   const [readyLogMatch, setReadyLogMatch] = useState("");
   const [levels, setLevels] = useState<Task[][]>([]);
   const [logMatchType, setLogMatchType] = useState<"text" | "regex">("text");
-
   const [retries, setRetries] = useState<number | string>("");
   const [timeoutVal, setTimeoutVal] = useState<number | string>("");
   const [envStr, setEnvStr] = useState<string>("");
+
+  // --- Create Mode Form State ---
+  const [addingTaskPosition, setAddingTaskPosition] = useState<{ x: number; y: number } | null>(null);
+  const [createTaskName, setCreateTaskName] = useState("");
+  const [createFolderName, setCreateFolderName] = useState("");
+  const [createCommand, setCreateCommand] = useState("");
+  const [createTaskType, setCreateTaskType] = useState<"job" | "service">("job");
+  const [createReadyKind, setCreateReadyKind] = useState<"exit" | "port" | "log">("exit");
+  const [createReadyPort, setCreateReadyPort] = useState<number>(3000);
+  const [createReadyLogMatch, setCreateReadyLogMatch] = useState("");
+  const [createLogMatchType, setCreateLogMatchType] = useState<"text" | "regex">("text");
+  const [createRetries, setCreateRetries] = useState<number | string>("");
+  const [createTimeoutVal, setCreateTimeoutVal] = useState<number | string>("");
+  const [createEnvStr, setCreateEnvStr] = useState<string>("");
+  const [createLogRules, setCreateLogRules] = useState<any[]>([]);
 
   useEffect(() => {
     if (!editingTask) return;
@@ -142,13 +161,30 @@ export function DependencyGraph({
 
       if (editingTask.ready.kind === "log") {
         setReadyLogMatch(String(editingTask.ready.match));
-
         setLogMatchType(editingTask.ready.isRegex ? "regex" : "text");
       }
     } else {
       setReadyKind("exit");
     }
   }, [editingTask]);
+
+  useEffect(() => {
+    if (addingTaskPosition) {
+      setCreateTaskName("");
+      setCreateFolderName(localStorage.getItem("workspaceDir") || "");
+      setCreateCommand("");
+      setCreateTaskType("job");
+      setCreateReadyKind("exit");
+      setCreateReadyPort(3000);
+      setCreateReadyLogMatch("");
+      setCreateLogMatchType("text");
+      setCreateRetries("");
+      setCreateTimeoutVal("");
+      setCreateEnvStr("");
+      setCreateLogRules([]);
+    }
+  }, [addingTaskPosition]);
+
   useEffect(() => {
     analyze("parallel").then((res) => {
       if (res.ok) {
@@ -156,10 +192,12 @@ export function DependencyGraph({
       }
     });
   }, [apiData.tasks, apiData.dependencies]);
+
   const deleteTaskMutation = useDeleteTask();
   const deleteDependencyMutation = useDeleteDependency();
   const addDependencyMutation = useAddDependency();
   const updateTaskMutation = useUpdateTask();
+  const addTaskMutation = useAddTask();
 
   useEffect(() => {
     const { nodes, edges } = toReactFlowGraphFromLevels(
@@ -262,10 +300,55 @@ export function DependencyGraph({
       const task = apiData.tasks.find((t) => t.id === node.id);
       if (!task) return;
 
+      setAddingTaskPosition(null);
       setEditingTask(task);
     },
     [apiData.tasks, setEditingTask],
   );
+
+  const onDoubleClick = useCallback(
+    (event: React.MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.classList.contains("react-flow__pane")) return;
+
+      const reactFlowBounds = document.querySelector(".react-flow")?.getBoundingClientRect();
+      if (!reactFlowBounds) return;
+
+      const position = reactFlowInstance.project({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      });
+
+      setEditingTask(null);
+      setAddingTaskPosition(position);
+    },
+    [reactFlowInstance, setEditingTask],
+  );
+
+  const handlePickFolderForEdit = async () => {
+    const fullPath = await window.api.selectFolder();
+    if (fullPath) setFolderName(fullPath);
+  };
+
+  const handlePickFolderForCreate = async () => {
+    const fullPath = await window.api.selectFolder();
+    if (fullPath) setCreateFolderName(fullPath);
+  };
+
+  const handleImportEnvForEdit = async () => {
+    const content = await window.api.importEnv();
+    if (content) {
+      setEnvStr(content);
+    }
+  };
+
+  const handleImportEnvForCreate = async () => {
+    const content = await window.api.importEnv();
+    if (content) {
+      setCreateEnvStr(content);
+    }
+  };
+
   const handleUpdateTask = () => {
     if (!editingTask) return;
 
@@ -329,6 +412,62 @@ export function DependencyGraph({
 
     setEditingTask(null);
   };
+
+  const handleCreateTask = () => {
+    if (!createTaskName.trim() || !addingTaskPosition) return;
+
+    let ready: ReadyWhen;
+    if (createTaskType === "job") {
+      ready = { kind: "exit" };
+    } else {
+      if (createReadyKind === "port") {
+        ready = { kind: "port", port: createReadyPort };
+      } else if (createReadyKind === "log") {
+        ready = {
+          kind: "log",
+          match:
+            createLogMatchType === "regex"
+              ? new RegExp(createReadyLogMatch)
+              : createReadyLogMatch,
+          isRegex: createLogMatchType === "regex",
+        };
+      } else {
+        ready = { kind: "exit" };
+      }
+    }
+
+    const envObj: Record<string, string> = {};
+    createEnvStr.split("\n").forEach((line) => {
+      const idx = line.indexOf("=");
+      if (idx !== -1) {
+        const k = line.substring(0, idx).trim();
+        const v = line.substring(idx + 1).trim();
+        if (k) envObj[k] = v;
+      }
+    });
+
+    addTaskMutation.mutate(
+      {
+        task: createTaskName,
+        folder: createFolderName,
+        command: createCommand,
+        type: createTaskType,
+        ready,
+        logRules: createLogRules.filter((r) => r.label && r.match),
+        retries: createRetries === "" ? 0 : (Number(createRetries) || 0),
+        timeout: createTimeoutVal === "" ? 0 : (Number(createTimeoutVal) || 0),
+        env: envObj,
+        x: Math.round(addingTaskPosition.x),
+        y: Math.round(addingTaskPosition.y),
+      },
+      {
+        onSuccess: () => {
+          setAddingTaskPosition(null);
+        },
+      }
+    );
+  };
+
   return (
     <>
       <div style={{ width: "100%", height: "100%" }}>
@@ -343,6 +482,7 @@ export function DependencyGraph({
           onNodeClick={onNodeClick}
           onConnect={onConnect}
           onNodeDragStop={onNodeDragStop}
+          onDoubleClick={onDoubleClick}
           fitView
           minZoom={0.1}
           maxZoom={4}
@@ -351,6 +491,7 @@ export function DependencyGraph({
           nodesConnectable
           deleteKeyCode={["Backspace", "Delete"]}
           zoomOnScroll={true}
+          zoomOnDoubleClick={false}
           defaultEdgeOptions={{ type: "smoothstep" }}
           proOptions={{ hideAttribution: true }}
         >
@@ -358,16 +499,382 @@ export function DependencyGraph({
           <Controls />
         </ReactFlow>
       </div>
+
+      {/* CREATE TASK SIDEBAR */}
+      {addingTaskPosition && (
+        <div className="absolute right-0 top-0 h-full w-96 bg-background border-l border-border p-0 overflow-hidden z-50 flex flex-col shadow-2xl">
+          {/* HEADER */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border/20 bg-card/30">
+            <div className="flex flex-col">
+              <h2 className="font-mono font-bold text-sm tracking-tighter uppercase text-accent flex items-center gap-2">
+                <Plus size={14} />
+                Create Step
+              </h2>
+            </div>
+            <Button
+              onClick={() => setAddingTaskPosition(null)}
+              variant="ghost"
+              className="p-1 rounded-none hover:bg-accent hover:text-accent-foreground transition-colors h-8 w-8 border border-transparent hover:border-accent"
+            >
+              ✕
+            </Button>
+          </div>
+
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="h-full px-6">
+              <div className="space-y-8 py-6">
+                {/* 01. TASK NAME */}
+                <div className="space-y-2 group">
+                  <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground group-focus-within:text-accent transition-colors">
+                    01. Task Name
+                  </Label>
+                  <Input
+                    className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm"
+                    value={createTaskName}
+                    onChange={(e) => setCreateTaskName(e.target.value)}
+                    placeholder="e.g. build-frontend"
+                  />
+                </div>
+
+                {/* 02. FOLDER */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                    02. Namespace / Folder
+                  </Label>
+                  <div className="flex gap-px">
+                    <Input
+                      className="bg-card border-border/40 rounded-none font-mono text-sm opacity-60 flex-1 h-9"
+                      value={createFolderName}
+                      onChange={(e) => setCreateFolderName(e.target.value)}
+                      placeholder="/path/to/project"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="rounded-none h-9 border-border/40 hover:bg-accent hover:text-background transition-colors"
+                      onClick={handlePickFolderForCreate}
+                    >
+                      <FolderOpen size={14} />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 03. TYPE SELECTOR */}
+                <div className="space-y-3">
+                  <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                    03. Execution Type
+                  </Label>
+                  <div className="flex p-1 bg-card border border-border/20 gap-1">
+                    <Button
+                      onClick={() => setCreateTaskType("job")}
+                      className={`flex-1 rounded-none font-mono text-xs h-8 ${
+                        createTaskType === "job"
+                          ? "bg-accent text-accent-foreground shadow-[0_0_10px_rgba(225,244,243,0.3)]"
+                          : "bg-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      JOB
+                    </Button>
+                    <Button
+                      onClick={() => setCreateTaskType("service")}
+                      className={`flex-1 rounded-none font-mono text-xs h-8 ${
+                        createTaskType === "service"
+                          ? "bg-accent text-accent-foreground shadow-[0_0_10px_rgba(225,244,243,0.3)]"
+                          : "bg-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      SERVICE
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 04. COMMAND */}
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                    04. Shell Command
+                  </Label>
+                  <div className="relative">
+                    <Textarea
+                      className="w-full bg-black border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-xs min-h-[100px] p-3 leading-relaxed text-emerald-400/90"
+                      value={createCommand}
+                      onChange={(e) => setCreateCommand(e.target.value)}
+                      placeholder="npm run dev"
+                    />
+                    <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                  </div>
+                </div>
+
+                {/* RETRIES & TIMEOUT */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      Execution Retries
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm"
+                      value={createRetries}
+                      onChange={(e) => setCreateRetries(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      Timeout (seconds)
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm"
+                      value={createTimeoutVal}
+                      onChange={(e) => setCreateTimeoutVal(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="e.g. 60"
+                    />
+                  </div>
+                </div>
+
+                {/* ENV VARIABLES */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      Environment Variables
+                    </Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleImportEnvForCreate}
+                      className="h-6 text-[9px] font-mono border border-border/40 rounded-none hover:bg-accent flex items-center gap-1.5"
+                    >
+                      <Upload size={10} />
+                      IMPORT .ENV
+                    </Button>
+                  </div>
+                  <Textarea
+                    className="w-full bg-black border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-xs min-h-[80px] p-3 leading-relaxed text-blue-400"
+                    value={createEnvStr}
+                    onChange={(e) => setCreateEnvStr(e.target.value)}
+                    placeholder="KEY=VALUE&#10;PORT=8080"
+                  />
+                  <span className="text-[9px] text-muted-foreground block font-mono">
+                    Enter one env variable per line. Format: KEY=VALUE
+                  </span>
+                </div>
+
+                {/* 05. LOG RULES */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      05. Log Rules (Highlights)
+                    </Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const newRule = {
+                          id: crypto.randomUUID(),
+                          label: "",
+                          match: "",
+                          enabled: true,
+                          isRegex: false,
+                          color: "#10b981",
+                        };
+                        setCreateLogRules([...createLogRules, newRule]);
+                      }}
+                      className="h-6 text-[9px] font-mono border border-border/40 rounded-none hover:bg-accent"
+                    >
+                      + ADD RULE
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {createLogRules.map((rule) => (
+                      <div
+                        key={rule.id}
+                        className="space-y-4 border-l-2 border-accent/30 pl-4 py-3 bg-accent/5 relative group"
+                      >
+                        <button
+                          onClick={() => {
+                            setCreateLogRules(createLogRules.filter((r) => r.id !== rule.id));
+                          }}
+                          className="absolute top-2 right-2 text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          <X size={14} />
+                        </button>
+
+                        <div className="grid grid-cols-[1fr_40px] gap-3">
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-mono text-accent/70 uppercase">
+                                Rule Label
+                              </span>
+                              <Input
+                                placeholder="e.g. ERROR"
+                                className="h-8 text-[10px] font-mono rounded-none bg-card border-border/40 focus-visible:border-accent"
+                                value={rule.label}
+                                onChange={(e) => {
+                                  setCreateLogRules(
+                                    createLogRules.map((r) =>
+                                      r.id === rule.id ? { ...r, label: e.target.value } : r
+                                    )
+                                  );
+                                }}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-mono text-accent/70 uppercase">
+                                Pattern Match
+                              </span>
+                              <Input
+                                placeholder="Pattern..."
+                                className="h-8 text-[10px] font-mono rounded-none bg-card border-border/40 focus-visible:border-accent"
+                                value={rule.match}
+                                onChange={(e) => {
+                                  setCreateLogRules(
+                                    createLogRules.map((r) =>
+                                      r.id === rule.id ? { ...r, match: e.target.value } : r
+                                    )
+                                  );
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex flex-col justify-end pb-1">
+                            <span className="text-[9px] font-mono text-accent/70 uppercase mb-1">
+                              Color
+                            </span>
+                            <input
+                              type="color"
+                              value={rule.color}
+                              onChange={(e) => {
+                                setCreateLogRules(
+                                  createLogRules.map((r) =>
+                                    r.id === rule.id ? { ...r, color: e.target.value } : r
+                                  )
+                                );
+                              }}
+                              className="w-full h-8 bg-transparent border border-border/40 cursor-pointer p-0.5"
+                            />
+                          </div>
+                        </div>
+
+                        <label className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground cursor-pointer hover:text-accent transition-colors">
+                          <input
+                            type="checkbox"
+                            className="accent-accent w-3 h-3"
+                            checked={rule.isRegex}
+                            onChange={(e) => {
+                              setCreateLogRules(
+                                createLogRules.map((r) =>
+                                  r.id === rule.id ? { ...r, isRegex: e.target.checked } : r
+                                )
+                              );
+                            }}
+                          />
+                          ENABLE_REGEX_PARSING
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* HEALTH CHECK CONDITION */}
+                {createTaskType === "service" && (
+                  <div className="space-y-3">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      06. Health Check Condition
+                    </Label>
+                    <div className="space-y-4 border-l-2 border-accent/30 pl-4 py-2 bg-accent/5">
+                      <Select
+                        value={createReadyKind}
+                        onValueChange={(value) => setCreateReadyKind(value as any)}
+                      >
+                        <SelectTrigger className="w-full bg-card border-border/40 rounded-none font-mono text-xs">
+                          <SelectValue placeholder="Select condition" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-none border-border/40 bg-card font-mono text-xs">
+                          <SelectItem value="exit">Wait for Exit</SelectItem>
+                          <SelectItem value="port">Listen on Port</SelectItem>
+                          <SelectItem value="log">Parse Log Stream</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {createReadyKind === "port" && (
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-mono text-muted-foreground">
+                            PORT:
+                          </span>
+                          <Input
+                            type="number"
+                            className="flex-1 bg-card border-border/40 rounded-none h-8 font-mono text-sm"
+                            value={createReadyPort}
+                            onChange={(e) =>
+                              setCreateReadyPort(Number(e.target.value))
+                            }
+                          />
+                        </div>
+                      )}
+
+                      {createReadyKind === "log" && (
+                        <div className="space-y-3">
+                          <Input
+                            className="w-full bg-card border-border/40 rounded-none h-8 font-mono text-xs"
+                            value={createReadyLogMatch}
+                            onChange={(e) => setCreateReadyLogMatch(e.target.value)}
+                            placeholder="Pattern string..."
+                          />
+                          <label className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground cursor-pointer hover:text-accent transition-colors">
+                            <input
+                              type="checkbox"
+                              className="accent-accent w-3 h-3"
+                              checked={createLogMatchType === "regex"}
+                              onChange={(e) =>
+                                setCreateLogMatchType(
+                                  e.target.checked ? "regex" : "text",
+                                )
+                              }
+                            />
+                            ENABLE_REGEX_PARSING
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </ScrollArea>
+
+          {/* ACTIONS */}
+          <div className="grid grid-cols-2 gap-px bg-border/20 border-t border-border/20">
+            <Button
+              variant="ghost"
+              className="rounded-none h-14 bg-card text-red-400 hover:bg-red-950/30 font-mono text-xs uppercase tracking-widest"
+              onClick={() => setAddingTaskPosition(null)}
+            >
+              CANCEL
+            </Button>
+            <Button
+              className="rounded-none h-14 bg-accent text-accent-foreground hover:bg-accent/90 font-mono text-xs uppercase tracking-widest font-bold disabled:opacity-50"
+              onClick={handleCreateTask}
+              disabled={addTaskMutation.isPending}
+            >
+              {addTaskMutation.isPending ? "Creating..." : "Create Step"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT TASK SIDEBAR */}
       {editingTask && (
         <div className="absolute right-0 top-0 h-full w-96 bg-background border-l border-border p-0 overflow-hidden z-50 flex flex-col shadow-2xl">
-          {/* HEADER - Tech Slate Style */}
+          {/* HEADER */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border/20 bg-card/30">
             <div className="flex flex-col">
               <h2 className="font-mono font-bold text-sm tracking-tighter uppercase text-accent">
                 Edit Step
               </h2>
             </div>
-
             <Button
               onClick={() => setEditingTask(null)}
               variant="ghost"
@@ -397,11 +904,21 @@ export function DependencyGraph({
                   <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
                     02. Namespace / Folder
                   </Label>
-                  <Input
-                    className="w-full bg-card border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-sm opacity-60"
-                    value={folderName}
-                    onChange={(e) => setFolderName(e.target.value)}
-                  />
+                  <div className="flex gap-px">
+                    <Input
+                      className="bg-card border-border/40 rounded-none font-mono text-sm opacity-60 flex-1 h-9"
+                      value={folderName}
+                      onChange={(e) => setFolderName(e.target.value)}
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="rounded-none h-9 border-border/40 hover:bg-accent hover:text-background transition-colors"
+                      onClick={handlePickFolderForEdit}
+                    >
+                      <FolderOpen size={14} />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* 03. TYPE SELECTOR */}
@@ -480,9 +997,20 @@ export function DependencyGraph({
 
                 {/* ENV VARIABLES */}
                 <div className="space-y-2">
-                  <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
-                    Environment Variables
-                  </Label>
+                  <div className="flex justify-between items-center">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      Environment Variables
+                    </Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleImportEnvForEdit}
+                      className="h-6 text-[9px] font-mono border border-border/40 rounded-none hover:bg-accent flex items-center gap-1.5"
+                    >
+                      <Upload size={10} />
+                      IMPORT .ENV
+                    </Button>
+                  </div>
                   <Textarea
                     className="w-full bg-black border-border/40 rounded-none focus-visible:ring-0 focus-visible:border-accent font-mono text-xs min-h-[80px] p-3 leading-relaxed text-blue-400"
                     value={envStr}
@@ -494,7 +1022,7 @@ export function DependencyGraph({
                   </span>
                 </div>
 
-                {/* 05. LOG RULES (Sync with Add Panel Design) */}
+                {/* 05. LOG RULES */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
@@ -646,7 +1174,6 @@ export function DependencyGraph({
                 {/* HEALTH CHECK CONDITION */}
                 {taskType === "service" && (
                   <div className="space-y-3">
-                    {" "}
                     <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
                       06. Health Check Condition
                     </Label>
@@ -720,7 +1247,6 @@ export function DependencyGraph({
             >
               CANCEL
             </Button>
-
             <Button
               className="rounded-none h-14 bg-accent text-accent-foreground hover:bg-accent/90 font-mono text-xs uppercase tracking-widest font-bold disabled:opacity-50"
               onClick={handleUpdateTask}
@@ -732,5 +1258,25 @@ export function DependencyGraph({
         </div>
       )}
     </>
+  );
+}
+
+export function DependencyGraph({
+  apiData,
+  editingTask,
+  setEditingTask,
+}: {
+  apiData: { tasks: Task[]; dependencies: Dependency[] };
+  editingTask: Task | null;
+  setEditingTask: (task: Task | null) => void;
+}) {
+  return (
+    <ReactFlowProvider>
+      <DependencyGraphInner
+        apiData={apiData}
+        editingTask={editingTask}
+        setEditingTask={setEditingTask}
+      />
+    </ReactFlowProvider>
   );
 }

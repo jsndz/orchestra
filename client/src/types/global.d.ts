@@ -55,6 +55,20 @@ declare global {
       openExternal: (url: string) => Promise<any>;
       // LOGS
       getTaskLogs: (taskId: string) => Promise<string[]>;
+
+      // WORKSPACE
+      listWorkspace: (dirPath: string) => Promise<string[]>;
+      loadWorkspaceWorkflow: (
+        dirPath: string,
+        name: string,
+      ) => Promise<{ ok: boolean; error?: string }>;
+      saveWorkspaceWorkflow: (
+        dirPath: string,
+        name: string,
+      ) => Promise<{ ok: boolean; error?: string }>;
+
+      // ENV
+      importEnv: () => Promise<string | null>;
     };
   }
 }
