@@ -1,14 +1,22 @@
 {
   "name": "orchestra",
   "version": "1.0.0",
-  "description": "",
+  "description": "Local-first workflow orchestration tool",
   "license": "MIT",
   "author": "",
   "type": "module",
-  "main": "main.js",
+  "main": "packages/electron/dist/main.js",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "electron:build": "tsc -p electron",
-    "client:build": "cd client && npm run build",
+    "electron:build": "tsc -p packages/electron",
+    "electron:watch": "tsc -w -p packages/electron",
+    "client:dev": "npm run dev -w @orchestra/client",
+    "client:build": "npm run build -w @orchestra/client",
+    "web:dev": "npm run dev -w @orchestra/web",
+    "web:build": "npm run build -w @orchestra/web",
+    "dev": "npm run dev -w @orchestra/client",
     "build": "npm run electron:build && npm run client:build",
     "start": "npm run electron:build && electron .",
     "dist": "npm run build && electron-builder"
@@ -32,10 +40,9 @@
       "buildResources": "assets"
     },
     "files": [
-      "main.js",
-      "electron/dist/**/*",
-      "electron/preload.js",
-      "client/dist/**/*",
+      "packages/electron/dist/**/*",
+      "packages/electron/preload.js",
+      "packages/client/dist/**/*",
       "assets/**/*",
       "node_modules/**/*",
       "package.json"
