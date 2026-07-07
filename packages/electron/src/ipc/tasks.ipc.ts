@@ -3,12 +3,7 @@ import fs from "fs";
 import path from "path";
 import { workflowStore } from "../store/index.js";
 import { Dependency, Task } from "@orchestra/shared";
-import {
-  handleTerminalInput,
-  stopAllTasks,
-  stopTask,
-  handleTerminalReady,
-} from "../services/execution/runner.js";
+import { workflowRunner } from "../services/execution/runner.js";
 import {
   yamlToDag,
   dagToWorkflow,
@@ -76,22 +71,54 @@ export function registerTaskIPC() {
 
   // Starts the workflow scheduler
   ipcMain.handle("execution:start", async (event) => {
-    return executeWorkflow(event.sender);
+    const wc = event.sender;
+    
+    // Wire up events from workflowRunner to this WebContents
+    const onTerminalCreated = (data: any) => {
+      if (!wc.isDestroyed()) wc.send("terminal:created", data);
+    };
+    const onTerminalData = (data: any) => {
+      if (!wc.isDestroyed()) wc.send("terminal:data", data);
+    };
+    const onTaskLog = (data: any) => {
+      if (!wc.isDestroyed()) wc.send("task:log", data);
+    };
+    const onTaskState = (data: any) => {
+      if (!wc.isDestroyed()) wc.send("task:state", data);
+    };
+    const onGlobalState = (data: any) => {
+      if (!wc.isDestroyed()) wc.send("global:state", data);
+    };
+
+    // Clean up previous listeners to prevent listener leaks
+    workflowRunner.removeAllListeners("terminal:created");
+    workflowRunner.removeAllListeners("terminal:data");
+    workflowRunner.removeAllListeners("task:log");
+    workflowRunner.removeAllListeners("task:state");
+    workflowRunner.removeAllListeners("global:state");
+
+    workflowRunner.on("terminal:created", onTerminalCreated);
+    workflowRunner.on("terminal:data", onTerminalData);
+    workflowRunner.on("task:log", onTaskLog);
+    workflowRunner.on("task:state", onTaskState);
+    workflowRunner.on("global:state", onGlobalState);
+
+    return executeWorkflow(wc);
   });
 
   // Stops all currently active tasks
-  ipcMain.handle("execution:stop", async (event) => {
-    stopAllTasks(event.sender);
+  ipcMain.handle("execution:stop", async () => {
+    workflowRunner.stopAllTasks();
   });
 
   // Signal that frontend terminal component is initialized
   ipcMain.handle("terminal:ready", async (event, id: string) => {
-    handleTerminalReady(id, event.sender);
+    workflowRunner.handleTerminalReady(id);
   });
 
   // Terminates a single task by ID
   ipcMain.handle("task:stop", (event, id: string) => {
-    return stopTask(id, event.sender);
+    return workflowRunner.stopTask(id);
   });
 
   // Imports a workflow DAG from YAML content
@@ -119,7 +146,7 @@ export function registerTaskIPC() {
 
   // Processes terminal keyboard input
   ipcMain.on("terminal:input", (event, { terminalId, data }) => {
-    handleTerminalInput(terminalId, data, event.sender);
+    workflowRunner.handleTerminalInput(terminalId, data);
   });
 
   // Lists workflows in a workspace directory

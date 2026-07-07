@@ -1,7 +1,7 @@
 import * as pty from "node-pty";
 import crypto from "crypto";
 import { Task } from "@orchestra/shared";
-import { getSystemStats } from "../utils/os.js";
+import { getSystemStats } from "../../utils/os.js";
 
 type Terminal = {
   id: string;

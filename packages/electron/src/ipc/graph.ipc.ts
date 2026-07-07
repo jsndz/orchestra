@@ -7,7 +7,7 @@ import {
   shortestPath,
   terminalNodes,
   unreachableNodes,
-} from "../services/graph.js";
+} from "../utils/graph.js";
 
 export function registerGraphIPC() {
   ipcMain.handle("graph:order", () => {
@@ -20,8 +20,9 @@ export function registerGraphIPC() {
   });
 
   ipcMain.handle("graph:cycle", () => {
-    const indices = detectCycle(dependencies, tasks);
-    return indices.map((i) => tasks[i].task);
+    const ids = detectCycle(dependencies, tasks);
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    return ids.map((id) => taskMap.get(id)?.task || "");
   });
 
   ipcMain.handle("graph:parallel", () => {
@@ -29,10 +30,14 @@ export function registerGraphIPC() {
   });
 
   ipcMain.handle("graph:terminal", () => {
-    return terminalNodes(dependencies, tasks).map((i) => tasks[i].task);
+    const ids = terminalNodes(dependencies, tasks);
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    return ids.map((id) => taskMap.get(id)?.task || "");
   });
 
   ipcMain.handle("graph:unreachable", () => {
-    return unreachableNodes(dependencies, tasks).map((i) => tasks[i].task);
+    const ids = unreachableNodes(dependencies, tasks);
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    return ids.map((id) => taskMap.get(id)?.task || "");
   });
 }
