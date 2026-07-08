@@ -4,6 +4,7 @@ import { TerminalService } from "./terminal.service.js";
 import { TaskLogger } from "../logger.js";
 import { workflowStore } from "../../store/index.js";
 import { Task, TaskState, GlobalExecutionState } from "@orchestra/shared";
+import { checkPort } from "../../utils/ports.js";
 
 const HOSTS = ["127.0.0.1", "::1", "localhost"];
 
@@ -43,6 +44,33 @@ export async function pollPort(port: number, timeout = 30000): Promise<void> {
   throw new Error(`Timeout waiting for port ${port}`);
 }
 
+export async function pollHttp(
+  url: string,
+  expectedStatus = 200,
+  timeout = 30000,
+): Promise<void> {
+  let targetUrl = url;
+  if (!/^https?:\/\//i.test(targetUrl)) {
+    targetUrl = `http://${targetUrl}`;
+  }
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    try {
+      const controller = new AbortController();
+      const abortId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(targetUrl, { signal: controller.signal });
+      clearTimeout(abortId);
+      if (res.status === expectedStatus) {
+        return;
+      }
+    } catch {
+      // Ignore connection errors/timeouts while server starts
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`Timeout waiting for HTTP URL ${targetUrl} to return status ${expectedStatus}`);
+}
+
 export class WorkflowRunner extends EventEmitter {
   private terminalService = new TerminalService();
   private taskLogger = new TaskLogger();
@@ -55,10 +83,19 @@ export class WorkflowRunner extends EventEmitter {
     return this.taskLogger;
   }
 
-  public updateTaskStatus(task: Task, state: TaskState, failureReason?: string) {
+  public updateTaskStatus(
+    task: Task,
+    state: TaskState,
+    failureReason?: string,
+  ) {
     workflowStore.updateTaskState(task.id, state, failureReason);
-    const resolvedFailureReason = failureReason !== undefined ? failureReason : task.failureReason;
-    this.emit("task:state", { id: task.id, state, failureReason: resolvedFailureReason });
+    const resolvedFailureReason =
+      failureReason !== undefined ? failureReason : task.failureReason;
+    this.emit("task:state", {
+      id: task.id,
+      state,
+      failureReason: resolvedFailureReason,
+    });
     this.syncGlobalState();
   }
 
@@ -112,10 +149,11 @@ export class WorkflowRunner extends EventEmitter {
 
       try {
         if (task.ready && task.ready.kind === "port" && task.ready.port) {
-          const { checkPort } = await import("../../utils/ports.js");
           const portInfo = await checkPort(task.ready.port);
           if (portInfo.inUse) {
-            const processDesc = portInfo.command ? `'${portInfo.command}' (PID: ${portInfo.pid})` : "an unknown process";
+            const processDesc = portInfo.command
+              ? `'${portInfo.command}' (PID: ${portInfo.pid})`
+              : "an unknown process";
             const errMsg = `Port ${task.ready.port} is already in use by ${processDesc}.`;
             this.updateTaskStatus(task, "failed", errMsg);
             throw new Error(errMsg);
@@ -134,20 +172,24 @@ export class WorkflowRunner extends EventEmitter {
               this.emit("terminal:data", { terminalId: id, data });
             }
 
-            this.taskLogger.processLogChunk(task, data, (line: string, rule?: any) => {
-              this.emit("task:log", {
-                taskId: task.id,
-                message: line,
-                ts: Date.now(),
-                ...(rule && {
-                  color: rule.color,
-                  ruleId: rule.id,
-                  label: rule.label,
-                }),
-              });
-            });
+            this.taskLogger.processLogChunk(
+              task,
+              data,
+              (line: string, rule?: any) => {
+                this.emit("task:log", {
+                  taskId: task.id,
+                  message: line,
+                  ts: Date.now(),
+                  ...(rule && {
+                    color: rule.color,
+                    ruleId: rule.id,
+                    label: rule.label,
+                  }),
+                });
+              },
+            );
           },
-          () => {} // Process exit handled via resolve/reject listeners below
+          () => {}, // Process exit handled via resolve/reject listeners below
         );
 
         this.updateTaskStatus(task, "starting");
@@ -156,7 +198,7 @@ export class WorkflowRunner extends EventEmitter {
           this.terminalService.injectSystemLog(
             terminalId,
             `\r\n\x1b[1;33m[Retrying task: attempt ${attempt} of ${maxAttempts}...]\x1b[0m\r\n`,
-            logForwarder
+            logForwarder,
           );
         }
 
@@ -167,7 +209,8 @@ export class WorkflowRunner extends EventEmitter {
           if (task.type === "service") {
             await this.waitForReadiness(task, terminalId);
           } else {
-            const exitCode = await this.terminalService.listenForExitCode(terminalId);
+            const exitCode =
+              await this.terminalService.listenForExitCode(terminalId);
             if (exitCode !== 0) {
               throw new Error(`Command failed with exit code ${exitCode}`);
             }
@@ -179,7 +222,9 @@ export class WorkflowRunner extends EventEmitter {
           const timeoutPromise = new Promise<void>((_, reject) => {
             timeoutId = setTimeout(() => {
               this.terminalService.kill(terminalId);
-              reject(new Error(`Timeout: Task exceeded limit of ${task.timeout}s`));
+              reject(
+                new Error(`Timeout: Task exceeded limit of ${task.timeout}s`),
+              );
             }, timeoutMs);
           });
 
@@ -188,10 +233,12 @@ export class WorkflowRunner extends EventEmitter {
           await executePromise();
         }
 
-        this.updateTaskStatus(task, task.type === "service" ? "ready" : "completed");
+        this.updateTaskStatus(
+          task,
+          task.type === "service" ? "ready" : "completed",
+        );
         if (timeoutId) clearTimeout(timeoutId);
         return;
-
       } catch (err: any) {
         if (timeoutId) clearTimeout(timeoutId);
         if (terminalId) this.terminalService.kill(terminalId);
@@ -203,7 +250,7 @@ export class WorkflowRunner extends EventEmitter {
           this.terminalService.injectSystemLog(
             terminalId,
             `\r\n\x1b[1;31m[Attempt ${attempt} failed: ${errorMessage}. Retrying in 1s...]\x1b[0m\r\n`,
-            logForwarder
+            logForwarder,
           );
           await new Promise((resolve) => setTimeout(resolve, 1000));
         } else {
@@ -214,7 +261,10 @@ export class WorkflowRunner extends EventEmitter {
     }
   }
 
-  private async waitForReadiness(task: Task, terminalId: string): Promise<void> {
+  private async waitForReadiness(
+    task: Task,
+    terminalId: string,
+  ): Promise<void> {
     if (task.state === "ready" || !task.ready) return;
 
     if (task.ready.kind === "port") {
@@ -222,7 +272,11 @@ export class WorkflowRunner extends EventEmitter {
         await pollPort(task.ready.port);
         this.updateTaskStatus(task, "ready");
       } catch (err) {
-        workflowStore.updateTaskState(task.id, task.state, `Port ${task.ready.port} not open after timeout`);
+        workflowStore.updateTaskState(
+          task.id,
+          task.state,
+          `Port ${task.ready.port} not open after timeout`,
+        );
         throw err;
       }
     } else if (task.ready.kind === "log") {
@@ -234,7 +288,24 @@ export class WorkflowRunner extends EventEmitter {
         );
         this.updateTaskStatus(task, "ready");
       } catch (err) {
-        workflowStore.updateTaskState(task.id, task.state, "Failed to detect readiness log message");
+        workflowStore.updateTaskState(
+          task.id,
+          task.state,
+          "Failed to detect readiness log message",
+        );
+        throw err;
+      }
+    } else if (task.ready.kind === "http") {
+      try {
+        const timeoutMs = (task.timeout && task.timeout > 0) ? task.timeout * 1000 : 30000;
+        await pollHttp(task.ready.url, task.ready.code || 200, timeoutMs);
+        this.updateTaskStatus(task, "ready");
+      } catch (err: any) {
+        workflowStore.updateTaskState(
+          task.id,
+          task.state,
+          err.message || "Failed to pass health check",
+        );
         throw err;
       }
     }
@@ -267,7 +338,8 @@ export class WorkflowRunner extends EventEmitter {
 
   public handleTerminalInput(terminalId: string, data: string) {
     const taskId = this.terminalService.getTaskIdByTerminalId(terminalId);
-    if (data === "\x03") { // Ctrl+C
+    if (data === "\x03") {
+      // Ctrl+C
       const task = workflowStore.getTasks().find((t) => t.id === taskId);
       if (task) {
         this.updateTaskStatus(task, "stopped", "Interrupted (Ctrl+C)");

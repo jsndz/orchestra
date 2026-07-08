@@ -12,6 +12,7 @@ import {
 } from "../services/parser.js";
 import { getSystemStats } from "../utils/os.js";
 import { executeWorkflow } from "../services/execution/index.js";
+import { checkPort, killProcess } from "../utils/ports.js";
 
 /**
  * Registers main process IPC handlers related to task lifecycle, imports/exports, and OS metrics.
@@ -235,13 +236,11 @@ export function registerTaskIPC() {
 
   // Checks if a port is in use and returns process info
   ipcMain.handle("port:check", async (_, port: number) => {
-    const { checkPort } = await import("../utils/ports.js");
     return checkPort(port);
   });
 
   // Kills a process by PID
   ipcMain.handle("port:kill", async (_, pid: number) => {
-    const { killProcess } = await import("../utils/ports.js");
     try {
       await killProcess(pid);
       return { ok: true };

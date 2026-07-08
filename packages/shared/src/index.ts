@@ -15,7 +15,8 @@ export type GlobalExecutionState = "idle" | "running" | "completed" | "failed";
 export type ReadyWhen =
   | { kind: "exit" }
   | { kind: "port"; port: number }
-  | { kind: "log"; match: string | RegExp; isRegex: boolean };
+  | { kind: "log"; match: string | RegExp; isRegex: boolean }
+  | { kind: "http"; url: string; code?: number };
 
 export type LogRule = {
   id: string;

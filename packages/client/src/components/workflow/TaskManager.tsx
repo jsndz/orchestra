@@ -51,10 +51,12 @@ export default function WorkflowControls({
   const [taskEnv, setTaskEnv] = useState("");
 
   // ReadyWhen State
-  const [readyKind, setReadyKind] = useState<"exit" | "port" | "log">("exit");
+  const [readyKind, setReadyKind] = useState<"exit" | "port" | "log" | "http">("exit");
   const [readyPort, setReadyPort] = useState("");
   const [readyLog, setReadyLog] = useState("");
   const [readyIsRegex, setReadyIsRegex] = useState(false);
+  const [readyHttpUrl, setReadyHttpUrl] = useState("");
+  const [readyHttpCode, setReadyHttpCode] = useState("200");
 
   // --- Dependency Form State ---
   const [depFrom, setDepFrom] = useState("");
@@ -96,6 +98,8 @@ export default function WorkflowControls({
         ready = { kind: "port", port: Number(readyPort) || 0 };
       } else if (readyKind === "log") {
         ready = { kind: "log", match: readyLog, isRegex: readyIsRegex };
+      } else if (readyKind === "http") {
+        ready = { kind: "http", url: readyHttpUrl, code: Number(readyHttpCode) || 200 };
       } else {
         ready = { kind: "exit" };
       }
@@ -407,8 +411,37 @@ export default function WorkflowControls({
                         <SelectItem value="exit">Wait for Exit</SelectItem>
                         <SelectItem value="port">Listen on Port</SelectItem>
                         <SelectItem value="log">Parse Log Stream</SelectItem>
+                        <SelectItem value="http">HTTP Health Check</SelectItem>
                       </SelectContent>
                     </Select>
+
+                    {readyKind === "http" && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-mono text-muted-foreground w-12 shrink-0">
+                            URL:
+                          </span>
+                          <Input
+                            className="flex-1 bg-card border-border/40 rounded-none h-8 font-mono text-xs"
+                            value={readyHttpUrl}
+                            onChange={(e) => setReadyHttpUrl(e.target.value)}
+                            placeholder="http://localhost:3000/health"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-mono text-muted-foreground w-12 shrink-0">
+                            STATUS:
+                          </span>
+                          <Input
+                            type="number"
+                            className="flex-1 bg-card border-border/40 rounded-none h-8 font-mono text-xs"
+                            value={readyHttpCode}
+                            onChange={(e) => setReadyHttpCode(e.target.value)}
+                            placeholder="200"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {readyKind === "port" && (
                       <div className="flex items-center gap-3">

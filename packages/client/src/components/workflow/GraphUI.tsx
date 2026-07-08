@@ -112,9 +112,11 @@ function DependencyGraphInner({
   const [folderName, setFolderName] = useState("");
   const [command, setCommand] = useState("");
   const [taskType, setTaskType] = useState<"job" | "service">("job");
-  const [readyKind, setReadyKind] = useState<"exit" | "port" | "log">("exit");
+  const [readyKind, setReadyKind] = useState<"exit" | "port" | "log" | "http">("exit");
   const [readyPort, setReadyPort] = useState<number>(3000);
   const [readyLogMatch, setReadyLogMatch] = useState("");
+  const [readyHttpUrl, setReadyHttpUrl] = useState("");
+  const [readyHttpCode, setReadyHttpCode] = useState<number>(200);
   const [levels, setLevels] = useState<Task[][]>([]);
   const [logMatchType, setLogMatchType] = useState<"text" | "regex">("text");
   const [retries, setRetries] = useState<number | string>("");
@@ -127,9 +129,11 @@ function DependencyGraphInner({
   const [createFolderName, setCreateFolderName] = useState("");
   const [createCommand, setCreateCommand] = useState("");
   const [createTaskType, setCreateTaskType] = useState<"job" | "service">("job");
-  const [createReadyKind, setCreateReadyKind] = useState<"exit" | "port" | "log">("exit");
+  const [createReadyKind, setCreateReadyKind] = useState<"exit" | "port" | "log" | "http">("exit");
   const [createReadyPort, setCreateReadyPort] = useState<number>(3000);
   const [createReadyLogMatch, setCreateReadyLogMatch] = useState("");
+  const [createReadyHttpUrl, setCreateReadyHttpUrl] = useState("");
+  const [createReadyHttpCode, setCreateReadyHttpCode] = useState<number>(200);
   const [createLogMatchType, setCreateLogMatchType] = useState<"text" | "regex">("text");
   const [createRetries, setCreateRetries] = useState<number | string>("");
   const [createTimeoutVal, setCreateTimeoutVal] = useState<number | string>("");
@@ -163,6 +167,11 @@ function DependencyGraphInner({
         setReadyLogMatch(String(editingTask.ready.match));
         setLogMatchType(editingTask.ready.isRegex ? "regex" : "text");
       }
+
+      if (editingTask.ready.kind === "http") {
+        setReadyHttpUrl(editingTask.ready.url);
+        setReadyHttpCode(editingTask.ready.code ?? 200);
+      }
     } else {
       setReadyKind("exit");
     }
@@ -178,6 +187,8 @@ function DependencyGraphInner({
       setCreateReadyPort(3000);
       setCreateReadyLogMatch("");
       setCreateLogMatchType("text");
+      setCreateReadyHttpUrl("");
+      setCreateReadyHttpCode(200);
       setCreateRetries("");
       setCreateTimeoutVal("");
       setCreateEnvStr("");
@@ -373,6 +384,10 @@ function DependencyGraphInner({
           isRegex: logMatchType === "regex",
         };
       }
+
+      if (readyKind === "http") {
+        ready = { kind: "http", url: readyHttpUrl, code: readyHttpCode || 200 };
+      }
     }
 
     const logRules =
@@ -431,6 +446,8 @@ function DependencyGraphInner({
               : createReadyLogMatch,
           isRegex: createLogMatchType === "regex",
         };
+      } else if (createReadyKind === "http") {
+        ready = { kind: "http", url: createReadyHttpUrl, code: createReadyHttpCode || 200 };
       } else {
         ready = { kind: "exit" };
       }
@@ -796,8 +813,37 @@ function DependencyGraphInner({
                           <SelectItem value="exit">Wait for Exit</SelectItem>
                           <SelectItem value="port">Listen on Port</SelectItem>
                           <SelectItem value="log">Parse Log Stream</SelectItem>
+                          <SelectItem value="http">HTTP Health Check</SelectItem>
                         </SelectContent>
                       </Select>
+
+                      {createReadyKind === "http" && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-mono text-muted-foreground w-12 shrink-0">
+                              URL:
+                            </span>
+                            <Input
+                              className="flex-1 bg-card border-border/40 rounded-none h-8 font-mono text-xs"
+                              value={createReadyHttpUrl}
+                              onChange={(e) => setCreateReadyHttpUrl(e.target.value)}
+                              placeholder="http://localhost:3000/health"
+                            />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-mono text-muted-foreground w-12 shrink-0">
+                              STATUS:
+                            </span>
+                            <Input
+                              type="number"
+                              className="flex-1 bg-card border-border/40 rounded-none h-8 font-mono text-xs"
+                              value={createReadyHttpCode}
+                              onChange={(e) => setCreateReadyHttpCode(Number(e.target.value) || 200)}
+                              placeholder="200"
+                            />
+                          </div>
+                        </div>
+                      )}
 
                       {createReadyKind === "port" && (
                         <div className="flex items-center gap-3">
@@ -1189,8 +1235,37 @@ function DependencyGraphInner({
                           <SelectItem value="exit">Wait for Exit</SelectItem>
                           <SelectItem value="port">Listen on Port</SelectItem>
                           <SelectItem value="log">Parse Log Stream</SelectItem>
+                          <SelectItem value="http">HTTP Health Check</SelectItem>
                         </SelectContent>
                       </Select>
+
+                      {readyKind === "http" && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-mono text-muted-foreground w-12 shrink-0">
+                              URL:
+                            </span>
+                            <Input
+                              className="flex-1 bg-card border-border/40 rounded-none h-8 font-mono text-xs"
+                              value={readyHttpUrl}
+                              onChange={(e) => setReadyHttpUrl(e.target.value)}
+                              placeholder="http://localhost:3000/health"
+                            />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-mono text-muted-foreground w-12 shrink-0">
+                              STATUS:
+                            </span>
+                            <Input
+                              type="number"
+                              className="flex-1 bg-card border-border/40 rounded-none h-8 font-mono text-xs"
+                              value={readyHttpCode}
+                              onChange={(e) => setReadyHttpCode(Number(e.target.value) || 200)}
+                              placeholder="200"
+                            />
+                          </div>
+                        </div>
+                      )}
 
                       {readyKind === "port" && (
                         <div className="flex items-center gap-3">

@@ -15,10 +15,12 @@ interface DagTask {
   command: string;
   type: "job" | "service";
   ready?: {
-    kind: "exit" | "port" | "log";
+    kind: "exit" | "port" | "log" | "http";
     port?: number;
     match?: string;
     isRegex?: boolean;
+    url?: string;
+    code?: number;
   };
   dependsOn?: string[];
   logRules?: DagLogRule[];
@@ -54,6 +56,8 @@ function serializeReady(ready?: Task["ready"]): DagTask["ready"] {
         match: typeof ready.match === "string" ? ready.match : ready.match.source,
         isRegex: ready.isRegex,
       };
+    case "http":
+      return { kind: "http", url: ready.url, code: ready.code };
     default:
       return { kind: "exit" };
   }
@@ -71,6 +75,8 @@ function deserializeReady(ready?: DagTask["ready"]): Task["ready"] {
         match: ready.match ?? "",
         isRegex: !!ready.isRegex,
       };
+    case "http":
+      return { kind: "http", url: ready.url ?? "", code: ready.code };
     default:
       return { kind: "exit" };
   }
