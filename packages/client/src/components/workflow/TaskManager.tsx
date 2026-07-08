@@ -288,7 +288,7 @@ export default function WorkflowControls({
                     placeholder="KEY=VALUE&#10;PORT=8080"
                   />
                   <span className="text-[9px] text-muted-foreground block font-mono">
-                    Enter one env variable per line. Format: KEY=VALUE
+                    Enter one env variable per line. Format: KEY=VALUE (Note: values here override `.env` files).
                   </span>
                 </div>
               </section>

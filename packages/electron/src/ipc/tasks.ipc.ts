@@ -232,4 +232,22 @@ export function registerTaskIPC() {
       return null;
     }
   });
+
+  // Checks if a port is in use and returns process info
+  ipcMain.handle("port:check", async (_, port: number) => {
+    const { checkPort } = await import("../utils/ports.js");
+    return checkPort(port);
+  });
+
+  // Kills a process by PID
+  ipcMain.handle("port:kill", async (_, pid: number) => {
+    const { killProcess } = await import("../utils/ports.js");
+    try {
+      await killProcess(pid);
+      return { ok: true };
+    } catch (e: any) {
+      console.error(`Failed to kill process ${pid}:`, e);
+      return { ok: false, error: e.message };
+    }
+  });
 }

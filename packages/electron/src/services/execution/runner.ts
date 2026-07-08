@@ -57,7 +57,8 @@ export class WorkflowRunner extends EventEmitter {
 
   public updateTaskStatus(task: Task, state: TaskState, failureReason?: string) {
     workflowStore.updateTaskState(task.id, state, failureReason);
-    this.emit("task:state", { id: task.id, state });
+    const resolvedFailureReason = failureReason !== undefined ? failureReason : task.failureReason;
+    this.emit("task:state", { id: task.id, state, failureReason: resolvedFailureReason });
     this.syncGlobalState();
   }
 
@@ -110,6 +111,17 @@ export class WorkflowRunner extends EventEmitter {
       };
 
       try {
+        if (task.ready && task.ready.kind === "port" && task.ready.port) {
+          const { checkPort } = await import("../../utils/ports.js");
+          const portInfo = await checkPort(task.ready.port);
+          if (portInfo.inUse) {
+            const processDesc = portInfo.command ? `'${portInfo.command}' (PID: ${portInfo.pid})` : "an unknown process";
+            const errMsg = `Port ${task.ready.port} is already in use by ${processDesc}.`;
+            this.updateTaskStatus(task, "failed", errMsg);
+            throw new Error(errMsg);
+          }
+        }
+
         terminalId = this.terminalService.create(
           task.folder,
           task,

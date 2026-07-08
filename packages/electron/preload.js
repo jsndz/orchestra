@@ -85,4 +85,6 @@ contextBridge.exposeInMainWorld("api", {
   loadWorkspaceWorkflow: (dirPath, name) => ipcRenderer.invoke("workspace:load", { dirPath, name }),
   saveWorkspaceWorkflow: (dirPath, name) => ipcRenderer.invoke("workspace:save", { dirPath, name }),
   importEnv: () => ipcRenderer.invoke("env:import"),
+  checkPort: (port) => ipcRenderer.invoke("port:check", port),
+  killProcess: (pid) => ipcRenderer.invoke("port:kill", pid),
 });

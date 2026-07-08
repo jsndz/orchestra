@@ -67,6 +67,10 @@ declare global {
 
       // ENV
       importEnv: () => Promise<string | null>;
+
+      // PORT
+      checkPort: (port: number) => Promise<{ inUse: boolean; pid?: number; command?: string }>;
+      killProcess: (pid: number) => Promise<{ ok: boolean; error?: string }>;
     };
   }
 }

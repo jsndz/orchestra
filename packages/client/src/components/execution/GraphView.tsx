@@ -34,17 +34,51 @@ export default function LogPage() {
     }
   }, [data]);
 
+  const [isKilling, setIsKilling] = useState(false);
+  const [killResult, setKillResult] = useState<string | null>(null);
+
   useEffect(() => {
-    const handler = (payload: { id: string; state: string }) => {
+    setKillResult(null);
+  }, [selectedTaskId]);
+
+  const handleKillProcess = async (pid: number) => {
+    setIsKilling(true);
+    setKillResult(null);
+    try {
+      const res = await window.api.killProcess(pid);
+      if (res.ok) {
+        setKillResult("Process killed successfully. You can now restart execution.");
+        setLocalTasks((prev) =>
+          prev.map((t) =>
+            t.id === selectedTaskId
+              ? { ...t, state: "idle", failureReason: undefined }
+              : t
+          )
+        );
+      } else {
+        setKillResult(`Failed to kill process: ${res.error}`);
+      }
+    } catch (e: any) {
+      setKillResult(`Error: ${e.message}`);
+    } finally {
+      setIsKilling(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = (payload: { id: string; state: string; failureReason?: string }) => {
       setLocalTasks((prev) =>
         prev.map((t) =>
-          t.id === payload.id ? { ...t, state: payload.state } : t,
+          t.id === payload.id
+            ? { ...t, state: payload.state, failureReason: payload.failureReason }
+            : t,
         ),
       );
     };
 
-    window.api.onTaskStateChange(handler);
-  }, []);
+    const unsubscribe = window.api.onTaskStateChange(handler);
+    return () => unsubscribe();
+  }, [selectedTaskId]);
 
   useEffect(() => {
     const cleanup = window.api.onTaskLog((log) => {
@@ -258,6 +292,38 @@ export default function LogPage() {
 
               {/* LOG VIEWER SECTION */}
               <div className="flex-1 flex flex-col bg-black">
+                {/* PORT CONFLICT WARNING */}
+                {selectedTask.state === "failed" && selectedTask.failureReason && (
+                  <div className="p-4 bg-red-950/40 border-b border-red-500/30 font-mono text-xs text-red-400 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <span className="text-red-500 font-bold shrink-0">[ERROR]</span>
+                      <span>{selectedTask.failureReason}</span>
+                    </div>
+                    {(() => {
+                      const match = selectedTask.failureReason.match(/PID:?\s*(\d+)/i);
+                      const pid = match ? parseInt(match[1], 10) : null;
+                      if (!pid) return null;
+                      return (
+                        <div className="pt-2 flex flex-col gap-2">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            disabled={isKilling}
+                            className="rounded-none bg-red-900/60 hover:bg-red-800 border border-red-500/40 text-[10px] font-mono tracking-wider uppercase h-7 w-fit cursor-pointer"
+                            onClick={() => handleKillProcess(pid)}
+                          >
+                            {isKilling ? "KILLING..." : `KILL OWNER PROCESS (PID: ${pid})`}
+                          </Button>
+                          {killResult && (
+                            <div className="text-[10px] text-zinc-400 italic">
+                              // {killResult}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
          
                 <div className="flex-1 p-0 overflow-hidden">
                   <LogViewer logs={logs} />
