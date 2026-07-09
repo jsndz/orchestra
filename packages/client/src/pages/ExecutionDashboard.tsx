@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { TerminalPage } from "@/components/execution/TerminalView";
 import LogPage from "@/components/execution/GraphView";
+import UnifiedLogView from "@/components/execution/UnifiedLogView";
 import { useSystemStats } from "@/hooks/useTasks";
 import ExecutionNavbar from "@/components/layout/ExecutionNavbar";
 import { downloadYaml, execute, stopExecution } from "@/api/tasks";
 import { useWorkflowStore } from "@/store/useAppStore";
+import { useLogStore } from "@/store/useLogStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-type ViewMode = "terminal" | "graph";
+type ViewMode = "terminal" | "graph" | "unified";
 
 export default function ExecutionDashboard() {
   const [view, setView] = useState<ViewMode>("terminal");
@@ -46,7 +48,18 @@ export default function ExecutionDashboard() {
   }, [showYamlModal, workflowName]);
 
   useEffect(() => {
+    // Clear logs on fresh load/restart of execution dashboard
+    useLogStore.getState().clearLogs();
     execute();
+
+    const addLog = useLogStore.getState().addLog;
+    const unsubscribe = window.api.onTaskLog((log) => {
+      addLog(log);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
   const handleStop = async () => {
     if (status !== "idle") return;
@@ -82,6 +95,10 @@ export default function ExecutionDashboard() {
           <TerminalPage />
         </div>
 
+        <div className={view === "unified" ? "h-full block" : "hidden"}>
+          <UnifiedLogView />
+        </div>
+
         <div className={view === "graph" ? "h-full block" : "hidden"}>
           <LogPage />
         </div>
@@ -102,6 +119,24 @@ export default function ExecutionDashboard() {
       `}
           >
             TERMINAL
+          </Button>
+
+          {/* SEPARATOR (Visual "Hardware" Notch) */}
+          <div className="w-[1px] bg-border/20 my-2" />
+
+          {/* UNIFIED LOGS TOGGLE */}
+          <Button
+            onClick={() => setView("unified")}
+            className={`
+        px-6 py-1 h-9 rounded-none font-mono text-[10px] tracking-[0.2em] uppercase transition-none
+        ${
+          view === "unified"
+            ? "bg-accent text-background font-bold shadow-[0_0_10px_rgba(225,244,243,0.3)]"
+            : "bg-transparent text-muted-foreground hover:bg-card hover:text-foreground border border-transparent"
+        }
+      `}
+          >
+            UNIFIED LOGS
           </Button>
 
           {/* SEPARATOR (Visual "Hardware" Notch) */}

@@ -119,27 +119,28 @@ export default function ExecutionNavbar({
 
       {/* ACTIONS */}
       <div className="flex gap-2">
-        {(globalState === "failed" ||
-          globalState === "completed" ||
-          globalState === "stopped") && (
-          <Button
-            variant="outline"
-            className="rounded-none border-border/40 font-mono text-[10px] tracking-widest uppercase hover:bg-white hover:text-black h-9"
-            onClick={() => {
-              removeAllTerminals();
-              onStop();
-              navigate("/tasks");
-            }}
-          >
-            BACK TO EDIT
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          className="rounded-none border-border/40 font-mono text-[10px] tracking-widest uppercase hover:bg-white hover:text-black h-9 cursor-pointer"
+          onClick={() => {
+            removeAllTerminals();
+            onStop();
+            navigate("/tasks");
+          }}
+        >
+          BACK TO EDIT
+        </Button>
 
         <Button
           onClick={onRestart}
           variant="outline"
           disabled={status === "loading"}
-          className="rounded-none border-border/40 font-mono text-[10px] tracking-widest uppercase hover:bg-white hover:text-black h-9"
+          className={`rounded-none border font-mono text-[10px] tracking-widest uppercase h-9 transition-all
+            ${
+              status === "loading"
+                ? "bg-transparent text-muted-foreground/30 border-border/10 cursor-not-allowed"
+                : "border-border/40 hover:bg-white hover:text-black cursor-pointer"
+            }`}
         >
           RESTART EXEC
         </Button>
@@ -149,12 +150,24 @@ export default function ExecutionNavbar({
             setGlobalState("stopped");
             onStop();
           }}
-          disabled={status === "loading" || status === "stopped"}
-          className={`rounded-none font-mono text-[10px] tracking-widest uppercase h-9 transition-all
+          disabled={
+            status === "loading" ||
+            status === "stopped" ||
+            globalState === "completed" ||
+            globalState === "failed" ||
+            globalState === "idle" ||
+            globalState === "stopped"
+          }
+          className={`rounded-none font-mono text-[10px] tracking-widest uppercase h-9 transition-all border
             ${
-              status === "stopped"
-                ? "bg-muted text-muted-foreground border border-border/20"
-                : "bg-red-950/20 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+              status === "loading" ||
+              status === "stopped" ||
+              globalState === "completed" ||
+              globalState === "failed" ||
+              globalState === "idle" ||
+              globalState === "stopped"
+                ? "bg-transparent text-muted-foreground/30 border-border/10 cursor-not-allowed"
+                : "bg-red-950/20 border-red-500 text-red-500 hover:bg-red-500 hover:text-white cursor-pointer"
             }`}
         >
           {getButtonText()}
@@ -162,7 +175,7 @@ export default function ExecutionNavbar({
 
         <Button
           onClick={onCreateYaml}
-          className="rounded-none bg-accent text-background font-mono text-[10px] font-bold tracking-widest uppercase h-9 hover:bg-accent/80 glow-accent border-none px-6"
+          className="rounded-none bg-accent text-background font-mono text-[10px] font-bold tracking-widest uppercase h-9 hover:bg-accent/80 glow-accent border-none px-6 cursor-pointer"
         >
           GEN YAML
         </Button>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Plus,
   Link2,
@@ -39,6 +39,11 @@ export default function WorkflowControls({
   const addDep = useAddDependency();
 
   const [mode, setMode] = useState<"none" | "add" | "link">("none");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setErrorMsg(null);
+  }, [mode]);
 
   // --- Task Form State ---
   const [taskName, setTaskName] = useState("");
@@ -88,17 +93,48 @@ export default function WorkflowControls({
   };
 
   const handleAddTask = () => {
-    if (!taskName.trim()) return;
+    setErrorMsg(null);
+
+    // Client-side validations
+    if (!taskName.trim()) {
+      setErrorMsg("Step Name is required.");
+      return;
+    }
+    if (!taskFolder.trim()) {
+      setErrorMsg("Working Directory is required.");
+      return;
+    }
+    if (!taskCommand.trim()) {
+      setErrorMsg("Execution Command is required.");
+      return;
+    }
+    if (!taskType) {
+      setErrorMsg("Task Type is required.");
+      return;
+    }
 
     let ready: ReadyWhen;
     if (taskType === "job") {
       ready = { kind: "exit" };
     } else {
       if (readyKind === "port") {
-        ready = { kind: "port", port: Number(readyPort) || 0 };
+        const portNum = Number(readyPort);
+        if (!readyPort || isNaN(portNum) || portNum <= 0) {
+          setErrorMsg("A valid port number is required for Port readiness checks.");
+          return;
+        }
+        ready = { kind: "port", port: portNum };
       } else if (readyKind === "log") {
+        if (!readyLog.trim()) {
+          setErrorMsg("A log pattern string is required for Log readiness checks.");
+          return;
+        }
         ready = { kind: "log", match: readyLog, isRegex: readyIsRegex };
       } else if (readyKind === "http") {
+        if (!readyHttpUrl.trim()) {
+          setErrorMsg("A target URL is required for HTTP readiness checks.");
+          return;
+        }
         ready = { kind: "http", url: readyHttpUrl, code: Number(readyHttpCode) || 200 };
       } else {
         ready = { kind: "exit" };
@@ -137,7 +173,11 @@ export default function WorkflowControls({
           setTaskTimeout("");
           setTaskEnv("");
           setMode("none");
+          setErrorMsg(null);
         },
+        onError: (err: any) => {
+          setErrorMsg(err.message || "An error occurred in the backend while saving.");
+        }
       },
     );
   };
@@ -481,6 +521,13 @@ export default function WorkflowControls({
                 </section>
               )}
             </div>
+
+            {errorMsg && (
+              <div className="px-6 py-3 bg-red-950/30 border-t border-red-500/25 font-mono text-[10px] text-red-400 flex items-start gap-2 select-text">
+                <span className="text-red-500 font-bold">[VALIDATION_ERROR]::</span>
+                <span>{errorMsg}</span>
+              </div>
+            )}
 
             <div className="p-1 bg-border/20 border-t border-border/20">
               <Button

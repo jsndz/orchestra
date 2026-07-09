@@ -125,6 +125,11 @@ function DependencyGraphInner({
 
   // --- Create Mode Form State ---
   const [addingTaskPosition, setAddingTaskPosition] = useState<{ x: number; y: number } | null>(null);
+  const [createErrorMsg, setCreateErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCreateErrorMsg(null);
+  }, [addingTaskPosition]);
   const [createTaskName, setCreateTaskName] = useState("");
   const [createFolderName, setCreateFolderName] = useState("");
   const [createCommand, setCreateCommand] = useState("");
@@ -429,15 +434,43 @@ function DependencyGraphInner({
   };
 
   const handleCreateTask = () => {
-    if (!createTaskName.trim() || !addingTaskPosition) return;
+    setCreateErrorMsg(null);
+    if (!addingTaskPosition) return;
+
+    // Client-side validation checks
+    if (!createTaskName.trim()) {
+      setCreateErrorMsg("Step Name is required.");
+      return;
+    }
+    if (!createFolderName.trim()) {
+      setCreateErrorMsg("Working Directory is required.");
+      return;
+    }
+    if (!createCommand.trim()) {
+      setCreateErrorMsg("Execution Command is required.");
+      return;
+    }
+    if (!createTaskType) {
+      setCreateErrorMsg("Task Type is required.");
+      return;
+    }
 
     let ready: ReadyWhen;
     if (createTaskType === "job") {
       ready = { kind: "exit" };
     } else {
       if (createReadyKind === "port") {
-        ready = { kind: "port", port: createReadyPort };
+        const portNum = Number(createReadyPort);
+        if (!createReadyPort || isNaN(portNum) || portNum <= 0) {
+          setCreateErrorMsg("A valid port number is required for Port readiness checks.");
+          return;
+        }
+        ready = { kind: "port", port: portNum };
       } else if (createReadyKind === "log") {
+        if (!createReadyLogMatch.trim()) {
+          setCreateErrorMsg("A log pattern string is required for Log readiness checks.");
+          return;
+        }
         ready = {
           kind: "log",
           match:
@@ -447,6 +480,10 @@ function DependencyGraphInner({
           isRegex: createLogMatchType === "regex",
         };
       } else if (createReadyKind === "http") {
+        if (!createReadyHttpUrl.trim()) {
+          setCreateErrorMsg("A target URL is required for HTTP readiness checks.");
+          return;
+        }
         ready = { kind: "http", url: createReadyHttpUrl, code: createReadyHttpCode || 200 };
       } else {
         ready = { kind: "exit" };
@@ -480,7 +517,11 @@ function DependencyGraphInner({
       {
         onSuccess: () => {
           setAddingTaskPosition(null);
+          setCreateErrorMsg(null);
         },
+        onError: (err: any) => {
+          setCreateErrorMsg(err.message || "An error occurred in the backend while saving.");
+        }
       }
     );
   };
@@ -890,6 +931,13 @@ function DependencyGraphInner({
               </div>
             </div>
           </ScrollArea>
+
+          {createErrorMsg && (
+            <div className="px-6 py-3 bg-red-950/30 border-t border-red-500/25 font-mono text-[10px] text-red-400 flex items-start gap-2 select-text">
+              <span className="text-red-500 font-bold">[VALIDATION_ERROR]::</span>
+              <span>{createErrorMsg}</span>
+            </div>
+          )}
 
           {/* ACTIONS */}
           <div className="grid grid-cols-2 gap-px bg-border/20 border-t border-border/20">

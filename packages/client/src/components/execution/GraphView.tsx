@@ -9,6 +9,7 @@ import {
   Terminal as TerminalIcon,
   Search,
 } from "lucide-react";
+import { useLogStore } from "@/store/useLogStore";
 import { ExecGraph } from "./ExecGraph";
 import LogViewer, { LogEntry } from "./LogView";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import { Button } from "@/components/ui/button";
 export default function LogPage() {
   const { data } = useTasks();
   const { data: systemStats } = useSystemStats();
-  const [logsMap, setLogsMap] = useState<Record<string, LogEntry[]>>({});
+  const logsMap = useLogStore((s) => s.logsMap);
   const navigate = useNavigate();
 
   const [status, setStatus] = useState<"idle" | "loading" | "stopped">("idle");
@@ -80,24 +81,7 @@ export default function LogPage() {
     return () => unsubscribe();
   }, [selectedTaskId]);
 
-  useEffect(() => {
-    const cleanup = window.api.onTaskLog((log) => {
-      setLogsMap((prev) => {
-        const taskLogs = prev[log.taskId] || [];
-        const newEntry: LogEntry = {
-          message: log.message,
-          color: log.color,
-          label: log.label,
-        };
-        return {
-          ...prev,
-          [log.taskId]: [...taskLogs, newEntry].slice(-1000),
-        };
-      });
-    });
 
-    return cleanup;
-  }, []);
 
   const handleStop = async () => {
     if (status !== "idle") return;
