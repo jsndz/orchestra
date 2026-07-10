@@ -7,8 +7,10 @@ import ExecutionNavbar from "@/components/layout/ExecutionNavbar";
 import { downloadYaml, execute, stopExecution } from "@/api/tasks";
 import { useWorkflowStore } from "@/store/useAppStore";
 import { useLogStore } from "@/store/useLogStore";
+import { useResourceStore } from "@/store/useResourceStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Cpu, Database, Clock, Laptop } from "lucide-react";
 
 type ViewMode = "terminal" | "graph" | "unified";
 
@@ -52,13 +54,23 @@ export default function ExecutionDashboard() {
     useLogStore.getState().clearLogs();
     execute();
 
+    // Start native task process resources stream
+    window.api.startTaskResourcesStream();
+
     const addLog = useLogStore.getState().addLog;
     const unsubscribe = window.api.onTaskLog((log) => {
       addLog(log);
     });
 
+    const unsubscribeResources = window.api.onTaskResourcesUpdate((data) => {
+      useResourceStore.getState().setResources(data);
+    });
+
     return () => {
       unsubscribe();
+      unsubscribeResources();
+      window.api.stopTaskResourcesStream();
+      useResourceStore.getState().clearResources();
     };
   }, []);
   const handleStop = async () => {
@@ -183,32 +195,99 @@ export default function ExecutionDashboard() {
           </div>
         </div>
       )}
-      <footer className="w-full h-8 bg-background border-t px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0">
+      <footer className="w-full h-10 bg-card/60 backdrop-blur-md border-t border-border/40 px-6 flex items-center justify-between text-[11px] font-mono text-muted-foreground shrink-0 select-none">
         {systemStats ? (
           <>
-            <div className="flex items-center gap-4">
-              <span>CPU: {systemStats.cpuCores} cores</span>
-              <span>
-                Load:{" "}
-                {systemStats.loadAvg
-                  .map((l: number) => l.toFixed(2))
-                  .join(", ")}
-              </span>
+            {/* LEFT: CPU INFO */}
+            <div className="flex items-center gap-5">
+              <div className="flex items-center gap-2">
+                <Cpu size={13} className="text-accent" />
+                <span className="text-foreground font-semibold max-w-[180px] truncate" title={systemStats.cpuModel}>
+                  {systemStats.cpuModel}
+                </span>
+                <span className="text-[10px] text-muted-foreground/60">({systemStats.cpuCores} Cores)</span>
+              </div>
+              <div className="h-3 w-[1px] bg-border/40" />
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground/50 uppercase tracking-wider text-[9px]">Load:</span>
+                <div className="flex gap-1.5">
+                  {systemStats.loadAvg.map((load: number, idx: number) => {
+                    const thresholdColor = load > systemStats.cpuCores ? "text-red-400 font-bold animate-pulse" : "text-foreground";
+                    return (
+                      <span key={idx} className={`px-1.5 py-0.5 bg-black/30 border border-border/10 rounded-sm text-[10px] ${thresholdColor}`}>
+                        {load.toFixed(2)}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <span>
-                Memory:{" "}
-                {((systemStats.usedMem / systemStats.totalMem) * 100).toFixed(
-                  1,
-                )}
-                % used
-              </span>
-              <span>Platform: {systemStats.platform}</span>
+            {/* RIGHT: MEMORY, UPTIME, PLATFORM */}
+            <div className="flex items-center gap-5">
+              {/* UPTIME */}
+              {systemStats.uptime !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  <Clock size={13} className="text-muted-foreground/60" />
+                  <span className="text-muted-foreground/50 uppercase tracking-wider text-[9px]">Uptime:</span>
+                  <span className="text-foreground font-semibold">
+                    {(() => {
+                      const sec = systemStats.uptime;
+                      const h = Math.floor(sec / 3600);
+                      const m = Math.floor((sec % 3600) / 60);
+                      return h > 0 ? `${h}h ${m}m` : `${m}m`;
+                    })()}
+                  </span>
+                </div>
+              )}
+              
+              <div className="h-3 w-[1px] bg-border/40" />
+
+              {/* MEMORY */}
+              <div className="flex items-center gap-3">
+                <Database size={13} className="text-accent" />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground/50 uppercase tracking-wider text-[9px]">Memory:</span>
+                  <span className="text-foreground font-semibold">
+                    {(systemStats.usedMem / (1024 * 1024 * 1024)).toFixed(1)} GB
+                  </span>
+                  <span className="text-muted-foreground/60">/</span>
+                  <span className="text-muted-foreground/60">
+                    {(systemStats.totalMem / (1024 * 1024 * 1024)).toFixed(1)} GB
+                  </span>
+                </div>
+                {/* Custom mini progress bar */}
+                <div className="w-16 h-1.5 bg-black/40 border border-border/20 rounded-none overflow-hidden relative">
+                  {(() => {
+                    const ratio = systemStats.usedMem / systemStats.totalMem;
+                    const percent = Math.min(100, Math.max(0, ratio * 100));
+                    const isHigh = percent > 85;
+                    const barColor = isHigh ? "bg-red-500" : "bg-accent";
+                    return (
+                      <div 
+                        className={`h-full ${barColor} transition-all duration-500`}
+                        style={{ width: `${percent}%` }}
+                      />
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <div className="h-3 w-[1px] bg-border/40" />
+
+              {/* PLATFORM */}
+              <div className="flex items-center gap-2">
+                <Laptop size={13} className="text-muted-foreground/60" />
+                <span className="text-muted-foreground/50 uppercase tracking-wider text-[9px]">OS:</span>
+                <span className="text-foreground font-semibold uppercase">{systemStats.platform}</span>
+              </div>
             </div>
           </>
         ) : (
-          <span>Loading system stats...</span>
+          <div className="flex items-center gap-2 w-full justify-center text-muted-foreground/60">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
+            <span>Establishing native OS stats stream...</span>
+          </div>
         )}
       </footer>
     </div>

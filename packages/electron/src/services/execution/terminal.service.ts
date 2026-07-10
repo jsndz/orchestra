@@ -168,6 +168,20 @@ export class TerminalService {
   }
 
   /**
+   * Gets all active terminal processes with their corresponding taskIds and PIDs.
+   */
+  public getActiveProcesses(): { taskId: string; pid: number }[] {
+    const list: { taskId: string; pid: number }[] = [];
+    for (const [termId, terminal] of this.terminals.entries()) {
+      const taskId = this.terminalToTask.get(termId);
+      if (taskId) {
+        list.push({ taskId, pid: terminal.process.pid });
+      }
+    }
+    return list;
+  }
+
+  /**
    * Marks a terminal ready to receive and flushes its history buffer to the client.
    */
   public setReady(id: string, onDataCallback: (id: string, data: string) => void) {

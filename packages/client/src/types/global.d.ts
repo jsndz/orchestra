@@ -52,6 +52,12 @@ declare global {
 
       // SYSTEM
       getSystemStats: () => Promise<any>;
+      startSystemStatsStream: () => Promise<any>;
+      stopSystemStatsStream: () => Promise<any>;
+      onSystemStatsUpdate: (cb: (data: any) => void) => () => void;
+      startTaskResourcesStream: () => Promise<any>;
+      stopTaskResourcesStream: () => Promise<any>;
+      onTaskResourcesUpdate: (cb: (data: any) => void) => () => void;
       openExternal: (url: string) => Promise<any>;
 
       // WORKSPACE

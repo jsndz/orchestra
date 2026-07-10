@@ -79,6 +79,20 @@ contextBridge.exposeInMainWorld("api", {
   exportYaml: (workflow) => ipcRenderer.invoke("yaml:export", workflow),
 
   getSystemStats: () => ipcRenderer.invoke("system:stats"),
+  startSystemStatsStream: () => ipcRenderer.invoke("system:stats:start"),
+  stopSystemStatsStream: () => ipcRenderer.invoke("system:stats:stop"),
+  onSystemStatsUpdate: (callback) => {
+    const listener = (_, data) => callback(data);
+    ipcRenderer.on("system:stats:update", listener);
+    return () => ipcRenderer.removeListener("system:stats:update", listener);
+  },
+  startTaskResourcesStream: () => ipcRenderer.invoke("task:resources:start"),
+  stopTaskResourcesStream: () => ipcRenderer.invoke("task:resources:stop"),
+  onTaskResourcesUpdate: (callback) => {
+    const listener = (_, data) => callback(data);
+    ipcRenderer.on("task:resources:update", listener);
+    return () => ipcRenderer.removeListener("task:resources:update", listener);
+  },
   openExternal: (url) => ipcRenderer.invoke("app:open-external", url),
 
   listWorkspace: (dirPath) => ipcRenderer.invoke("workspace:list", dirPath),

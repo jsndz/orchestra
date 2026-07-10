@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/api/tasks";
 
@@ -59,11 +60,37 @@ export function useYaml(){
   });
 }
 export function useSystemStats() {
-  return useQuery({
-    queryKey: ["system-stats"],
+  const [dynamicStats, setDynamicStats] = useState<any>(null);
+
+  // Fetch static stats normally (once)
+  const { data: staticStats } = useQuery({
+    queryKey: ["system-stats-static"],
     queryFn: api.stats,
-    refetchInterval: 5000,
+    staleTime: Infinity,
   });
+
+  useEffect(() => {
+    // Start streaming dynamic stats from Electron Main
+    window.api.startSystemStatsStream();
+
+    // Listen to updates
+    const unsubscribe = window.api.onSystemStatsUpdate((newDynamicStats: any) => {
+      setDynamicStats(newDynamicStats);
+    });
+
+    // Cleanup: stop streaming and remove listener on unmount
+    return () => {
+      window.api.stopSystemStatsStream();
+      unsubscribe();
+    };
+  }, []);
+
+  // Merge static and dynamic stats
+  const combined = staticStats && dynamicStats
+    ? { ...staticStats, ...dynamicStats }
+    : null;
+
+  return { data: combined };
 }
 
 export function useStopExecution() {

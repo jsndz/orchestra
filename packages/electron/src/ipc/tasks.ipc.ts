@@ -10,7 +10,8 @@ import {
   dagToYaml,
   workflowToDag,
 } from "../services/parser.js";
-import { getSystemStats } from "../utils/os.js";
+import { getSystemStats, getStaticStats, getDynamicStats } from "../utils/os.js";
+import { getProcessTreeStats } from "../utils/resources.js";
 import { executeWorkflow } from "../services/execution/index.js";
 import { checkPort, killProcess } from "../utils/ports.js";
 
@@ -140,10 +141,74 @@ export function registerTaskIPC() {
     return dagToYaml(dag);
   });
 
-  // Retreives CPU, memory, and OS stats
+  // Retrieves static CPU, memory, and OS stats
   ipcMain.handle("system:stats", () => {
-    return getSystemStats();
+    return getStaticStats();
   });
+
+  // Handle system stats streaming
+  let statsInterval: NodeJS.Timeout | null = null;
+
+  ipcMain.handle("system:stats:start", (event) => {
+    const wc = event.sender;
+    if (statsInterval) clearInterval(statsInterval);
+
+    statsInterval = setInterval(() => {
+      if (wc.isDestroyed()) {
+        clearInterval(statsInterval!);
+        statsInterval = null;
+        return;
+      }
+      wc.send("system:stats:update", getDynamicStats());
+    }, 2000);
+
+    return { ok: true };
+  });
+
+  ipcMain.handle("system:stats:stop", () => {
+    if (statsInterval) {
+      clearInterval(statsInterval);
+      statsInterval = null;
+    }
+    return { ok: true };
+  });
+
+  // Handle task process resource streaming
+  let resourcesInterval: NodeJS.Timeout | null = null;
+
+  ipcMain.handle("task:resources:start", (event) => {
+    const wc = event.sender;
+    if (resourcesInterval) clearInterval(resourcesInterval);
+
+    resourcesInterval = setInterval(async () => {
+      if (wc.isDestroyed()) {
+        clearInterval(resourcesInterval!);
+        resourcesInterval = null;
+        return;
+      }
+
+      const activeProcesses = workflowRunner.getTerminalService().getActiveProcesses();
+      const statsMap: Record<string, { cpu: number; memory: number }> = {};
+
+      for (const proc of activeProcesses) {
+        const stats = await getProcessTreeStats(proc.pid);
+        statsMap[proc.taskId] = stats;
+      }
+
+      wc.send("task:resources:update", statsMap);
+    }, 1500);
+
+    return { ok: true };
+  });
+
+  ipcMain.handle("task:resources:stop", () => {
+    if (resourcesInterval) {
+      clearInterval(resourcesInterval);
+      resourcesInterval = null;
+    }
+    return { ok: true };
+  });
+  
 
   // Processes terminal keyboard input
   ipcMain.on("terminal:input", (event, { terminalId, data }) => {
