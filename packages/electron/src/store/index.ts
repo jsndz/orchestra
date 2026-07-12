@@ -1,4 +1,9 @@
-import { Task, Dependency, GlobalExecutionState, TaskState } from "@orchestra/shared";
+import {
+  Task,
+  Dependency,
+  GlobalExecutionState,
+  TaskState,
+} from "@orchestra/shared";
 import crypto from "crypto";
 
 export class WorkflowStore {
@@ -77,6 +82,7 @@ export class WorkflowStore {
       retries: body.retries ?? 0,
       timeout: body.timeout ?? 0,
       env: body.env ?? {},
+      onwatch: body.onwatch ?? false,
     };
 
     this.tasks.push(newTask);
@@ -117,7 +123,9 @@ export class WorkflowStore {
       task.state = state;
       if (failureReason !== undefined) {
         task.failureReason = failureReason;
-      } else if (["idle", "starting", "running", "ready", "completed"].includes(state)) {
+      } else if (
+        ["idle", "starting", "running", "ready", "completed"].includes(state)
+      ) {
         delete task.failureReason;
       }
     }
@@ -133,7 +141,7 @@ export class WorkflowStore {
     }
 
     this.dependencies = this.dependencies.filter(
-      (dep) => dep.from !== id && dep.to !== id
+      (dep) => dep.from !== id && dep.to !== id,
     );
 
     this.tasks.forEach((task) => {
@@ -147,7 +155,9 @@ export class WorkflowStore {
   public addDependency(from: string, to: string) {
     if (!from || !to) throw new Error("Invalid dependency");
 
-    const exists = this.dependencies.some((d) => d.from === from && d.to === to);
+    const exists = this.dependencies.some(
+      (d) => d.from === from && d.to === to,
+    );
     if (!exists) {
       this.dependencies.push({ from, to });
     }
@@ -163,7 +173,7 @@ export class WorkflowStore {
    */
   public removeDependency(from: string, to: string) {
     this.dependencies = this.dependencies.filter(
-      (d) => !(d.from === from && d.to === to)
+      (d) => !(d.from === from && d.to === to),
     );
 
     const targetTask = this.tasks.find((t) => t.id === to);
@@ -190,7 +200,8 @@ export const workflowStore = new WorkflowStore();
 // Export array references and wrapper functions to ensure full backward compatibility
 export const tasks = workflowStore.getTasks();
 export const dependencies = workflowStore.getDependencies();
-export const setGlobalState = (state: GlobalExecutionState) => workflowStore.setGlobalState(state);
+export const setGlobalState = (state: GlobalExecutionState) =>
+  workflowStore.setGlobalState(state);
 
 // Named getter to allow safe runtime retrieval of GlobalState
 export function getGlobalStateValue(): GlobalExecutionState {

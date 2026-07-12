@@ -43,6 +43,7 @@ export interface Task {
   retries?: number;
   timeout?: number;
   env?: Record<string, string>;
+  onwatch: boolean;
 }
 
 export interface Dependency {

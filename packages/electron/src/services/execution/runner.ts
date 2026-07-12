@@ -5,6 +5,7 @@ import { TaskLogger } from "../logger.js";
 import { workflowStore } from "../../store/index.js";
 import { Task, TaskState, GlobalExecutionState } from "@orchestra/shared";
 import { checkPort } from "../../utils/ports.js";
+import { FileWatcher } from "../filewatcher.js";
 
 const HOSTS = ["127.0.0.1", "::1", "localhost"];
 
@@ -68,13 +69,14 @@ export async function pollHttp(
     }
     await new Promise((r) => setTimeout(r, 500));
   }
-  throw new Error(`Timeout waiting for HTTP URL ${targetUrl} to return status ${expectedStatus}`);
+  throw new Error(
+    `Timeout waiting for HTTP URL ${targetUrl} to return status ${expectedStatus}`,
+  );
 }
 
 export class WorkflowRunner extends EventEmitter {
   private terminalService = new TerminalService();
   private taskLogger = new TaskLogger();
-
   public getTerminalService() {
     return this.terminalService;
   }
@@ -126,8 +128,13 @@ export class WorkflowRunner extends EventEmitter {
       this.emit("global:state", nextState);
     }
   }
-
-  public async runTask(task: Task): Promise<void> {
+  public async watchTask(task: Task, terminalId: string) {
+    const watcher = new FileWatcher(task.folder, () => {
+      this.reRunTask(task, terminalId);
+    });
+    watcher.start();
+  }
+  public async runTask(task: Task, termId: string): Promise<void> {
     const maxAttempts = (task.retries ?? 0) + 1;
     let attempt = 0;
 
@@ -137,6 +144,7 @@ export class WorkflowRunner extends EventEmitter {
     while (attempt < maxAttempts) {
       attempt++;
       let terminalId = "";
+
       let timeoutId: NodeJS.Timeout | null = null;
 
       // Direct helper callback to pipe output to both UI and the task-specific log file
@@ -160,37 +168,40 @@ export class WorkflowRunner extends EventEmitter {
           }
         }
 
-        terminalId = this.terminalService.create(
-          task.folder,
-          task,
-          (id: string, name: string) => {
-            this.emit("terminal:created", { terminalId: id, name });
-          },
-          (id: string, data: string) => {
-            this.taskLogger.writeLogToFile(task, data);
-            if (this.terminalService.isTerminalReady(id)) {
-              this.emit("terminal:data", { terminalId: id, data });
-            }
+        terminalId =
+          termId == ""
+            ? this.terminalService.create(
+                task.folder,
+                task,
+                (id: string, name: string) => {
+                  this.emit("terminal:created", { terminalId: id, name });
+                },
+                (id: string, data: string) => {
+                  this.taskLogger.writeLogToFile(task, data);
+                  if (this.terminalService.isTerminalReady(id)) {
+                    this.emit("terminal:data", { terminalId: id, data });
+                  }
 
-            this.taskLogger.processLogChunk(
-              task,
-              data,
-              (line: string, rule?: any) => {
-                this.emit("task:log", {
-                  taskId: task.id,
-                  message: line,
-                  ts: Date.now(),
-                  ...(rule && {
-                    color: rule.color,
-                    ruleId: rule.id,
-                    label: rule.label,
-                  }),
-                });
-              },
-            );
-          },
-          () => {}, // Process exit handled via resolve/reject listeners below
-        );
+                  this.taskLogger.processLogChunk(
+                    task,
+                    data,
+                    (line: string, rule?: any) => {
+                      this.emit("task:log", {
+                        taskId: task.id,
+                        message: line,
+                        ts: Date.now(),
+                        ...(rule && {
+                          color: rule.color,
+                          ruleId: rule.id,
+                          label: rule.label,
+                        }),
+                      });
+                    },
+                  );
+                },
+                () => {}, // Process exit handled via resolve/reject listeners below
+              )
+            : terminalId;
 
         this.updateTaskStatus(task, "starting");
 
@@ -237,6 +248,9 @@ export class WorkflowRunner extends EventEmitter {
           task,
           task.type === "service" ? "ready" : "completed",
         );
+        if (task.onwatch) {
+          await this.watchTask(task, terminalId);
+        }
         if (timeoutId) clearTimeout(timeoutId);
         return;
       } catch (err: any) {
@@ -297,7 +311,8 @@ export class WorkflowRunner extends EventEmitter {
       }
     } else if (task.ready.kind === "http") {
       try {
-        const timeoutMs = (task.timeout && task.timeout > 0) ? task.timeout * 1000 : 30000;
+        const timeoutMs =
+          task.timeout && task.timeout > 0 ? task.timeout * 1000 : 30000;
         await pollHttp(task.ready.url, task.ready.code || 200, timeoutMs);
         this.updateTaskStatus(task, "ready");
       } catch (err: any) {
@@ -310,7 +325,9 @@ export class WorkflowRunner extends EventEmitter {
       }
     }
   }
-
+  public async reRunTask(task: Task, terminalId: string) {
+    await this.runTask(task, terminalId);
+  }
   public stopAllTasks() {
     this.terminalService.killAll();
     const currentTasks = workflowStore.getTasks();
@@ -356,6 +373,6 @@ export class WorkflowRunner extends EventEmitter {
 export const workflowRunner = new WorkflowRunner();
 
 // Backward compatibility wrapper
-export function runTask(task: Task, wc?: any): Promise<void> {
-  return workflowRunner.runTask(task);
+export function runTask(task: Task): Promise<void> {
+  return workflowRunner.runTask(task, "");
 }
