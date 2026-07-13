@@ -1,5 +1,5 @@
 import { Handle, Position } from "reactflow";
-import { Server, Briefcase, Terminal } from "lucide-react";
+import { Server, Briefcase, Terminal, RefreshCw } from "lucide-react";
 
 export default function CustomNode({ data }: any) {
   const isService = data.type === "service";
@@ -24,6 +24,12 @@ export default function CustomNode({ data }: any) {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {data.onwatch && (
+            <span className="text-[9px] font-mono px-1.5 py-0.5 border bg-amber-500/10 border-amber-500/30 text-amber-400 flex items-center gap-1">
+              <RefreshCw size={8} className="animate-spin" style={{ animationDuration: "3s" }} />
+              RELOAD
+            </span>
+          )}
           <span className={`text-[9px] font-mono px-1.5 py-0.5 border ${
             isService 
               ? "bg-accent/10 border-accent/30 text-accent" 

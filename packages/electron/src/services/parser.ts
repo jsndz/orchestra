@@ -29,6 +29,7 @@ interface DagTask {
   retries?: number;
   timeout?: number;
   env?: Record<string, string>;
+  onwatch?: boolean;
 }
 
 type Dag = {
@@ -126,6 +127,7 @@ export function workflowToDag(
       retries: t.retries,
       timeout: t.timeout,
       env: t.env,
+      onwatch: t.onwatch,
     };
   }
 
@@ -163,6 +165,7 @@ export function dagToWorkflow(dag: Dag): { tasks: Task[]; dependencies: Dependen
       retries: t.retries ?? 0,
       timeout: t.timeout ?? 0,
       env: t.env ?? {},
+      onwatch: t.onwatch ?? false,
     });
   }
 

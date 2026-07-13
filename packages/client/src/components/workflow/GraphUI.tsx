@@ -70,6 +70,7 @@ export function toReactFlowGraphFromLevels(
           subLabel: task.folder,
           type: task.type,
           command: task.command,
+          onwatch: task.onwatch,
         },
       });
     });
@@ -122,6 +123,7 @@ function DependencyGraphInner({
   const [retries, setRetries] = useState<number | string>("");
   const [timeoutVal, setTimeoutVal] = useState<number | string>("");
   const [envStr, setEnvStr] = useState<string>("");
+  const [editOnwatch, setEditOnwatch] = useState(false);
 
   // --- Create Mode Form State ---
   const [addingTaskPosition, setAddingTaskPosition] = useState<{ x: number; y: number } | null>(null);
@@ -144,6 +146,7 @@ function DependencyGraphInner({
   const [createTimeoutVal, setCreateTimeoutVal] = useState<number | string>("");
   const [createEnvStr, setCreateEnvStr] = useState<string>("");
   const [createLogRules, setCreateLogRules] = useState<any[]>([]);
+  const [createOnwatch, setCreateOnwatch] = useState(false);
 
   useEffect(() => {
     if (!editingTask) return;
@@ -180,6 +183,7 @@ function DependencyGraphInner({
     } else {
       setReadyKind("exit");
     }
+    setEditOnwatch(editingTask.onwatch ?? false);
   }, [editingTask]);
 
   useEffect(() => {
@@ -198,6 +202,7 @@ function DependencyGraphInner({
       setCreateTimeoutVal("");
       setCreateEnvStr("");
       setCreateLogRules([]);
+      setCreateOnwatch(false);
     }
   }, [addingTaskPosition]);
 
@@ -427,6 +432,7 @@ function DependencyGraphInner({
         retries: retries === "" ? 0 : (Number(retries) || 0),
         timeout: timeoutVal === "" ? 0 : (Number(timeoutVal) || 0),
         env: envObj,
+        onwatch: editOnwatch,
       },
     });
 
@@ -513,6 +519,7 @@ function DependencyGraphInner({
         env: envObj,
         x: Math.round(addingTaskPosition.x),
         y: Math.round(addingTaskPosition.y),
+        onwatch: createOnwatch,
       },
       {
         onSuccess: () => {
@@ -928,6 +935,34 @@ function DependencyGraphInner({
                     </div>
                   </div>
                 )}
+
+                {/* 07. HOT RELOAD */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      07. Hot Reload
+                    </Label>
+                    <span className="text-[9px] bg-accent/10 text-accent font-mono px-1.5 py-0.5 border border-accent/20">
+                      FILE WATCHER
+                    </span>
+                  </div>
+                  <label className="flex items-start gap-3 p-3 bg-card border border-border/40 hover:border-accent/40 transition-all cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      className="accent-accent w-4 h-4 mt-0.5 cursor-pointer"
+                      checked={createOnwatch}
+                      onChange={(e) => setCreateOnwatch(e.target.checked)}
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-mono font-bold text-foreground group-hover:text-accent transition-colors">
+                        Enable Hot Reload
+                      </span>
+                      <span className="text-[10px] text-muted-foreground leading-normal font-mono">
+                        Auto-restart this step when files change in the working directory.
+                      </span>
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
           </ScrollArea>
@@ -1357,6 +1392,34 @@ function DependencyGraphInner({
                     </div>
                   </div>
                 )}
+
+                {/* 07. HOT RELOAD */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                      07. Hot Reload
+                    </Label>
+                    <span className="text-[9px] bg-accent/10 text-accent font-mono px-1.5 py-0.5 border border-accent/20">
+                      FILE WATCHER
+                    </span>
+                  </div>
+                  <label className="flex items-start gap-3 p-3 bg-card border border-border/40 hover:border-accent/40 transition-all cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      className="accent-accent w-4 h-4 mt-0.5 cursor-pointer"
+                      checked={editOnwatch}
+                      onChange={(e) => setEditOnwatch(e.target.checked)}
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-mono font-bold text-foreground group-hover:text-accent transition-colors">
+                        Enable Hot Reload
+                      </span>
+                      <span className="text-[10px] text-muted-foreground leading-normal font-mono">
+                        Auto-restart this step when files change in the working directory.
+                      </span>
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
           </ScrollArea>

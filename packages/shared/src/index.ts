@@ -65,6 +65,7 @@ export type TaskRequest = {
   retries?: number;
   timeout?: number;
   env?: Record<string, string>;
+  onwatch?: boolean;
 };
 
 export interface OrderResponse {

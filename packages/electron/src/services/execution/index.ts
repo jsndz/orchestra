@@ -52,7 +52,7 @@ export class EventDrivenScheduler {
   async run(task: Task, wc: Electron.WebContents) {
     try {
       this.activeExecutions.add(task.id);
-      await runTask(task, wc);
+      await runTask(task);
       this.handleSuccess(task, wc);
     } catch (err) {
       this.handleFailure(task, wc);

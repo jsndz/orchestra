@@ -54,6 +54,7 @@ export default function WorkflowControls({
   const [taskRetries, setTaskRetries] = useState("");
   const [taskTimeout, setTaskTimeout] = useState("");
   const [taskEnv, setTaskEnv] = useState("");
+  const [taskOnwatch, setTaskOnwatch] = useState(false);
 
   // ReadyWhen State
   const [readyKind, setReadyKind] = useState<"exit" | "port" | "log" | "http">("exit");
@@ -162,6 +163,7 @@ export default function WorkflowControls({
         retries: Number(taskRetries) || 0,
         timeout: Number(taskTimeout) || 0,
         env: envObj,
+        onwatch: taskOnwatch,
       },
       {
         onSuccess: () => {
@@ -172,6 +174,7 @@ export default function WorkflowControls({
           setTaskRetries("");
           setTaskTimeout("");
           setTaskEnv("");
+          setTaskOnwatch(false);
           setMode("none");
           setErrorMsg(null);
         },
@@ -520,6 +523,29 @@ export default function WorkflowControls({
                   </div>
                 </section>
               )}
+
+              {/* SECTION: Hot Reload */}
+              <section className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <Label className={sectionLabelStyle}>
+                  07. Hot Reload (File Watcher)
+                </Label>
+                <label className="flex items-start gap-3 p-4 bg-accent/[0.03] border border-accent/20 hover:border-accent/40 transition-all cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    className="accent-accent w-4 h-4 mt-0.5 cursor-pointer"
+                    checked={taskOnwatch}
+                    onChange={(e) => setTaskOnwatch(e.target.checked)}
+                  />
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-mono font-bold text-foreground group-hover:text-accent transition-colors">
+                      Enable Hot Reload
+                    </span>
+                    <span className="text-[10px] text-muted-foreground leading-normal font-mono">
+                      Auto-restart this step when files change in the working directory.
+                    </span>
+                  </div>
+                </label>
+              </section>
             </div>
 
             {errorMsg && (
