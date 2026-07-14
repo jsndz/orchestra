@@ -81,12 +81,101 @@ export async function killProcess(pid: number): Promise<void> {
   try {
     process.kill(pid, "SIGKILL");
   } catch (err: any) {
+    if (err.code === "ESRCH") {
+      return;
+    }
     // If native kill fails, try system commands
-    const platform = process.platform;
-    if (platform === "win32") {
-      await execPromise(`taskkill /F /PID ${pid}`);
-    } else {
-      await execPromise(`kill -9 ${pid}`);
+    try {
+      const platform = process.platform;
+      if (platform === "win32") {
+        await execPromise(`taskkill /F /PID ${pid}`);
+      } else {
+        await execPromise(`kill -9 ${pid}`);
+      }
+    } catch (sysErr: any) {
+      if (sysErr.message && (sysErr.message.includes("No such process") || sysErr.message.includes("not found"))) {
+        return;
+      }
+      throw sysErr;
     }
   }
 }
+
+/**
+ * Resolves all descendant process PIDs of a root process ID.
+ */
+async function getDescendantPids(rootPid: number): Promise<number[]> {
+  const platform = process.platform;
+  const pids: number[] = [];
+  const parentMap = new Map<number, number>();
+
+  try {
+    if (platform === "win32") {
+      const { stdout } = await execPromise("wmic process get ProcessId,ParentProcessId");
+      const lines = stdout.split("\n");
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 2) {
+          const ppid = parseInt(parts[0], 10);
+          const pid = parseInt(parts[1], 10);
+          if (!isNaN(pid) && !isNaN(ppid)) {
+            parentMap.set(pid, ppid);
+          }
+        }
+      }
+    } else {
+      const { stdout } = await execPromise("ps -o pid=,ppid=");
+      const lines = stdout.split("\n");
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 2) {
+          const pid = parseInt(parts[0], 10);
+          const ppid = parseInt(parts[1], 10);
+          if (!isNaN(pid) && !isNaN(ppid)) {
+            parentMap.set(pid, ppid);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error gathering process tree stats:", err);
+  }
+
+  const queue = [rootPid];
+  const visited = new Set<number>();
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    if (current !== rootPid) {
+      pids.push(current);
+    }
+
+    for (const [pid, ppid] of parentMap.entries()) {
+      if (ppid === current) {
+        queue.push(pid);
+      }
+    }
+  }
+
+  return pids;
+}
+
+/**
+ * Kills a process and all of its descendants (the entire process tree).
+ */
+export async function killProcessTree(rootPid: number): Promise<void> {
+  try {
+    const descendants = await getDescendantPids(rootPid);
+    // Kill children in reverse order (bottom-up) first
+    for (let i = descendants.length - 1; i >= 0; i--) {
+      await killProcess(descendants[i]);
+    }
+    // Kill the root process
+    await killProcess(rootPid);
+  } catch (err) {
+    console.error(`Failed to kill process tree for PID ${rootPid}:`, err);
+  }
+}
+

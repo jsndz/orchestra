@@ -51,19 +51,19 @@ Install dependencies for both the root and the client application:
 ```bash
 # Install root and Electron dependencies
 npm install
-
+  
 # Install frontend dependencies
 cd client && npm install
-```
+``` 
 
 ## Development
 
 The application requires two concurrent processes during development:
 
-1. **Frontend Dev Server:**
+1. **Frontend Dev Server:** 
 
    ```bash
-   cd client
+   cd client 
    npm run dev
    ```
 

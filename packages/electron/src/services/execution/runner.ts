@@ -77,6 +77,15 @@ export async function pollHttp(
 export class WorkflowRunner extends EventEmitter {
   private terminalService = new TerminalService();
   private taskLogger = new TaskLogger();
+  private activeWatchers: Map<string, FileWatcher> = new Map();
+
+  public async stopWatcher(taskId: string) {
+    const watcher = this.activeWatchers.get(taskId);
+    if (watcher) {
+      await watcher.close();
+      this.activeWatchers.delete(taskId);
+    }
+  }
   public getTerminalService() {
     return this.terminalService;
   }
@@ -129,12 +138,16 @@ export class WorkflowRunner extends EventEmitter {
     }
   }
   public async watchTask(task: Task, terminalId: string) {
+    console.log(`[WorkflowRunner] Setting up watcher for task "${task.task}" (ID: ${task.id}) on folder "${task.folder}"`);
+    await this.stopWatcher(task.id);
     const watcher = new FileWatcher(task.folder, () => {
       this.reRunTask(task, terminalId);
     });
     watcher.start();
+    this.activeWatchers.set(task.id, watcher);
   }
   public async runTask(task: Task, termId: string): Promise<void> {
+    await this.stopWatcher(task.id);
     const maxAttempts = (task.retries ?? 0) + 1;
     let attempt = 0;
 
@@ -168,40 +181,40 @@ export class WorkflowRunner extends EventEmitter {
           }
         }
 
-        terminalId =
-          termId == ""
-            ? this.terminalService.create(
-                task.folder,
-                task,
-                (id: string, name: string) => {
-                  this.emit("terminal:created", { terminalId: id, name });
-                },
-                (id: string, data: string) => {
-                  this.taskLogger.writeLogToFile(task, data);
-                  if (this.terminalService.isTerminalReady(id)) {
-                    this.emit("terminal:data", { terminalId: id, data });
-                  }
+        terminalId = await this.terminalService.create(
+          task.folder,
+          task,
+          (id: string, name: string) => {
+            if (termId === "") {
+              this.emit("terminal:created", { terminalId: id, name });
+            }
+          },
+          (id: string, data: string) => {
+            this.taskLogger.writeLogToFile(task, data);
+            if (this.terminalService.isTerminalReady(id)) {
+              this.emit("terminal:data", { terminalId: id, data });
+            }
 
-                  this.taskLogger.processLogChunk(
-                    task,
-                    data,
-                    (line: string, rule?: any) => {
-                      this.emit("task:log", {
-                        taskId: task.id,
-                        message: line,
-                        ts: Date.now(),
-                        ...(rule && {
-                          color: rule.color,
-                          ruleId: rule.id,
-                          label: rule.label,
-                        }),
-                      });
-                    },
-                  );
-                },
-                () => {}, // Process exit handled via resolve/reject listeners below
-              )
-            : terminalId;
+            this.taskLogger.processLogChunk(
+              task,
+              data,
+              (line: string, rule?: any) => {
+                this.emit("task:log", {
+                  taskId: task.id,
+                  message: line,
+                  ts: Date.now(),
+                  ...(rule && {
+                    color: rule.color,
+                    ruleId: rule.id,
+                    label: rule.label,
+                  }),
+                });
+              },
+            );
+          },
+          () => {}, // Process exit handled via resolve/reject listeners below
+          termId || undefined,
+        );
 
         this.updateTaskStatus(task, "starting");
 
@@ -231,8 +244,8 @@ export class WorkflowRunner extends EventEmitter {
         if (task.timeout && task.timeout > 0) {
           const timeoutMs = task.timeout * 1000;
           const timeoutPromise = new Promise<void>((_, reject) => {
-            timeoutId = setTimeout(() => {
-              this.terminalService.kill(terminalId);
+            timeoutId = setTimeout(async () => {
+              await this.terminalService.kill(terminalId);
               reject(
                 new Error(`Timeout: Task exceeded limit of ${task.timeout}s`),
               );
@@ -255,7 +268,7 @@ export class WorkflowRunner extends EventEmitter {
         return;
       } catch (err: any) {
         if (timeoutId) clearTimeout(timeoutId);
-        if (terminalId) this.terminalService.kill(terminalId);
+        if (terminalId) await this.terminalService.kill(terminalId);
 
         const errorMessage = err.message || "Unknown error";
         workflowStore.updateTaskState(task.id, task.state, errorMessage);
@@ -326,25 +339,28 @@ export class WorkflowRunner extends EventEmitter {
     }
   }
   public async reRunTask(task: Task, terminalId: string) {
+    console.log(`[WorkflowRunner] File change detected. Triggering rerun for task "${task.task}" (ID: ${task.id}) on terminal: ${terminalId}`);
     await this.runTask(task, terminalId);
   }
-  public stopAllTasks() {
-    this.terminalService.killAll();
+  public async stopAllTasks() {
+    await this.terminalService.killAll();
     const currentTasks = workflowStore.getTasks();
-    currentTasks.forEach((task) => {
+    for (const task of currentTasks) {
       if (["running", "starting", "ready"].includes(task.state)) {
         this.updateTaskStatus(task, "stopped", "Execution Stopped");
       }
-    });
+      await this.stopWatcher(task.id);
+    }
     this.syncGlobalState();
   }
 
-  public stopTask(id: string) {
-    this.terminalService.kill(id);
+  public async stopTask(id: string) {
+    await this.terminalService.kill(id);
     const task = workflowStore.getTasks().find((t) => t.id === id);
     if (task) {
       this.updateTaskStatus(task, "stopped", "Terminal Closed");
     }
+    await this.stopWatcher(id);
   }
 
   public handleTerminalReady(id: string) {
@@ -365,8 +381,11 @@ export class WorkflowRunner extends EventEmitter {
     this.terminalService.write(terminalId, data);
   }
 
-  public clearTerminalService() {
-    this.terminalService.clearAll();
+  public async clearTerminalService() {
+    await this.terminalService.clearAll();
+    await Promise.all(
+      Array.from(this.activeWatchers.keys()).map((id) => this.stopWatcher(id)),
+    );
   }
 }
 

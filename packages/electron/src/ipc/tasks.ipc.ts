@@ -110,7 +110,7 @@ export function registerTaskIPC() {
 
   // Stops all currently active tasks
   ipcMain.handle("execution:stop", async () => {
-    workflowRunner.stopAllTasks();
+    await workflowRunner.stopAllTasks();
   });
 
   // Signal that frontend terminal component is initialized
@@ -119,8 +119,8 @@ export function registerTaskIPC() {
   });
 
   // Terminates a single task by ID
-  ipcMain.handle("task:stop", (event, id: string) => {
-    return workflowRunner.stopTask(id);
+  ipcMain.handle("task:stop", async (event, id: string) => {
+    return await workflowRunner.stopTask(id);
   });
 
   // Imports a workflow DAG from YAML content

@@ -2,6 +2,8 @@ import * as pty from "node-pty";
 import crypto from "crypto";
 import { Task } from "@orchestra/shared";
 import { getSystemStats } from "../../utils/os.js";
+import { killProcessTree } from "../../utils/ports.js";
+
 
 type Terminal = {
   id: string;
@@ -47,8 +49,8 @@ export class TerminalService {
   /**
    * Resets and cleans up all active processes and history buffers.
    */
-  public clearAll() {
-    this.killAll();
+  public async clearAll() {
+    await this.killAll();
     this.historyBuffers.clear();
     this.exitCodes.clear();
   }
@@ -56,14 +58,20 @@ export class TerminalService {
   /**
    * Spawns a new virtual terminal shell running the specified task command.
    */
-  public create(
+  public async create(
     folder: string,
     task: Task,
     onCreated: (terminalId: string, name: string) => void,
     onData: (terminalId: string, data: string) => void,
-    onExit: (terminalId: string, exitCode: number) => void
-  ): string {
-    const id = `term-${crypto.randomUUID()}`;
+    onExit: (terminalId: string, exitCode: number) => void,
+    existingTerminalId?: string
+  ): Promise<string> {
+    const id = existingTerminalId || `term-${crypto.randomUUID()}`;
+    const existing = this.terminals.get(id);
+    if (existing) {
+      await this.kill(id);
+    }
+
     const shell = pty.spawn(this.getShell(), this.getShellArgs(task.command), {
       name: "xterm-color",
       cwd: folder,
@@ -116,7 +124,8 @@ export class TerminalService {
    * Outputs the echo command prompt to screen.
    */
   public run(command: string, id: string, onDataCallback: (id: string, data: string) => void) {
-    const echoData = `\x1b[1;32m$ ${command}\x1b[0m\r\n`;
+    const clearSeq = "\x1b[2J\x1b[H";
+    const echoData = `${clearSeq}\x1b[1;32m$ ${command}\x1b[0m\r\n`;
     this.injectSystemLog(id, echoData, onDataCallback);
   }
 
@@ -136,12 +145,17 @@ export class TerminalService {
   /**
    * Terminates a specific terminal process.
    */
-  public kill(id: string) {
+  public async kill(id: string) {
     const terminal = this.terminals.get(id);
     if (!terminal) return;
 
     try {
-      terminal.process.kill();
+      const pid = terminal.process.pid;
+      if (pid) {
+        await killProcessTree(pid);
+      } else {
+        terminal.process.kill();
+      }
     } catch (e) {
       console.error("Failed to kill terminal process", e);
     }
@@ -154,9 +168,9 @@ export class TerminalService {
   /**
    * Terminates all running terminal processes.
    */
-  public killAll() {
+  public async killAll() {
     for (const id of this.terminals.keys()) {
-      this.kill(id);
+      await this.kill(id);
     }
   }
 
