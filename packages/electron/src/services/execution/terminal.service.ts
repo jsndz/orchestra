@@ -70,6 +70,11 @@ export class TerminalService {
     const existing = this.terminals.get(id);
     if (existing) {
       await this.kill(id);
+      this.historyBuffers.delete(id);
+    }
+
+    if (existingTerminalId) {
+      this.isReady.set(id, true);
     }
 
     const shell = pty.spawn(this.getShell(), this.getShellArgs(task.command), {

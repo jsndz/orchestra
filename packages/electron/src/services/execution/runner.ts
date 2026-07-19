@@ -138,7 +138,6 @@ export class WorkflowRunner extends EventEmitter {
     }
   }
   public async watchTask(task: Task, terminalId: string) {
-    console.log(`[WorkflowRunner] Setting up watcher for task "${task.task}" (ID: ${task.id}) on folder "${task.folder}"`);
     await this.stopWatcher(task.id);
     const watcher = new FileWatcher(task.folder, () => {
       this.reRunTask(task, terminalId);
@@ -339,7 +338,6 @@ export class WorkflowRunner extends EventEmitter {
     }
   }
   public async reRunTask(task: Task, terminalId: string) {
-    console.log(`[WorkflowRunner] File change detected. Triggering rerun for task "${task.task}" (ID: ${task.id}) on terminal: ${terminalId}`);
     await this.runTask(task, terminalId);
   }
   public async stopAllTasks() {

@@ -27,7 +27,6 @@ export class FileWatcher {
     });
 
     this.watcher.on("change", (filePath: string) => {
-      console.log(`[FileWatcher] Change detected on path: ${filePath}`);
       this.onchange();
     });
 

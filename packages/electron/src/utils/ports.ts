@@ -10,172 +10,166 @@ export type PortInfo = {
 };
 
 /**
- * Checks if a TCP port is currently in use on localhost.
- * If in use, attempts to resolve the PID and command name of the owner process.
+ * Checks whether a TCP port is in use and returns the owning PID and command.
  */
 export async function checkPort(port: number): Promise<PortInfo> {
-  const platform = process.platform;
   try {
-    if (platform === "win32") {
-      // Find the PID using netstat
-      const { stdout } = await execPromise(`netstat -ano`);
-      const lines = stdout.split("\n");
-      let pid: number | undefined;
-      const targetStr = `:${port}`;
-      for (const line of lines) {
-        if (line.includes(targetStr) && line.includes("LISTENING")) {
-          const parts = line.trim().split(/\s+/);
-          const lastPart = parts[parts.length - 1];
-          const parsedPid = parseInt(lastPart, 10);
-          if (!isNaN(parsedPid)) {
-            pid = parsedPid;
-            break;
-          }
-        }
-      }
+    if (process.platform === "win32") {
+      // Get the owning PID
+      const { stdout: pidOut } = await execPromise(
+        `powershell -NoProfile -Command "(Get-NetTCPConnection -State Listen -LocalPort ${port} -ErrorAction SilentlyContinue).OwningProcess"`
+      );
 
-      if (pid) {
-        // Find command name using tasklist
-        try {
-          const { stdout: taskStdout } = await execPromise(`tasklist /FI "PID eq ${pid}" /FO CSV /NH`);
-          const match = taskStdout.match(/"([^"]+)"/);
-          const command = match ? match[1] : "Unknown";
-          return { inUse: true, pid, command };
-        } catch {
-          return { inUse: true, pid, command: "Unknown" };
-        }
-      }
-    } else {
-      // Unix: macOS/Linux
-      // lsof -i :<port> -sTCP:LISTEN -F cp
-      try {
-        const { stdout } = await execPromise(`lsof -i :${port} -sTCP:LISTEN -F cp`);
-        const lines = stdout.trim().split("\n");
-        let pid: number | undefined;
-        let command: string | undefined;
-        for (const line of lines) {
-          if (line.startsWith("p")) {
-            pid = parseInt(line.substring(1), 10);
-          } else if (line.startsWith("c")) {
-            command = line.substring(1);
-          }
-        }
-        if (pid) {
-          return { inUse: true, pid, command: command || "Unknown" };
-        }
-      } catch (err: any) {
-        // lsof returns exit code 1 if no matches found
+      const pid = Number(pidOut.trim());
+
+      if (!pid || Number.isNaN(pid)) {
         return { inUse: false };
       }
+
+      // Get the process name
+      let command = "Unknown";
+      try {
+        const { stdout: cmdOut } = await execPromise(
+          `powershell -NoProfile -Command "(Get-Process -Id ${pid} -ErrorAction SilentlyContinue).ProcessName"`
+        );
+
+        if (cmdOut.trim()) {
+          command = cmdOut.trim();
+        }
+      } catch {}
+
+      return {
+        inUse: true,
+        pid,
+        command,
+      };
     }
-  } catch (e) {
-    console.error("Error checking port:", e);
+
+    // Linux/macOS
+    const { stdout } = await execPromise(
+      `lsof -iTCP:${port} -sTCP:LISTEN -Fpc`
+    );
+
+    let pid: number | undefined;
+    let command: string | undefined;
+
+    for (const line of stdout.split("\n")) {
+      if (line.startsWith("p")) {
+        pid = Number(line.slice(1));
+      } else if (line.startsWith("c")) {
+        command = line.slice(1);
+      }
+    }
+
+    if (!pid) {
+      return { inUse: false };
+    }
+
+    return {
+      inUse: true,
+      pid,
+      command: command ?? "Unknown",
+    };
+  } catch {
+    return { inUse: false };
   }
-  return { inUse: false };
 }
 
 /**
- * Kills a process by PID.
+ * Kills a single process.
  */
 export async function killProcess(pid: number): Promise<void> {
   try {
-    process.kill(pid, "SIGKILL");
+    if (process.platform === "win32") {
+      await execPromise(`taskkill /PID ${pid} /F`);
+    } else {
+      process.kill(pid, "SIGKILL");
+    }
   } catch (err: any) {
-    if (err.code === "ESRCH") {
+    if (
+      err.code === "ESRCH" ||
+      err.message?.includes("No such process") ||
+      err.message?.includes("not found")
+    ) {
       return;
     }
-    // If native kill fails, try system commands
-    try {
-      const platform = process.platform;
-      if (platform === "win32") {
-        await execPromise(`taskkill /F /PID ${pid}`);
-      } else {
-        await execPromise(`kill -9 ${pid}`);
-      }
-    } catch (sysErr: any) {
-      if (sysErr.message && (sysErr.message.includes("No such process") || sysErr.message.includes("not found"))) {
-        return;
-      }
-      throw sysErr;
-    }
+
+    throw err;
   }
 }
 
 /**
- * Resolves all descendant process PIDs of a root process ID.
+ * Returns all descendants of a process.
+ * Windows returns an empty array because taskkill /T handles this.
  */
 async function getDescendantPids(rootPid: number): Promise<number[]> {
-  const platform = process.platform;
-  const pids: number[] = [];
-  const parentMap = new Map<number, number>();
+  if (process.platform === "win32") {
+    return [];
+  }
 
-  try {
-    if (platform === "win32") {
-      const { stdout } = await execPromise("wmic process get ProcessId,ParentProcessId");
-      const lines = stdout.split("\n");
-      for (const line of lines) {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length >= 2) {
-          const ppid = parseInt(parts[0], 10);
-          const pid = parseInt(parts[1], 10);
-          if (!isNaN(pid) && !isNaN(ppid)) {
-            parentMap.set(pid, ppid);
-          }
-        }
-      }
-    } else {
-      const { stdout } = await execPromise("ps -o pid=,ppid=");
-      const lines = stdout.split("\n");
-      for (const line of lines) {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length >= 2) {
-          const pid = parseInt(parts[0], 10);
-          const ppid = parseInt(parts[1], 10);
-          if (!isNaN(pid) && !isNaN(ppid)) {
-            parentMap.set(pid, ppid);
-          }
-        }
-      }
+  const parentMap = new Map<number, number>();
+  const descendants: number[] = [];
+
+  const { stdout } = await execPromise("ps -eo pid=,ppid=");
+
+  for (const line of stdout.split("\n")) {
+    const [pidStr, ppidStr] = line.trim().split(/\s+/);
+
+    const pid = Number(pidStr);
+    const ppid = Number(ppidStr);
+
+    if (!Number.isNaN(pid) && !Number.isNaN(ppid)) {
+      parentMap.set(pid, ppid);
     }
-  } catch (err) {
-    console.error("Error gathering process tree stats:", err);
   }
 
   const queue = [rootPid];
   const visited = new Set<number>();
 
-  while (queue.length > 0) {
+  while (queue.length) {
     const current = queue.shift()!;
+
     if (visited.has(current)) continue;
     visited.add(current);
-    if (current !== rootPid) {
-      pids.push(current);
-    }
 
     for (const [pid, ppid] of parentMap.entries()) {
       if (ppid === current) {
+        descendants.push(pid);
         queue.push(pid);
       }
     }
   }
 
-  return pids;
+  return descendants;
 }
 
 /**
- * Kills a process and all of its descendants (the entire process tree).
+ * Kills a process and its children.
  */
 export async function killProcessTree(rootPid: number): Promise<void> {
   try {
+    if (process.platform === "win32") {
+      // Windows handles the entire tree natively.
+      await execPromise(`taskkill /PID ${rootPid} /T /F`);
+      return;
+    }
+
     const descendants = await getDescendantPids(rootPid);
-    // Kill children in reverse order (bottom-up) first
+
+    // Kill deepest children first.
     for (let i = descendants.length - 1; i >= 0; i--) {
       await killProcess(descendants[i]);
     }
-    // Kill the root process
+
     await killProcess(rootPid);
-  } catch (err) {
-    console.error(`Failed to kill process tree for PID ${rootPid}:`, err);
+  } catch (err: any) {
+    if (
+      err.message?.includes("No such process") ||
+      err.message?.includes("not found")
+    ) {
+      return;
+    }
+
+    throw err;
   }
 }
-
