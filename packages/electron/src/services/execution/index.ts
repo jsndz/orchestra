@@ -30,7 +30,7 @@ export class EventDrivenScheduler {
 
   // check tasks for the indegree 0
   // execute them
-  async execute(wc: Electron.WebContents): Promise<void> {
+  async execute(wc?: Electron.WebContents | null): Promise<void> {
     this.executionPromise = new Promise((res, rej) => {
       this.rejectPromise = rej;
       this.resolvePromise = res;
@@ -49,7 +49,7 @@ export class EventDrivenScheduler {
     }
     return this.executionPromise;
   }
-  async run(task: Task, wc: Electron.WebContents) {
+  async run(task: Task, wc?: Electron.WebContents | null) {
     try {
       this.activeExecutions.add(task.id);
       await runTask(task);
@@ -58,7 +58,7 @@ export class EventDrivenScheduler {
       this.handleFailure(task, wc);
     }
   }
-  handleSuccess(task: Task, wc: Electron.WebContents) {
+  handleSuccess(task: Task, wc?: Electron.WebContents | null) {
     this.activeExecutions.delete(task.id);
     this.completedTasks.add(task.id);
     const nextTaskIds = this.adjacencyList.get(task.id) || [];
@@ -77,7 +77,7 @@ export class EventDrivenScheduler {
       this.resolvePromise?.();
     }
   }
-  handleFailure(task: Task, wc: Electron.WebContents) {
+  handleFailure(task: Task, wc?: Electron.WebContents | null) {
     this.activeExecutions.delete(task.id);
 
     const children = this.adjacencyList.get(task.id) || [];
@@ -110,7 +110,7 @@ export class EventDrivenScheduler {
 /**
  * Executes the workflow by running tasks event-driven.
  */
-export async function executeWorkflow(wc: Electron.WebContents) {
+export async function executeWorkflow(wc?: Electron.WebContents | null) {
   const dependencyCheck = resolveDependencies(
     workflowStore.getDependencies(),
     workflowStore.getTasks(),

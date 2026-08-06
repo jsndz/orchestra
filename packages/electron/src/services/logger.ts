@@ -93,4 +93,22 @@ export class TaskLogger {
     }
     return line.includes(String(rule.match));
   }
+
+  /**
+   * Retrieves the log history for a task from disk, optionally limited to the last N lines.
+   */
+  public getTaskLogs(task: Task, limitLines?: number): string {
+    try {
+      const logFile = path.join(task.folder, ".orchestra-logs", `${task.task}.log`);
+      if (!fs.existsSync(logFile)) return "";
+      const content = fs.readFileSync(logFile, "utf8");
+      if (!limitLines || limitLines <= 0) return content;
+      const lines = content.trimEnd().split("\n");
+      return lines.slice(-limitLines).join("\n");
+    } catch (e) {
+      console.error("Failed to read task logs", e);
+      return "";
+    }
+  }
 }
+

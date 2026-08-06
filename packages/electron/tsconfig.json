@@ -6,7 +6,8 @@
     "outDir": "dist",
     "moduleResolution": "nodenext",
     "esModuleInterop": true,
-    "strict": true
+    "strict": true,
+    "declaration": true
   },
     "include": ["src"]
 }

@@ -30,11 +30,12 @@ Orchestra simplifies this process by providing a visual, node-based editor. You 
 ```text
 orchestra/
 ├── main.js                 # Electron main process entry
-├── electron/               # Main-process services, IPC handlers, and execution logic
-│   ├── src/                # TypeScript source for Electron services
-│   └── preload.js          # Preload script for secure IPC bridge
-├── client/                 # React renderer application
-│   └── src/                # Frontend source code
+├── packages/
+│   ├── electron/           # Main-process services, IPC handlers, and execution logic
+│   ├── client/             # React renderer application source
+│   ├── shared/             # Shared TypeScript types and state interfaces
+│   └── web/                # Web version source code
+├── tests/                  # Integration test suite
 └── assets/                 # Application icons and static resources
 ```
 
@@ -46,25 +47,20 @@ orchestra/
 
 ## Installation
 
-Install dependencies for both the root and the client application:
+Install dependencies for all workspace packages:
 
 ```bash
-# Install root and Electron dependencies
 npm install
-  
-# Install frontend dependencies
-cd client && npm install
 ``` 
 
 ## Development
 
-The application requires two concurrent processes during development:
+The application requires concurrent processes during development:
 
 1. **Frontend Dev Server:** 
 
    ```bash
-   cd client 
-   npm run dev
+   npm run client:dev
    ```
 
 2. **Electron App:** (In a new terminal)
@@ -74,9 +70,9 @@ The application requires two concurrent processes during development:
 
 Electron will automatically load the frontend from `http://localhost:6080`.
 
-##  Building & Packaging
+## Building & Packaging
 
-### Compile Electron
+### Compile Electron Services
 
 ```bash
 npm run electron:build
@@ -111,6 +107,7 @@ Distributables will be generated in the `dist/` directory.
 - `npm start`: Builds Electron and launches the app.
 - `npm run build`: Compiles both Electron and Frontend assets.
 - `npm run dist`: Packages the application for distribution using `electron-builder`.
+- `npm test`: Runs integration test suite.
 
 ### Client Project
 
@@ -122,3 +119,5 @@ Distributables will be generated in the `dist/` directory.
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+
