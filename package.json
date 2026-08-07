@@ -29,11 +29,15 @@
     "typescript": "^6.0.2"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@types/express": "^5.0.6",
     "child_process": "^1.0.2",
     "chokidar": "^5.0.0",
+    "express": "^5.2.1",
     "node-pty": "^1.1.0",
     "strip-ansi": "^7.2.0",
-    "yaml": "^2.8.3"
+    "yaml": "^2.8.3",
+    "zod": "^4.4.3"
   },
   "build": {
     "appId": "com.orchestra.app",
