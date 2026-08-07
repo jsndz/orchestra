@@ -1,11 +1,12 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
-import z from "zod";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
-import { isInitializeRequest } from "@modelcontextprotocol/sdk/types";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { randomUUID } from "node:crypto";
+import { registerAllMcpTools } from "./tools/index.js";
+
 export function createMCPserver(
-  port =3030 
+  port = 3030 
 ) {
   const app = express();
   app.use(express.json());
@@ -14,23 +15,8 @@ export function createMCPserver(
     version: "1.0.0",
   });
 
-  mcp.registerTool(
-    "get_alerts",
-    {
-      description: "Get weather alerts for a state",
-      inputSchema: z.object({
-        state: z
-          .string()
-          .length(2)
-          .describe("Two-letter state code (e.g. CA, NY)"),
-      }),
-    },
-    async ({ state }) => {
-      return {
-        content: [],
-      };
-    },
-  );
+  // Register all modular MCP tools across domains
+  registerAllMcpTools(mcp);
   const transports = new Map<string, StreamableHTTPServerTransport>();
   //initialising session re
   app.post("/mcp", async (req, res) => {
@@ -60,7 +46,7 @@ export function createMCPserver(
         });
         await mcp.connect(transport);
       }
-      await transport.handleRequest(req, res.req.body);
+      await transport.handleRequest(req, res, req.body);
     } catch (error) {
       console.error(error);
 
