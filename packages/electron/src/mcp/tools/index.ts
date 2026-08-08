@@ -4,6 +4,7 @@ import { registerExecutionTools } from "./execution.tools.js";
 import { registerYamlTools } from "./yaml.tools.js";
 import { registerSystemTools } from "./system.tools.js";
 import { registerWorkspaceTools } from "./workspace.tools.js";
+import { registerGraphTools } from "./graph.tools.js";
 
 /**
  * Registers all domain MCP tools into the given McpServer instance.
@@ -14,6 +15,7 @@ export function registerAllMcpTools(mcp: McpServer) {
   registerYamlTools(mcp);
   registerSystemTools(mcp);
   registerWorkspaceTools(mcp);
+  registerGraphTools(mcp);
 }
 
 export {
@@ -22,4 +24,5 @@ export {
   registerYamlTools,
   registerSystemTools,
   registerWorkspaceTools,
+  registerGraphTools,
 };

@@ -5,20 +5,21 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { randomUUID } from "node:crypto";
 import { registerAllMcpTools } from "./tools/index.js";
 
-export function createMCPserver(
-  port = 3030 
-) {
+export function createMCPserver(port = 3030) {
   const app = express();
   app.use(express.json());
-  const mcp = new McpServer({
-    name: "Orchestra MCP",
-    version: "1.0.0",
-  });
 
-  // Register all modular MCP tools across domains
-  registerAllMcpTools(mcp);
+  function createMcpInstance() {
+    const mcp = new McpServer({
+      name: "Orchestra MCP",
+      version: "1.0.0",
+    });
+    registerAllMcpTools(mcp);
+    return mcp;
+  }
+
   const transports = new Map<string, StreamableHTTPServerTransport>();
-  //initialising session re
+
   app.post("/mcp", async (req, res) => {
     try {
       const sessionId = req.header("mcp-session-id");
@@ -32,23 +33,24 @@ export function createMCPserver(
         }
       } else {
         if (!isInitializeRequest(req.body)) {
-          res.status(404).send("Initialize first");
+          res.status(400).send("Initialize first");
           return;
         }
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
-          onsessioninitialized(sessionId) {
-            transports.set(sessionId, transport);
+          onsessioninitialized(id) {
+            transports.set(id, transport);
           },
-          onsessionclosed(sessionId) {
-            transports.delete(sessionId);
+          onsessionclosed(id) {
+            transports.delete(id);
           },
         });
+        const mcp = createMcpInstance();
         await mcp.connect(transport);
       }
       await transport.handleRequest(req, res, req.body);
     } catch (error) {
-      console.error(error);
+      console.error("MCP Request Error:", error);
 
       if (!res.headersSent) {
         res.status(500).json({

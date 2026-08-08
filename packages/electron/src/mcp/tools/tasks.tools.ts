@@ -41,11 +41,24 @@ export function registerTaskTools(mcp: McpServer) {
         timeout: z.number().optional().describe("Timeout in seconds"),
         retries: z.number().optional().describe("Number of retry attempts"),
         env: z.record(z.string(), z.string()).optional().describe("Environment variables map"),
+        readyKind: z.enum(["exit", "port", "log", "http"]).optional().default("exit").describe("How Orchestra detects task readiness"),
+        readyPort: z.number().optional().describe("Port number if readyKind is 'port'"),
+        readyLogMatch: z.string().optional().describe("Log message to match if readyKind is 'log'"),
+        readyHttpUrl: z.string().optional().describe("HTTP URL to poll if readyKind is 'http'"),
+        onwatch: z.boolean().optional().default(false).describe("Whether to auto-restart task on file changes"),
       }),
     },
-    async ({ task, command, folder, type, timeout, retries, env }) => {
+    async ({ task, command, folder, type, timeout, retries, env, readyKind, readyPort, readyLogMatch, readyHttpUrl, onwatch }) => {
       try {
-  
+        let readyObj: any = { kind: readyKind || "exit" };
+        if (readyKind === "port" && readyPort) {
+          readyObj = { kind: "port", port: readyPort };
+        } else if (readyKind === "log" && readyLogMatch) {
+          readyObj = { kind: "log", match: readyLogMatch, isRegex: false };
+        } else if (readyKind === "http" && readyHttpUrl) {
+          readyObj = { kind: "http", url: readyHttpUrl, code: 200 };
+        }
+
         const created = workflowStore.createTask({
           task,
           command,
@@ -54,6 +67,8 @@ export function registerTaskTools(mcp: McpServer) {
           timeout: timeout ?? 0,
           retries: retries ?? 0,
           env: env ?? {},
+          ready: readyObj,
+          onwatch: onwatch ?? false,
         });
         return {
           content: [

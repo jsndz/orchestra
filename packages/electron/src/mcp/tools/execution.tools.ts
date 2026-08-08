@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import stripAnsi from "strip-ansi";
 import { workflowStore } from "../../store/index.js";
 import { workflowRunner } from "../../services/execution/runner.js";
 import { executeWorkflow } from "../../services/execution/index.js";
@@ -34,11 +35,52 @@ export function registerExecutionTools(mcp: McpServer) {
     }
   );
 
+  // Get task output logs
+  mcp.registerTool(
+    "get_task_logs",
+    {
+      description: "Retrieve recent terminal output log lines for a specific task node",
+      inputSchema: z.object({
+        id: z.string().describe("Task ID or task name to fetch logs for"),
+        lines: z.number().optional().default(50).describe("Number of recent lines to retrieve"),
+      }),
+    },
+    async ({ id, lines }) => {
+      const tasks = workflowStore.getTasks();
+      const task = tasks.find((t) => t.id === id || t.task.toLowerCase() === id.toLowerCase());
+
+      if (!task) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Task '${id}' not found.`,
+            },
+          ],
+        };
+      }
+
+      const taskLogger = workflowRunner.getTaskLogger();
+      const rawLogs = taskLogger.getTaskLogs(task, lines);
+      const cleanLogs = stripAnsi(rawLogs);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: cleanLogs || "(No logs available for this task)",
+          },
+        ],
+      };
+    }
+  );
+
   // Start workflow execution
   mcp.registerTool(
     "start_workflow",
     {
-      description: "Start executing the active workflow tasks",
+      description: "Start executing the active workflow tasks in DAG order",
     },
     async () => {
       try {

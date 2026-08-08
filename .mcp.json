@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "orchestra": {
+      "url": "http://localhost:3030/mcp"
+    }
+  }
+}
