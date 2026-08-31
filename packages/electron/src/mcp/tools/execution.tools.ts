@@ -16,22 +16,34 @@ export function registerExecutionTools(mcp: McpServer) {
       description: "Get the current global execution state and status of all tasks",
     },
     async () => {
-      const globalState = workflowStore.getGlobalState();
-      const tasks = workflowStore.getTasks().map((t) => ({
-        id: t.id,
-        task: t.task,
-        state: t.state,
-        failureReason: t.failureReason,
-      }));
+      try {
+        const globalState = workflowStore.getGlobalState();
+        const tasks = workflowStore.getTasks().map((t) => ({
+          id: t.id,
+          task: t.task,
+          state: t.state,
+          failureReason: t.failureReason,
+        }));
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ globalState, tasks }, null, 2),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ globalState, tasks }, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Failed to get execution state: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
@@ -42,54 +54,41 @@ export function registerExecutionTools(mcp: McpServer) {
       description: "Retrieve recent terminal output log lines for a specific task node",
       inputSchema: z.object({
         id: z.string().describe("Task ID or task name to fetch logs for"),
-        lines: z.number().optional().default(50).describe("Number of recent lines to retrieve"),
+        lines: z
+          .number()
+          .int()
+          .nonnegative()
+          .optional()
+          .default(50)
+          .describe("Number of recent lines to retrieve"),
       }),
     },
     async ({ id, lines }) => {
-      const tasks = workflowStore.getTasks();
-      const task = tasks.find((t) => t.id === id || t.task.toLowerCase() === id.toLowerCase());
-
-      if (!task) {
-        return {
-          isError: true,
-          content: [
-            {
-              type: "text",
-              text: `Task '${id}' not found.`,
-            },
-          ],
-        };
-      }
-
-      const taskLogger = workflowRunner.getTaskLogger();
-      const rawLogs = taskLogger.getTaskLogs(task, lines);
-      const cleanLogs = stripAnsi(rawLogs);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: cleanLogs || "(No logs available for this task)",
-          },
-        ],
-      };
-    }
-  );
-
-  // Start workflow execution
-  mcp.registerTool(
-    "start_workflow",
-    {
-      description: "Start executing the active workflow tasks in DAG order",
-    },
-    async () => {
       try {
-        const result = await executeWorkflow();
+        const tasks = workflowStore.getTasks();
+        const task = tasks.find((t) => t.id === id || t.task.toLowerCase() === id.toLowerCase());
+
+        if (!task) {
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: `Task '${id}' not found.`,
+              },
+            ],
+          };
+        }
+
+        const taskLogger = workflowRunner.getTaskLogger();
+        const rawLogs = taskLogger.getTaskLogs(task, lines);
+        const cleanLogs = stripAnsi(rawLogs);
+
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ success: true, result }, null, 2),
+              text: cleanLogs || "(No logs available for this task)",
             },
           ],
         };
@@ -99,12 +98,65 @@ export function registerExecutionTools(mcp: McpServer) {
           content: [
             {
               type: "text",
-              text: `Failed to start workflow execution: ${error.message}`,
+              text: `Failed to retrieve task logs: ${error.message}`,
             },
           ],
         };
       }
     }
+  );
+
+  const startWorkflowHandler = async () => {
+    try {
+      const result = await executeWorkflow();
+      if (!result.ok) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text" as const,
+              text: "Failed to start workflow: Circular dependency detected or invalid graph layout.",
+            },
+          ],
+        };
+      }
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ success: true, result }, null, 2),
+          },
+        ],
+      };
+    } catch (error: any) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text" as const,
+            text: `Failed to start workflow execution: ${error.message}`,
+          },
+        ],
+      };
+    }
+  };
+
+  // Start workflow execution
+  mcp.registerTool(
+    "start_workflow",
+    {
+      description: "Start executing the active workflow tasks in DAG order",
+    },
+    startWorkflowHandler
+  );
+
+  // Alias tool: run_workflow
+  mcp.registerTool(
+    "run_workflow",
+    {
+      description: "Run/Start executing the active workflow tasks in DAG order",
+    },
+    startWorkflowHandler
   );
 
   // Stop entire workflow
@@ -172,3 +224,4 @@ export function registerExecutionTools(mcp: McpServer) {
     }
   );
 }
+

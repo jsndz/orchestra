@@ -1,6 +1,6 @@
 # Orchestra
 
-Orchestra is a desktop developer tool designed to make setting up and running local development projects much easier. 
+Orchestra is a local-first desktop application designed for local development. **It is installed and executed entirely on your local machine.**
 
 When working on modern projects, you often need to run multiple commands at the same time—such as starting a backend database, spinning up an API server, running build steps, and launching a frontend web server. Managing multiple terminal tabs, running commands in the correct sequence, and troubleshooting startup errors can be tedious.
 

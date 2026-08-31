@@ -13,15 +13,27 @@ export function registerTaskTools(mcp: McpServer) {
       description: "Get the current workflow state including all tasks and dependencies",
     },
     async () => {
-      const workflow = workflowStore.getWorkflow();
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(workflow, null, 2),
-          },
-        ],
-      };
+      try {
+        const workflow = workflowStore.getWorkflow();
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(workflow, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Failed to retrieve workflow: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
@@ -38,11 +50,11 @@ export function registerTaskTools(mcp: McpServer) {
           .enum(["job", "service"])
           .default("job")
           .describe("Task type (task, service, or process)"),
-        timeout: z.number().optional().describe("Timeout in seconds"),
-        retries: z.number().optional().describe("Number of retry attempts"),
+        timeout: z.number().int().nonnegative().optional().describe("Timeout in seconds"),
+        retries: z.number().int().nonnegative().optional().describe("Number of retry attempts"),
         env: z.record(z.string(), z.string()).optional().describe("Environment variables map"),
         readyKind: z.enum(["exit", "port", "log", "http"]).optional().default("exit").describe("How Orchestra detects task readiness"),
-        readyPort: z.number().optional().describe("Port number if readyKind is 'port'"),
+        readyPort: z.number().int().min(1).max(65535).optional().describe("Port number if readyKind is 'port'"),
         readyLogMatch: z.string().optional().describe("Log message to match if readyKind is 'log'"),
         readyHttpUrl: z.string().optional().describe("HTTP URL to poll if readyKind is 'http'"),
         onwatch: z.boolean().optional().default(false).describe("Whether to auto-restart task on file changes"),
@@ -106,14 +118,32 @@ export function registerTaskTools(mcp: McpServer) {
           .enum(["job", "service"])
           .optional()
           .describe("Updated task type"),
-        timeout: z.number().optional().describe("Updated timeout in seconds"),
-        retries: z.number().optional().describe("Updated retry count"),
+        timeout: z.number().int().nonnegative().optional().describe("Updated timeout in seconds"),
+        retries: z.number().int().nonnegative().optional().describe("Updated retry count"),
         env: z.record(z.string(), z.string()).optional().describe("Updated environment variables"),
+        readyKind: z.enum(["exit", "port", "log", "http"]).optional().describe("Updated readiness check type"),
+        readyPort: z.number().int().min(1).max(65535).optional().describe("Updated port number for ready check"),
+        readyLogMatch: z.string().optional().describe("Updated log match text for ready check"),
+        readyHttpUrl: z.string().optional().describe("Updated HTTP URL for ready check"),
+        onwatch: z.boolean().optional().describe("Updated auto-restart file watch setting"),
       }),
     },
-    async ({ id, ...updates }) => {
+    async ({ id, readyKind, readyPort, readyLogMatch, readyHttpUrl, ...updates }) => {
       try {
-        const updated = workflowStore.updateTask(id, updates);
+        const updatePayload: Record<string, any> = { ...updates };
+        if (readyKind) {
+          let readyObj: any = { kind: readyKind };
+          if (readyKind === "port" && readyPort) {
+            readyObj = { kind: "port", port: readyPort };
+          } else if (readyKind === "log" && readyLogMatch) {
+            readyObj = { kind: "log", match: readyLogMatch, isRegex: false };
+          } else if (readyKind === "http" && readyHttpUrl) {
+            readyObj = { kind: "http", url: readyHttpUrl, code: 200 };
+          }
+          updatePayload.ready = readyObj;
+        }
+
+        const updated = workflowStore.updateTask(id, updatePayload);
         return {
           content: [
             {
@@ -240,3 +270,4 @@ export function registerTaskTools(mcp: McpServer) {
     }
   );
 }
+

@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getStaticStats, getDynamicStats } from "../../utils/os.js";
-import { checkPort, killProcess } from "../../utils/ports.js";
+import { checkPort, killProcessTree } from "../../utils/ports.js";
 
 /**
  * Registers OS stats, system diagnostic, and port management tools with the MCP server.
@@ -14,21 +14,33 @@ export function registerSystemTools(mcp: McpServer) {
       description: "Get system hardware and operating system statistics (CPU, memory, OS details)",
     },
     async () => {
-      const staticStats = getStaticStats();
-      const dynamicStats = getDynamicStats();
+      try {
+        const staticStats = getStaticStats();
+        const dynamicStats = getDynamicStats();
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              { ...staticStats, dynamic: dynamicStats },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                { ...staticStats, dynamic: dynamicStats },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Failed to retrieve system stats: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
@@ -38,7 +50,7 @@ export function registerSystemTools(mcp: McpServer) {
     {
       description: "Check if a local TCP port is currently in use and get process details",
       inputSchema: z.object({
-        port: z.number().describe("Port number to check"),
+        port: z.number().int().min(1).max(65535).describe("Port number to check"),
       }),
     },
     async ({ port }) => {
@@ -66,18 +78,18 @@ export function registerSystemTools(mcp: McpServer) {
     }
   );
 
-  // Kill process by PID
+  // Kill process and process tree by PID
   mcp.registerTool(
     "kill_process",
     {
-      description: "Kill a running system process by PID",
+      description: "Kill a running system process and its child processes by PID",
       inputSchema: z.object({
-        pid: z.number().describe("Process ID (PID) to kill"),
+        pid: z.number().int().nonnegative().describe("Process ID (PID) to kill"),
       }),
     },
     async ({ pid }) => {
       try {
-        await killProcess(pid);
+        await killProcessTree(pid);
         return {
           content: [
             {
@@ -100,3 +112,4 @@ export function registerSystemTools(mcp: McpServer) {
     }
   );
 }
+

@@ -21,18 +21,30 @@ export function registerGraphTools(mcp: McpServer) {
       description: "Calculate the topological execution order of the workflow DAG",
     },
     async () => {
-      const tasks = workflowStore.getTasks();
-      const deps = workflowStore.getDependencies();
-      const result = resolveDependencies(deps, tasks);
+      try {
+        const tasks = workflowStore.getTasks();
+        const deps = workflowStore.getDependencies();
+        const result = resolveDependencies(deps, tasks);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Failed to calculate graph order: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
@@ -43,28 +55,40 @@ export function registerGraphTools(mcp: McpServer) {
       description: "Detect if there are circular dependency cycles in the workflow graph",
     },
     async () => {
-      const tasks = workflowStore.getTasks();
-      const deps = workflowStore.getDependencies();
-      const cycleIds = detectCycle(deps, tasks);
-      const taskMap = new Map(tasks.map((t) => [t.id, t.task]));
-      const cycleNames = cycleIds.map((id) => taskMap.get(id) || id);
+      try {
+        const tasks = workflowStore.getTasks();
+        const deps = workflowStore.getDependencies();
+        const cycleIds = detectCycle(deps, tasks);
+        const taskMap = new Map(tasks.map((t) => [t.id, t.task]));
+        const cycleNames = cycleIds.map((id) => taskMap.get(id) || id);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                hasCycle: cycleIds.length > 0,
-                cycleNodeIds: cycleIds,
-                cycleTaskNames: cycleNames,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  hasCycle: cycleIds.length > 0,
+                  cycleNodeIds: cycleIds,
+                  cycleTaskNames: cycleNames,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Failed to detect graph cycles: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
@@ -75,18 +99,30 @@ export function registerGraphTools(mcp: McpServer) {
       description: "Analyze which tasks can be executed concurrently in parallel levels",
     },
     async () => {
-      const tasks = workflowStore.getTasks();
-      const deps = workflowStore.getDependencies();
-      const result = parallelExecution(deps, tasks);
+      try {
+        const tasks = workflowStore.getTasks();
+        const deps = workflowStore.getDependencies();
+        const result = parallelExecution(deps, tasks);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Failed to calculate parallel execution levels: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
@@ -101,18 +137,30 @@ export function registerGraphTools(mcp: McpServer) {
       }),
     },
     async ({ from, to }) => {
-      const tasks = workflowStore.getTasks();
-      const deps = workflowStore.getDependencies();
-      const result = shortestPath(deps, tasks, from, to);
+      try {
+        const tasks = workflowStore.getTasks();
+        const deps = workflowStore.getDependencies();
+        const result = shortestPath(deps, tasks, from, to);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Failed to find shortest path from ${from} to ${to}: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
@@ -123,20 +171,32 @@ export function registerGraphTools(mcp: McpServer) {
       description: "Find terminal nodes (tasks with no downstream dependents)",
     },
     async () => {
-      const tasks = workflowStore.getTasks();
-      const deps = workflowStore.getDependencies();
-      const terminalIds = terminalNodes(deps, tasks);
-      const taskMap = new Map(tasks.map((t) => [t.id, t.task]));
-      const names = terminalIds.map((id) => taskMap.get(id) || id);
+      try {
+        const tasks = workflowStore.getTasks();
+        const deps = workflowStore.getDependencies();
+        const terminalIds = terminalNodes(deps, tasks);
+        const taskMap = new Map(tasks.map((t) => [t.id, t.task]));
+        const names = terminalIds.map((id) => taskMap.get(id) || id);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ terminalIds, terminalTaskNames: names }, null, 2),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ terminalIds, terminalTaskNames: names }, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Failed to find terminal nodes: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 
@@ -147,20 +207,33 @@ export function registerGraphTools(mcp: McpServer) {
       description: "Find unreachable task nodes in the workflow graph",
     },
     async () => {
-      const tasks = workflowStore.getTasks();
-      const deps = workflowStore.getDependencies();
-      const unreachableIds = unreachableNodes(deps, tasks);
-      const taskMap = new Map(tasks.map((t) => [t.id, t.task]));
-      const names = unreachableIds.map((id) => taskMap.get(id) || id);
+      try {
+        const tasks = workflowStore.getTasks();
+        const deps = workflowStore.getDependencies();
+        const unreachableIds = unreachableNodes(deps, tasks);
+        const taskMap = new Map(tasks.map((t) => [t.id, t.task]));
+        const names = unreachableIds.map((id) => taskMap.get(id) || id);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ unreachableIds, unreachableTaskNames: names }, null, 2),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ unreachableIds, unreachableTaskNames: names }, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: `Failed to find unreachable nodes: ${error.message}`,
+            },
+          ],
+        };
+      }
     }
   );
 }
+
