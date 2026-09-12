@@ -1,8 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerAllMcpTools } from "../packages/electron/src/mcp/tools/index.js";
-import { workflowStore } from "../packages/electron/src/store/index.js";
+import { registerAllMcpTools, workflowStore } from "../packages/shared/dist/node.js";
 
 test("MCP Tools Registration and Execution Test", async (t) => {
   const mcp = new McpServer({
@@ -13,7 +12,7 @@ test("MCP Tools Registration and Execution Test", async (t) => {
   registerAllMcpTools(mcp);
 
   await t.test("Workflow task CRUD via workflowStore", () => {
-    workflowStore.clear();
+    workflowStore.setWorkflow([], []);
 
     const t1 = workflowStore.createTask({
       task: "TestTask1",
@@ -36,7 +35,7 @@ test("MCP Tools Registration and Execution Test", async (t) => {
     });
 
     assert.equal(updated.command, "echo world");
-    assert.equal(updated.ready.kind, "port");
+    assert.equal(updated.ready?.kind, "port");
 
     workflowStore.deleteTask(t1.id);
     assert.equal(workflowStore.getTasks().length, 0);

@@ -1,5 +1,5 @@
 import { parse, stringify } from "yaml";
-import { Dependency, Task } from "../types/index.js";
+import { Dependency, Task, LogRule } from "../index.js";
 
 interface DagLogRule {
   id: string;
@@ -84,7 +84,7 @@ function deserializeReady(ready?: DagTask["ready"]): Task["ready"] {
 }
 
 function serializeLogRules(rules?: Task["logRules"]): DagLogRule[] | undefined {
-  return rules?.map((r) => ({
+  return rules?.map((r: LogRule) => ({
     id: r.id,
     label: r.label,
     match: typeof r.match === "string" ? r.match : r.match.source,

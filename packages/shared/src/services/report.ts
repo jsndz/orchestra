@@ -1,4 +1,4 @@
-import { Task } from "@orchestra/shared";
+import { Task } from "../index.js";
 
 type TaskTiming = {
   startTime: Date;

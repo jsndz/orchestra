@@ -77,6 +77,15 @@ declare global {
       // PORT
       checkPort: (port: number) => Promise<{ inUse: boolean; pid?: number; command?: string }>;
       killProcess: (pid: number) => Promise<{ ok: boolean; error?: string }>;
+
+      // MCP CLI & SERVER
+      mcpCliStatus: () => Promise<{ installed: boolean; path: string | null }>;
+      mcpCliInstall: () => Promise<{ success: boolean; path: string; error?: string }>;
+      mcpCliUninstall: () => Promise<{ success: boolean; error?: string }>;
+
+      mcpServerStatus: () => Promise<{ running: boolean; port: number }>;
+      mcpServerStart: (port?: number) => Promise<{ success: boolean; port: number; error?: string }>;
+      mcpServerStop: () => Promise<{ success: boolean; error?: string }>;
     };
   }
 }

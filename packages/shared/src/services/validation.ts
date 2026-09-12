@@ -1,4 +1,4 @@
-import { TaskRequest, Dependency, Task } from "@orchestra/shared";
+import { TaskRequest, Dependency, Task } from "../index.js";
 
 export interface ValidationResult {
   valid: boolean;

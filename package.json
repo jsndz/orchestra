@@ -10,17 +10,18 @@
     "packages/*"
   ],
   "scripts": {
-    "electron:build": "tsc -p packages/electron",
+    "shared:build": "tsc -p packages/shared",
+    "electron:build": "npm run shared:build && tsc -p packages/electron",
     "electron:watch": "tsc -w -p packages/electron",
     "client:dev": "npm run dev -w @orchestra/client",
     "client:build": "npm run build -w @orchestra/client",
     "web:dev": "npm run dev -w @orchestra/web",
     "web:build": "npm run build -w @orchestra/web",
     "dev": "npm run dev -w @orchestra/client",
-    "build": "npm run electron:build && npm run client:build",
+    "build": "npm run shared:build && npm run electron:build && npm run client:build",
     "start": "npm run electron:build && electron .",
     "dist": "npm run build && electron-builder",
-    "test": "node --experimental-strip-types --test tests/*.test.ts"
+    "test": "npm run shared:build && npm run electron:build && node --experimental-strip-types --test tests/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

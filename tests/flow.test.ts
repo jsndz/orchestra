@@ -3,10 +3,7 @@ import assert from "node:assert";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-// @ts-expect-error - JS build artifact without bundled type declarations
-import { workflowStore } from "../packages/electron/dist/store/index.js";
-// @ts-expect-error - JS build artifact without bundled type declarations
-import { executeWorkflow } from "../packages/electron/dist/services/execution/index.js";
+import { workflowStore, executeWorkflow } from "../packages/shared/dist/node.js";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -37,7 +34,7 @@ test("Whole flow of creating and running a simple job", async (t:any) => {
 
     // 4. Wait a brief moment for the shell command to run and exit
     let attempts = 0;
-    while (task.state !== "completed" && attempts < 15) {
+    while (task.state !== "idle" && attempts < 15) {
       await delay(200);
       attempts++;
     }

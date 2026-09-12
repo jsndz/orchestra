@@ -1,6 +1,6 @@
 import * as pty from "node-pty";
 import crypto from "crypto";
-import { Task } from "@orchestra/shared";
+import { Task } from "../../index.js";
 import { getSystemStats } from "../../utils/os.js";
 import { killProcessTree } from "../../utils/ports.js";
 

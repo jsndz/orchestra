@@ -150,3 +150,4 @@ export type TerminalUIState = {
 };
 
 export type TerminalsState = Record<string, TerminalUIState>;
+

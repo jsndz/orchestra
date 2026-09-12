@@ -1,0 +1,13 @@
+{
+  "name": "@orchestra/mcp-cli",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "orchestra-mcp": "./index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@orchestra/shared": "*"
+  }
+}

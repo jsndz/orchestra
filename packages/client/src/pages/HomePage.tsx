@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UploadYaml from "@/components/workflow/UploadYaml";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Github, Terminal, Cpu, GitBranch } from "lucide-react";
+import { PlusCircle, Github, Terminal, Cpu, GitBranch, Bot, Sparkles } from "lucide-react";
+import McpSetupModal from "@/components/mcp/McpSetupModal";
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [isMcpOpen, setIsMcpOpen] = useState(false);
 
   const openGithub = () => {
     if (window.api?.openExternal) {
@@ -25,7 +28,7 @@ export default function HomePage() {
 
       <div className="w-full max-w-4xl flex flex-col items-center relative z-10">
         {/* Header Section */}
-        <div className="w-full max-w-2xl flex flex-col items-center gap-8 mb-16">
+        <div className="w-full max-w-2xl flex flex-col items-center gap-8 mb-12">
           <div className="flex items-center justify-center group relative">
             <div className="absolute inset-0 bg-accent/20 blur-3xl rounded-full scale-0 group-hover:scale-100 transition-transform duration-700" />
             <img
@@ -46,7 +49,7 @@ export default function HomePage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col items-center gap-6 w-full max-w-md mb-20">
+        <div className="flex flex-col items-center gap-3 w-full max-w-md mb-16">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <Button
               onClick={() => navigate("/tasks")}
@@ -62,15 +65,28 @@ export default function HomePage() {
             </div>
           </div>
 
-          <Button
-            onClick={openGithub}
-            variant="outline"
-            className="w-full border-border/10 bg-card/30 hover:bg-white hover:text-black font-mono text-[9px] tracking-[0.3em] uppercase rounded-none h-11 transition-all duration-300"
-          >
-            <Github className="mr-2 h-3.5 w-3.5" />
-            View Source on GitHub
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
+            <Button
+              onClick={() => setIsMcpOpen(true)}
+              variant="outline"
+              className="flex-1 border-accent/30 bg-accent/10 hover:bg-accent hover:text-background font-mono text-[9px] font-bold tracking-[0.2em] uppercase rounded-none h-11 transition-all duration-300 text-accent"
+            >
+              <Bot className="mr-2 h-4 w-4" />
+              Connect AI Assistant (MCP)
+            </Button>
+
+            <Button
+              onClick={openGithub}
+              variant="outline"
+              className="flex-1 border-border/10 bg-card/30 hover:bg-white hover:text-black font-mono text-[9px] tracking-[0.2em] uppercase rounded-none h-11 transition-all duration-300"
+            >
+              <Github className="mr-2 h-3.5 w-3.5" />
+              GitHub
+            </Button>
+          </div>
         </div>
+
+        <McpSetupModal isOpen={isMcpOpen} onClose={() => setIsMcpOpen(false)} />
 
         {/* Minimal Features / Open Source Identity */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 w-full border-t border-border/5 pt-16">

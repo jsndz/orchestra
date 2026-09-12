@@ -3,7 +3,7 @@ import {
   Dependency,
   GlobalExecutionState,
   TaskState,
-} from "@orchestra/shared";
+} from "../index.js";
 import crypto from "crypto";
 
 export class WorkflowStore {

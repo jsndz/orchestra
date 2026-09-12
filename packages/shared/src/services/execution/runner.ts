@@ -3,7 +3,7 @@ import net from "net";
 import { TerminalService } from "./terminal.service.js";
 import { TaskLogger } from "../logger.js";
 import { workflowStore } from "../../store/index.js";
-import { Task, TaskState, GlobalExecutionState } from "@orchestra/shared";
+import { Task, TaskState, GlobalExecutionState } from "../../index.js";
 import { checkPort } from "../../utils/ports.js";
 import { FileWatcher } from "../filewatcher.js";
 

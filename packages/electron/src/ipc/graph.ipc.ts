@@ -1,13 +1,14 @@
 import { ipcMain } from "electron";
-import { tasks, dependencies } from "../store/index.js";
 import {
+  tasks,
+  dependencies,
   detectCycle,
   parallelExecution,
   resolveDependencies,
   shortestPath,
   terminalNodes,
   unreachableNodes,
-} from "../utils/graph.js";
+} from "@orchestra/shared/node";
 
 export function registerGraphIPC() {
   ipcMain.handle("graph:order", () => {

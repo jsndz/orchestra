@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { Metadata } from "next"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { 
   Terminal, 
   Cpu, 
@@ -10,6 +11,7 @@ import {
   LayoutGrid, 
   Workflow
 } from "lucide-react"
+import { McpSection } from "@/components/McpSection"
 import { GitHubLogoIcon } from "@radix-ui/react-icons"
 
 export const metadata: Metadata = {
@@ -41,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <main className="h-screen flex flex-col bg-background text-foreground selection:bg-accent selection:text-background overflow-hidden">
+    <main className="min-h-screen flex flex-col bg-background text-foreground selection:bg-accent selection:text-background overflow-y-auto">
       {/* Background Subtle Gradient & Grid */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--card)_0%,_transparent_70%)] opacity-20 pointer-events-none" />
       <div className="fixed inset-0 opacity-[0.03] pointer-events-none dot-grid" />
@@ -135,6 +137,9 @@ export default function Page() {
         </div>
       </section>
 
+      {/* MCP AI Assistant Integration Section */}
+      <McpSection />
+
       {/* Features Grid */}
       <section className="relative z-10 w-full max-w-5xl mx-auto px-6 py-8 border-t border-border/5 shrink-0">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12">
@@ -201,18 +206,18 @@ function DownloadButton({ label, subLabel, icon, href }: { label: string, subLab
 
 function FeatureItem({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <div className="flex flex-col gap-3 group">
-      <div className="w-8 h-8 flex items-center justify-center bg-card border border-border/10 text-accent group-hover:glow-accent transition-all duration-500">
+    <Card className="p-5 flex flex-col gap-3 group bg-card/50 hover:border-accent/30 transition-all duration-300">
+      <div className="w-8 h-8 flex items-center justify-center bg-background border border-border/20 text-accent group-hover:glow-accent transition-all duration-500">
         {icon}
       </div>
       <div className="space-y-1">
-        <h3 className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/80 group-hover:text-accent transition-colors">
+        <h3 className="text-[9px] font-bold uppercase tracking-[0.3em] text-accent/80 group-hover:text-accent transition-colors font-mono">
           {title}
         </h3>
         <p className="text-[10px] text-muted-foreground/70 leading-relaxed font-medium">
           {description}
         </p>
       </div>
-    </div>
+    </Card>
   )
 }

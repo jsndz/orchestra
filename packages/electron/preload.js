@@ -101,4 +101,12 @@ contextBridge.exposeInMainWorld("api", {
   importEnv: () => ipcRenderer.invoke("env:import"),
   checkPort: (port) => ipcRenderer.invoke("port:check", port),
   killProcess: (pid) => ipcRenderer.invoke("port:kill", pid),
+
+  mcpCliStatus: () => ipcRenderer.invoke("mcp:cli-status"),
+  mcpCliInstall: () => ipcRenderer.invoke("mcp:cli-install"),
+  mcpCliUninstall: () => ipcRenderer.invoke("mcp:cli-uninstall"),
+
+  mcpServerStatus: () => ipcRenderer.invoke("mcp:server-status"),
+  mcpServerStart: (port) => ipcRenderer.invoke("mcp:server-start", port),
+  mcpServerStop: () => ipcRenderer.invoke("mcp:server-stop"),
 });

@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { registerTaskIPC } from "./ipc/tasks.ipc.js";
 import { registerGraphIPC } from "./ipc/graph.ipc.js";
-import { createMCPserver } from "./mcp/server.js";
+import { registerMcpIPC, stopMcpServer } from "./ipc/mcp.ipc.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename);
 // Register IPC handlers
 registerTaskIPC();
 registerGraphIPC();
+registerMcpIPC();
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -54,18 +55,8 @@ function createWindow() {
   }
 }
 
-let mcpServer: ReturnType<typeof createMCPserver> | null = null;
-
 app.whenReady().then(() => {
   createWindow();
-
-  // Start embedded MCP server on port 3030
-  try {
-    mcpServer = createMCPserver(3030);
-    mcpServer.start();
-  } catch (err) {
-    console.error("Failed to start embedded MCP server:", err);
-  }
 
   if (process.platform === "darwin") {
     app.dock?.setIcon(path.join(__dirname, "../../../assets/icon.icns"));
@@ -73,7 +64,7 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  mcpServer?.stop();
+  stopMcpServer();
   app.quit();
 });
 

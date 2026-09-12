@@ -1,10 +1,12 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useWorkflowStore } from "@/store/useAppStore";
-import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useTerminalStore } from "@/store/useTerminalStore";
 import { stopExecution } from "@/api/tasks";
+import { Bot } from "lucide-react";
+import McpSetupModal from "@/components/mcp/McpSetupModal";
 
 type Props = {
   onStop: () => void;
@@ -24,6 +26,7 @@ export default function ExecutionNavbar({
   const setWorkflowName = useWorkflowStore((s) => s.setWorkflowName);
   const removeAllTerminals = useTerminalStore((s) => s.removeAllTerminals);
   const [editingName, setEditingName] = useState(false);
+  const [isMcpOpen, setIsMcpOpen] = useState(false);
   const [globalState, setGlobalState] = useState<
     "idle" | "running" | "completed" | "failed" | "stopped"
   >("idle");
@@ -59,127 +62,141 @@ export default function ExecutionNavbar({
   };
 
   return (
-    <div className="w-full flex justify-between items-center px-6 h-16 border-b border-border/20 bg-background">
-      <div className="flex items-center gap-10">
-        {/* LOGO */}
-        <div
-          className="flex justify-center items-center gap-3 cursor-pointer group"
-          onClick={() => {
-            removeAllTerminals();
-            onStop();
-            navigate("/");
-          }}
-        >
-          <img
-            src="./icon.png"
-            alt="logo"
-            className="w-7 h-7 grayscale brightness-200"
-          />
-          <h1 className="text-lg font-black tracking-[0.2em] uppercase text-foreground">
-            ORCHESTRA
-          </h1>
-        </div>
-
-        {/* BREADCRUMB & EDITABLE NAME */}
-        <div className="flex items-center font-mono text-[10px] uppercase tracking-widest">
-          <span className="text-muted-foreground/40">workflows</span>
-          <span className="mx-3 text-muted-foreground/20">/</span>
-
-          {editingName ? (
-            <div className="relative">
-              <Input
-                autoFocus
-                className="rounded-none border-accent/50 bg-black px-2 h-7 w-48 text-[11px] font-mono focus-visible:ring-1 focus-visible:ring-accent text-accent uppercase"
-                value={workflowName}
-                onChange={(e) => setWorkflowName(e.target.value)}
-                onBlur={() => setEditingName(false)}
-                onKeyDown={(e) => e.key === "Enter" && setEditingName(false)}
-              />
-            </div>
-          ) : (
-            <span
-              className="text-accent font-bold cursor-pointer hover:bg-accent hover:text-background px-2 py-1 transition-colors border border-transparent"
-              onClick={() => setEditingName(true)}
-            >
-              {workflowName || "UNTITLED_SEQUENCE"}
-            </span>
-          )}
-        </div>
-
-        {/* STATUS BADGE - Hardware Style */}
-        <div
-          className={`flex items-center gap-2 px-3 py-1 border font-mono text-[10px] tracking-tighter ${getStatusStyles()}`}
-        >
+    <>
+      <div className="w-full flex justify-between items-center px-6 h-16 border-b border-border/20 bg-background">
+        <div className="flex items-center gap-10">
+          {/* LOGO */}
           <div
-            className={`w-1.5 h-1.5 bg-current ${globalState === "running" ? "animate-ping" : ""}`}
-          />
-          {globalState.toUpperCase()}
+            className="flex justify-center items-center gap-3 cursor-pointer group"
+            onClick={() => {
+              removeAllTerminals();
+              onStop();
+              navigate("/");
+            }}
+          >
+            <img
+              src="./icon.png"
+              alt="logo"
+              className="w-7 h-7 grayscale brightness-200"
+            />
+            <h1 className="text-lg font-black tracking-[0.2em] uppercase text-foreground">
+              ORCHESTRA
+            </h1>
+          </div>
+
+          {/* BREADCRUMB & EDITABLE NAME */}
+          <div className="flex items-center font-mono text-[10px] uppercase tracking-widest">
+            <span className="text-muted-foreground/40">workflows</span>
+            <span className="mx-3 text-muted-foreground/20">/</span>
+
+            {editingName ? (
+              <div className="relative">
+                <Input
+                  autoFocus
+                  className="rounded-none border-accent/50 bg-black px-2 h-7 w-48 text-[11px] font-mono focus-visible:ring-1 focus-visible:ring-accent text-accent uppercase"
+                  value={workflowName}
+                  onChange={(e) => setWorkflowName(e.target.value)}
+                  onBlur={() => setEditingName(false)}
+                  onKeyDown={(e) => e.key === "Enter" && setEditingName(false)}
+                />
+              </div>
+            ) : (
+              <span
+                className="text-accent font-bold cursor-pointer hover:bg-accent hover:text-background px-2 py-1 transition-colors border border-transparent"
+                onClick={() => setEditingName(true)}
+              >
+                {workflowName || "UNTITLED_SEQUENCE"}
+              </span>
+            )}
+          </div>
+
+          {/* STATUS BADGE - Hardware Style */}
+          <div
+            className={`flex items-center gap-2 px-3 py-1 border font-mono text-[10px] tracking-tighter ${getStatusStyles()}`}
+          >
+            <div
+              className={`w-1.5 h-1.5 bg-current ${globalState === "running" ? "animate-ping" : ""}`}
+            />
+            {globalState.toUpperCase()}
+          </div>
         </div>
-      </div>
 
-      {/* ACTIONS */}
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          className="rounded-none border-border/40 font-mono text-[10px] tracking-widest uppercase hover:bg-white hover:text-black h-9 cursor-pointer"
-          onClick={() => {
-            removeAllTerminals();
-            onStop();
-            navigate("/tasks");
-          }}
-        >
-          BACK TO EDIT
-        </Button>
+        {/* ACTIONS */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsMcpOpen(true)}
+            className="rounded-none border-accent/40 bg-accent/10 text-accent font-mono text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-background h-9 cursor-pointer transition-all"
+          >
+            <Bot className="w-3.5 h-3.5 mr-1.5" />
+            MCP AI
+          </Button>
 
-        <Button
-          onClick={onRestart}
-          variant="outline"
-          disabled={status === "loading"}
-          className={`rounded-none border font-mono text-[10px] tracking-widest uppercase h-9 transition-all
-            ${
-              status === "loading"
-                ? "bg-transparent text-muted-foreground/30 border-border/10 cursor-not-allowed"
-                : "border-border/40 hover:bg-white hover:text-black cursor-pointer"
-            }`}
-        >
-          RESTART EXEC
-        </Button>
+          <Button
+            variant="outline"
+            className="rounded-none border-border/40 font-mono text-[10px] tracking-widest uppercase hover:bg-white hover:text-black h-9 cursor-pointer"
+            onClick={() => {
+              removeAllTerminals();
+              onStop();
+              navigate("/tasks");
+            }}
+          >
+            BACK TO EDIT
+          </Button>
 
-        <Button
-          onClick={() => {
-            setGlobalState("stopped");
-            onStop();
-          }}
-          disabled={
-            status === "loading" ||
-            status === "stopped" ||
-            globalState === "completed" ||
-            globalState === "failed" ||
-            globalState === "idle" ||
-            globalState === "stopped"
-          }
-          className={`rounded-none font-mono text-[10px] tracking-widest uppercase h-9 transition-all border
-            ${
+          <Button
+            onClick={onRestart}
+            variant="outline"
+            disabled={status === "loading"}
+            className={`rounded-none border font-mono text-[10px] tracking-widest uppercase h-9 transition-all
+              ${
+                status === "loading"
+                  ? "bg-transparent text-muted-foreground/30 border-border/10 cursor-not-allowed"
+                  : "border-border/40 hover:bg-white hover:text-black cursor-pointer"
+              }`}
+          >
+            RESTART EXEC
+          </Button>
+
+          <Button
+            onClick={() => {
+              setGlobalState("stopped");
+              onStop();
+            }}
+            disabled={
               status === "loading" ||
               status === "stopped" ||
               globalState === "completed" ||
               globalState === "failed" ||
               globalState === "idle" ||
               globalState === "stopped"
-                ? "bg-transparent text-muted-foreground/30 border-border/10 cursor-not-allowed"
-                : "bg-red-950/20 border-red-500 text-red-500 hover:bg-red-500 hover:text-white cursor-pointer"
-            }`}
-        >
-          {getButtonText()}
-        </Button>
+            }
+            className={`rounded-none font-mono text-[10px] tracking-widest uppercase h-9 transition-all border
+              ${
+                status === "loading" ||
+                status === "stopped" ||
+                globalState === "completed" ||
+                globalState === "failed" ||
+                globalState === "idle" ||
+                globalState === "stopped"
+                  ? "bg-transparent text-muted-foreground/30 border-border/10 cursor-not-allowed"
+                  : "bg-red-950/20 border-red-500 text-red-500 hover:bg-red-500 hover:text-white cursor-pointer"
+              }`}
+          >
+            {getButtonText()}
+          </Button>
 
-        <Button
-          onClick={onCreateYaml}
-          className="rounded-none bg-accent text-background font-mono text-[10px] font-bold tracking-widest uppercase h-9 hover:bg-accent/80 glow-accent border-none px-6 cursor-pointer"
-        >
-          GEN YAML
-        </Button>
+          <Button
+            onClick={onCreateYaml}
+            className="rounded-none bg-accent text-background font-mono text-[10px] font-bold tracking-widest uppercase h-9 hover:bg-accent/80 glow-accent border-none px-6 cursor-pointer"
+          >
+            GEN YAML
+          </Button>
+        </div>
       </div>
-    </div>
+
+      <McpSetupModal isOpen={isMcpOpen} onClose={() => setIsMcpOpen(false)} />
+    </>
   );
 }
+

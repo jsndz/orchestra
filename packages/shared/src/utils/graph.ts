@@ -1,4 +1,4 @@
-import { Dependency, Task } from "../types/index.js";
+import { Dependency, Task } from "../index.js";
 import { Queue } from "./queue.js";
 
 export type AdjacencyList = Map<string, string[]>;

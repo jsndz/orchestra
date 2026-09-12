@@ -1,12 +1,13 @@
 import { workflowStore, setGlobalState } from "../../store/index.js";
 import { runTask, workflowRunner } from "./runner.js";
+export { runTask, workflowRunner };
 import {
   buildAdjacencyList,
   buildIndegreeMap,
   buildTaskMap,
   resolveDependencies,
 } from "../../utils/graph.js";
-import { Task, Dependency } from "@orchestra/shared";
+import { Task, Dependency } from "../../index.js";
 
 export class EventDrivenScheduler {
   private inDegrees: Map<string, number> = new Map();
@@ -28,9 +29,7 @@ export class EventDrivenScheduler {
     this.tasksMap = buildTaskMap(workflowStore.getTasks());
   }
 
-  // check tasks for the indegree 0
-  // execute them
-  async execute(wc?: Electron.WebContents | null): Promise<void> {
+  async execute(wc?: any): Promise<void> {
     this.executionPromise = new Promise((res, rej) => {
       this.rejectPromise = rej;
       this.resolvePromise = res;
@@ -49,7 +48,8 @@ export class EventDrivenScheduler {
     }
     return this.executionPromise;
   }
-  async run(task: Task, wc?: Electron.WebContents | null) {
+
+  async run(task: Task, wc?: any) {
     try {
       this.activeExecutions.add(task.id);
       await runTask(task);
@@ -58,7 +58,8 @@ export class EventDrivenScheduler {
       this.handleFailure(task, wc);
     }
   }
-  handleSuccess(task: Task, wc?: Electron.WebContents | null) {
+
+  handleSuccess(task: Task, wc?: any) {
     this.activeExecutions.delete(task.id);
     this.completedTasks.add(task.id);
     const nextTaskIds = this.adjacencyList.get(task.id) || [];
@@ -77,7 +78,8 @@ export class EventDrivenScheduler {
       this.resolvePromise?.();
     }
   }
-  handleFailure(task: Task, wc?: Electron.WebContents | null) {
+
+  handleFailure(task: Task, wc?: any) {
     this.activeExecutions.delete(task.id);
 
     const children = this.adjacencyList.get(task.id) || [];
@@ -90,6 +92,7 @@ export class EventDrivenScheduler {
 
     this.rejectPromise?.(new Error(`Task ${task.task} failed`));
   }
+
   propogateFailure(task: Task) {
     workflowRunner.getTerminalService().kill(task.id);
     const errorMessage = "Parent Task Failed";
@@ -102,6 +105,7 @@ export class EventDrivenScheduler {
       }
     }
   }
+
   checkDependency(task: Task): boolean {
     return task.dependency.every((taskid) => this.completedTasks.has(taskid));
   }
@@ -110,7 +114,7 @@ export class EventDrivenScheduler {
 /**
  * Executes the workflow by running tasks event-driven.
  */
-export async function executeWorkflow(wc?: Electron.WebContents | null) {
+export async function executeWorkflow(wc?: any) {
   const dependencyCheck = resolveDependencies(
     workflowStore.getDependencies(),
     workflowStore.getTasks(),

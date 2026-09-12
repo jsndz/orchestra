@@ -1,19 +1,23 @@
 import { ipcMain, dialog, shell } from "electron";
 import fs from "fs";
 import path from "path";
-import { workflowStore } from "../store/index.js";
-import { Dependency, Task } from "@orchestra/shared";
-import { workflowRunner } from "../services/execution/runner.js";
 import {
+  workflowStore,
+  Dependency,
+  Task,
+  workflowRunner,
   yamlToDag,
   dagToWorkflow,
   dagToYaml,
   workflowToDag,
-} from "../services/parser.js";
-import { getSystemStats, getStaticStats, getDynamicStats } from "../utils/os.js";
-import { getProcessTreeStats } from "../utils/resources.js";
-import { executeWorkflow } from "../services/execution/index.js";
-import { checkPort, killProcess } from "../utils/ports.js";
+  getSystemStats,
+  getStaticStats,
+  getDynamicStats,
+  getProcessTreeStats,
+  executeWorkflow,
+  checkPort,
+  killProcess,
+} from "@orchestra/shared/node";
 
 /**
  * Registers main process IPC handlers related to task lifecycle, imports/exports, and OS metrics.

@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import stripAnsi from "strip-ansi";
-import { Task } from "@orchestra/shared";
+import { Task } from "../index.js";
 
 /**
  * Handles workflow execution logs, parsing custom regex/string rules,
