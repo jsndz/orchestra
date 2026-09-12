@@ -4,7 +4,6 @@ import {
   Check, 
   Copy, 
   Terminal, 
-  Cpu, 
   X, 
   ShieldCheck,
   Download,
@@ -40,7 +39,6 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
 
   // CLI state
   const [cliInstalled, setCliInstalled] = useState(false);
-  const [cliPath, setCliPath] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -60,7 +58,6 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
       try {
         const cRes = await window.api.mcpCliStatus();
         setCliInstalled(cRes.installed);
-        setCliPath(cRes.path);
         if (cRes.installed) {
           setTransportMode("path");
         }
@@ -127,7 +124,6 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
       const res = await window.api.mcpCliInstall();
       if (res.success) {
         setCliInstalled(true);
-        setCliPath(res.path);
         setTransportMode("path");
         setActionMessage(`Installed CLI executable to ${res.path}`);
       } else {
@@ -149,7 +145,6 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
       const res = await window.api.mcpCliUninstall();
       if (res.success) {
         setCliInstalled(false);
-        setCliPath(null);
         setTransportMode("http");
         setActionMessage("Removed orchestra-mcp from PATH");
       } else {
@@ -265,7 +260,7 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
             onClick={onClose}
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 rounded-none hover:bg-white/10 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 p-0 rounded-lg hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -278,7 +273,7 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             
             {/* Method 1: System PATH CLI */}
-            <Card className="p-3 bg-background border-border/30 flex flex-col justify-between space-y-3">
+            <Card className="p-3 bg-background border-border/30 rounded-xl flex flex-col justify-between space-y-3">
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 font-bold uppercase text-[10px] text-foreground">
@@ -286,12 +281,12 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
                     <span>System CLI (`orchestra-mcp`)</span>
                   </div>
                   {cliInstalled ? (
-                    <Badge variant="default" className="bg-emerald-950/50 text-emerald-400 border-emerald-500/40 text-[8px] py-0">
+                    <Badge variant="default" className="bg-emerald-950/50 text-emerald-400 border-emerald-500/40 text-[8px] py-0 rounded-full">
                       <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse mr-1" />
                       INSTALLED
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-muted-foreground border-border/40 text-[8px] py-0">
+                    <Badge variant="outline" className="text-muted-foreground border-border/40 text-[8px] py-0 rounded-full">
                       NOT INSTALLED
                     </Badge>
                   )}
@@ -308,7 +303,7 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
                     disabled={loading}
                     variant="outline"
                     size="sm"
-                    className="w-full h-7 text-[9px] uppercase tracking-wider font-bold text-rose-400 hover:text-rose-300 border-rose-500/30 hover:bg-rose-950/20"
+                    className="w-full h-7 text-[9px] uppercase tracking-wider font-bold text-rose-400 hover:text-rose-300 border-rose-500/30 hover:bg-rose-950/20 rounded-lg cursor-pointer transition-all"
                   >
                     <Trash2 className="w-3 h-3 mr-1.5" />
                     Uninstall CLI
@@ -319,7 +314,7 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
                     disabled={loading}
                     variant="default"
                     size="sm"
-                    className="w-full h-7 text-[9px] uppercase tracking-wider font-bold bg-accent text-background hover:bg-accent/90"
+                    className="w-full h-7 text-[9px] uppercase tracking-wider font-bold bg-accent text-background hover:bg-accent/90 rounded-lg cursor-pointer transition-all"
                   >
                     <Download className="w-3 h-3 mr-1.5" />
                     Install CLI to PATH
@@ -329,7 +324,7 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
             </Card>
 
             {/* Method 2: Embedded HTTP MCP Server */}
-            <Card className="p-3 bg-background border-border/30 flex flex-col justify-between space-y-3">
+            <Card className="p-3 bg-background border-border/30 rounded-xl flex flex-col justify-between space-y-3">
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 font-bold uppercase text-[10px] text-foreground">
@@ -337,12 +332,12 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
                     <span>Embedded HTTP Server</span>
                   </div>
                   {serverRunning ? (
-                    <Badge variant="default" className="bg-emerald-950/50 text-emerald-400 border-emerald-500/40 text-[8px] py-0">
+                    <Badge variant="default" className="bg-emerald-950/50 text-emerald-400 border-emerald-500/40 text-[8px] py-0 rounded-full">
                       <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse mr-1" />
                       ONLINE (:3030)
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-muted-foreground border-border/40 text-[8px] py-0">
+                    <Badge variant="outline" className="text-muted-foreground border-border/40 text-[8px] py-0 rounded-full">
                       OFFLINE
                     </Badge>
                   )}
@@ -359,7 +354,7 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
                     disabled={loading}
                     variant="outline"
                     size="sm"
-                    className="w-full h-7 text-[9px] uppercase tracking-wider font-bold text-rose-400 hover:text-rose-300 border-rose-500/30 hover:bg-rose-950/20"
+                    className="w-full h-7 text-[9px] uppercase tracking-wider font-bold text-rose-400 hover:text-rose-300 border-rose-500/30 hover:bg-rose-950/20 rounded-lg cursor-pointer transition-all"
                   >
                     <Square className="w-3 h-3 mr-1.5 fill-current" />
                     Stop MCP Server
@@ -370,7 +365,7 @@ export default function McpSetupModal({ isOpen, onClose }: McpSetupModalProps) {
                     disabled={loading}
                     variant="default"
                     size="sm"
-                    className="w-full h-7 text-[9px] uppercase tracking-wider font-bold bg-emerald-500 text-black hover:bg-emerald-400"
+                    className="w-full h-7 text-[9px] uppercase tracking-wider font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-lg cursor-pointer transition-all"
                   >
                     <Play className="w-3 h-3 mr-1.5 fill-current" />
                     Start MCP Server

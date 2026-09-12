@@ -44,7 +44,7 @@ export default function UploadYaml({ onSuccess }: UploadYamlProps) {
       <Button
         variant="secondary"
         size="lg"
-        className="w-full flex items-center gap-2"
+        className="w-full flex items-center justify-center gap-2 rounded-none border border-white/10 hover:bg-white/[0.08] transition-all cursor-pointer font-sans text-xs font-semibold"
         onClick={() => fileInputRef.current?.click()}
       >
         <Upload className="h-4 w-4" />

@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useTasks, useSystemStats } from "@/hooks/useTasks";
-import { stopExecution } from "@/api/tasks";
+import { useTasks } from "@/hooks/useTasks";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,16 +9,13 @@ import {
 } from "lucide-react";
 import { useLogStore } from "@/store/useLogStore";
 import { ExecGraph } from "./ExecGraph";
-import LogViewer, { LogEntry } from "./LogView";
+import LogViewer from "./LogView";
 import { Button } from "@/components/ui/button";
 
 export default function LogPage() {
   const { data } = useTasks();
-  const { data: systemStats } = useSystemStats();
   const logsMap = useLogStore((s) => s.logsMap);
-  const navigate = useNavigate();
 
-  const [status, setStatus] = useState<"idle" | "loading" | "stopped">("idle");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [search, setSearch] = useState("");
@@ -80,20 +75,6 @@ export default function LogPage() {
     const unsubscribe = window.api.onTaskStateChange(handler);
     return () => unsubscribe();
   }, [selectedTaskId]);
-
-
-
-  const handleStop = async () => {
-    if (status !== "idle") return;
-
-    try {
-      setStatus("loading");
-      const result = await stopExecution();
-      setStatus(result?.ok ? "stopped" : "idle");
-    } catch {
-      setStatus("idle");
-    }
-  };
 
   const filteredTasks = localTasks.filter((t) =>
     t.task.toLowerCase().includes(search.toLowerCase()),

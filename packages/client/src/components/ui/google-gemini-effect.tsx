@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { motion, MotionValue, useScroll, useTransform } from "motion/react";
-import React, { useRef } from "react";
+import React from "react";
 import { NavLink } from "react-router-dom";
 
 const transition = {

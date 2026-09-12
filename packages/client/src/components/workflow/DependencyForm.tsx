@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { ArrowRight, Link2, Plus, Loader2 } from "lucide-react";
+import { ArrowRight, Link2, Loader2 } from "lucide-react";
 import { useAddDependency } from "@/hooks/useTasks";
 import { Task, Dependency } from "@/types";
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -18,11 +17,10 @@ import { Label } from "@/components/ui/label";
 export default function DependencyForm({
   tasks,
   dependencies,
-  onBack,
 }: {
   tasks: Task[];
   dependencies: Dependency[];
-  onBack: () => void;
+  onBack?: () => void;
 }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -39,26 +37,19 @@ export default function DependencyForm({
   const name = (id: string) => tasks.find((t) => t.id === id)?.task ?? id;
 
   return (
-   <Card className="h-full flex flex-col bg-background border-none rounded-none shadow-none">
-  {/* HEADER - Tech Header with Accent Icon */}
-  <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4 bg-card/30 border-b border-border/20">
-   
-
-  
-  </CardHeader>
-
+   <Card className="h-full flex flex-col bg-[#121215]/80 border border-white/10 rounded-2xl shadow-xl overflow-hidden font-sans">
   <CardContent className="flex-1 space-y-6 p-6">
-    {/* ADD DEPENDENCY - Industrial Input Strip */}
+    {/* ADD DEPENDENCY - Input Strip */}
     <div className="space-y-2">
-      <Label className="text-[9px] font-mono uppercase text-muted-foreground tracking-widest">01_Create_New_Link</Label>
-      <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2 p-3 bg-card/20 border border-border/10">
+      <Label className="text-xs font-semibold uppercase tracking-wider text-neutral-400">01. Create New Link</Label>
+      <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2 p-3 bg-[#141418] border border-white/10 rounded-xl">
         <Select value={from} onValueChange={setFrom}>
-          <SelectTrigger className="flex-1 min-w-[130px] bg-background border-border/40 rounded-none h-9 font-mono text-[11px] focus:ring-0">
-            <SelectValue placeholder="Source_Step" />
+          <SelectTrigger className="flex-1 min-w-[130px] bg-[#0c0c0e] border border-white/10 rounded-lg h-9 font-sans text-xs text-foreground focus:ring-accent">
+            <SelectValue placeholder="Source Step" />
           </SelectTrigger>
-          <SelectContent className="bg-card border-border/40 rounded-none">
+          <SelectContent className="bg-[#141418] border border-white/10 rounded-xl">
             {tasks.map((t) => (
-              <SelectItem key={t.id} value={t.id} className="font-mono text-xs uppercase">
+              <SelectItem key={t.id} value={t.id} className="font-sans text-xs">
                 {t.task}
               </SelectItem>
             ))}
@@ -70,12 +61,12 @@ export default function DependencyForm({
         </div>
 
         <Select value={to} onValueChange={setTo}>
-          <SelectTrigger className="flex-1 min-w-[130px] bg-background border-border/40 rounded-none h-9 font-mono text-[11px] focus:ring-0">
-            <SelectValue placeholder="Target_Step" />
+          <SelectTrigger className="flex-1 min-w-[130px] bg-[#0c0c0e] border border-white/10 rounded-lg h-9 font-sans text-xs text-foreground focus:ring-accent">
+            <SelectValue placeholder="Target Step" />
           </SelectTrigger>
-          <SelectContent className="bg-card border-border/40 rounded-none">
+          <SelectContent className="bg-[#141418] border border-white/10 rounded-xl">
             {tasks.map((t) => (
-              <SelectItem key={t.id} value={t.id} className="font-mono text-xs uppercase">
+              <SelectItem key={t.id} value={t.id} className="font-sans text-xs">
                 {t.task}
               </SelectItem>
             ))}
@@ -84,11 +75,11 @@ export default function DependencyForm({
 
         <Button
           type="submit"
-          className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-none h-9 px-4 font-mono text-[11px] uppercase font-bold tracking-tighter shrink-0"
+          className="bg-accent text-background hover:bg-accent/90 rounded-lg h-9 px-4 font-sans text-xs font-bold shrink-0 cursor-pointer transition-all"
           disabled={!from || !to || from === to || addDep.isPending}
         >
           {addDep.isPending ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
             "Link"
           )}
@@ -97,31 +88,31 @@ export default function DependencyForm({
     </div>
 
     <div className="space-y-3">
-      <div className="flex items-center justify-between border-b border-border/10 pb-2">
-        <Label className="text-[9px] font-mono uppercase text-muted-foreground tracking-widest">
-          02_Active_Pipeline_Links
+      <div className="flex items-center justify-between border-b border-white/10 pb-2">
+        <Label className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+          02. Active Pipeline Links
         </Label>
-        <span className="text-[10px] font-mono text-accent">[{dependencies.length}]</span>
+        <span className="text-xs font-mono font-bold text-accent">[{dependencies.length}]</span>
       </div>
 
       {dependencies.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border/20 opacity-40">
-          <Link2 className="h-5 w-5 mb-2" />
-          <span className="text-[10px] font-mono uppercase tracking-widest">No_Connections_Found</span>
+        <div className="flex flex-col items-center justify-center py-10 border border-dashed border-white/10 rounded-xl opacity-60">
+          <Link2 className="h-5 w-5 mb-2 text-neutral-400" />
+          <span className="text-xs font-sans text-neutral-400">No Connections Found</span>
         </div>
       ) : (
-        <div className="grid gap-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="grid gap-2 max-h-[200px] overflow-y-auto pr-1">
           {dependencies.map((d, i) => (
             <div
               key={i}
-              className="flex items-center justify-between group bg-card/40 border border-border/10 px-4 py-2 hover:border-accent/40 transition-colors"
+              className="flex items-center justify-between group bg-[#141418] border border-white/10 rounded-xl px-4 py-2.5 hover:border-accent/40 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <span className="text-[11px] font-mono font-bold uppercase text-foreground">{name(d.from)}</span>
-                <ArrowRight size={12} className="text-muted-foreground/40 group-hover:text-accent transition-colors" />
-                <span className="text-[11px] font-mono font-bold uppercase text-foreground">{name(d.to)}</span>
+                <span className="text-xs font-semibold text-foreground">{name(d.from)}</span>
+                <ArrowRight size={14} className="text-neutral-500 group-hover:text-accent transition-colors" />
+                <span className="text-xs font-semibold text-foreground">{name(d.to)}</span>
               </div>
-              <div className="w-1 h-1 bg-accent/50 rounded-full group-hover:shadow-[0_0_8px_#e1f4f3]" />
+              <div className="w-1.5 h-1.5 bg-accent rounded-full group-hover:shadow-[0_0_8px_rgba(45,212,191,0.8)] transition-all" />
             </div>
           ))}
         </div>

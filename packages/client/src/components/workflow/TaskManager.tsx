@@ -6,10 +6,6 @@ import {
   FolderOpen,
   ArrowRight,
   X,
-  Check,
-  Hash,
-  Terminal,
-  Activity,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import { useAddTask, useAddDependency } from "@/hooks/useTasks";
-import { TaskRequest, Task, Dependency, ReadyWhen, LogRule } from "@/types";
+import { Task, Dependency, ReadyWhen, LogRule } from "@/types";
 
 export default function WorkflowControls({
   tasks,
@@ -567,12 +563,11 @@ export default function WorkflowControls({
           </Card>
         )}
         {/* --- LINK DEPENDENCY PANEL --- */}
-
         {mode === "link" && (
-          <Card className="absolute bottom-full mb-8 w-[420px] bg-background border border-border/60 rounded-none shadow-[0_35px_60px_-15px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div className={techHeaderStyle}>
+          <Card className="absolute bottom-full mb-6 w-[420px] bg-[#121215] border border-white/10 rounded-none shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 font-sans">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#141418]">
               <div className="flex flex-col">
-                <h2 className="font-mono font-bold text-sm tracking-tighter uppercase text-accent">
+                <h2 className="font-sans font-bold text-sm tracking-wide uppercase text-accent">
                   Link Graph
                 </h2>
               </div>
@@ -580,7 +575,7 @@ export default function WorkflowControls({
               <Button
                 onClick={() => setMode("none")}
                 variant="ghost"
-                className="p-1 rounded-none hover:bg-accent hover:text-accent-foreground transition-colors h-8 w-8 border border-transparent hover:border-accent"
+                className="p-1 rounded-none hover:bg-white/10 text-neutral-400 hover:text-white transition-colors h-8 w-8 cursor-pointer"
               >
                 ✕
               </Button>
@@ -590,13 +585,13 @@ export default function WorkflowControls({
               <form onSubmit={handleAddDependency} className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Select value={depFrom} onValueChange={setDepFrom}>
-                    <SelectTrigger className="flex-1 bg-card border-border/40 rounded-none h-9 font-mono text-[11px]">
-                      <SelectValue placeholder="SOURCE" />
+                    <SelectTrigger className="flex-1 bg-[#0c0c0e] border border-white/10 rounded-none h-9 font-sans text-xs">
+                      <SelectValue placeholder="SOURCE STEP" />
                     </SelectTrigger>
 
-                    <SelectContent className="bg-card border-border/40 rounded-none">
+                    <SelectContent className="bg-[#141418] border border-white/10 rounded-none">
                       {tasks.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
+                        <SelectItem key={t.id} value={t.id} className="font-sans text-xs">
                           {t.task}
                         </SelectItem>
                       ))}
@@ -609,13 +604,13 @@ export default function WorkflowControls({
                   />
 
                   <Select value={depTo} onValueChange={setDepTo}>
-                    <SelectTrigger className="flex-1 bg-card border-border/40 rounded-none h-9 font-mono text-[11px]">
-                      <SelectValue placeholder="DEPENDENT" />
+                    <SelectTrigger className="flex-1 bg-[#0c0c0e] border border-white/10 rounded-none h-9 font-sans text-xs">
+                      <SelectValue placeholder="TARGET STEP" />
                     </SelectTrigger>
 
-                    <SelectContent className="bg-card border-border/40 rounded-none">
+                    <SelectContent className="bg-[#141418] border border-white/10 rounded-none">
                       {tasks.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
+                        <SelectItem key={t.id} value={t.id} className="font-sans text-xs">
                           {t.task}
                         </SelectItem>
                       ))}
@@ -628,7 +623,7 @@ export default function WorkflowControls({
                   disabled={
                     !depFrom || !depTo || depFrom === depTo || addDep.isPending
                   }
-                  className="w-full rounded-none bg-accent text-background font-bold h-9 text-[11px] uppercase"
+                  className="w-full rounded-none bg-accent text-background font-sans text-xs font-bold h-9 cursor-pointer transition-all"
                 >
                   {addDep.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -641,14 +636,14 @@ export default function WorkflowControls({
           </Card>
         )}
 
-        {/* --- MAIN CONTROL BAR --- */}
-        <div className="flex bg-black p-1 border border-border/40 shadow-xl">
+        {/* --- MAIN CONTROL DOCK BAR --- */}
+        <div className="flex bg-[#121215]/90 p-1 border border-white/10 rounded-none backdrop-blur-xl shadow-2xl items-center gap-1 font-sans">
           <Button
             variant="ghost"
-            className={`rounded-none font-bold uppercase tracking-tighter text-xs px-6 h-10 transition-none ${
+            className={`rounded-none font-sans font-semibold text-xs px-5 h-9 cursor-pointer transition-all border ${
               mode === "add"
-                ? "bg-accent text-background"
-                : "text-muted-foreground hover:text-accent"
+                ? "bg-accent text-background border-accent font-bold shadow-[0_0_12px_rgba(45,212,191,0.25)]"
+                : "bg-transparent text-neutral-300 border-transparent hover:text-white hover:bg-white/[0.06]"
             }`}
             onClick={() => setMode(mode === "add" ? "none" : "add")}
           >
@@ -656,14 +651,14 @@ export default function WorkflowControls({
             Add Step
           </Button>
 
-          <div className="w-[1px] bg-border/20 mx-1" />
+          <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
 
           <Button
             variant="ghost"
-            className={`rounded-none font-bold uppercase tracking-tighter text-xs px-6 h-10 transition-none ${
+            className={`rounded-none font-sans font-semibold text-xs px-5 h-9 cursor-pointer transition-all border ${
               mode === "link"
-                ? "bg-accent text-background"
-                : "text-muted-foreground hover:text-accent"
+                ? "bg-accent text-background border-accent font-bold shadow-[0_0_12px_rgba(45,212,191,0.25)]"
+                : "bg-transparent text-neutral-300 border-transparent hover:text-white hover:bg-white/[0.06]"
             }`}
             onClick={() => setMode(mode === "link" ? "none" : "link")}
           >

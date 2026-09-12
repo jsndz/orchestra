@@ -2,16 +2,13 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLogStore } from "@/store/useLogStore";
 import { useTasks } from "@/hooks/useTasks";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
   Terminal, 
-  Filter, 
   Trash2, 
   Search, 
   Eye, 
   EyeOff, 
-  Grid,
   CheckSquare,
   Square
 } from "lucide-react";
@@ -151,27 +148,27 @@ export default function UnifiedLogView() {
   return (
     <div className="flex h-full w-full bg-background overflow-hidden">
       {/* SIDEBAR - CONTROL BAR */}
-      <div className="w-72 border-r border-border/20 bg-card/25 flex flex-col shrink-0">
-        <div className="p-4 border-b border-border/10">
-          <span className="font-mono text-[10px] tracking-widest text-accent font-bold uppercase block mb-1">
-            CONTROL_PANEL
+      <div className="w-72 border-r border-white/[0.08] bg-[#0c0c0e] flex flex-col shrink-0 font-sans">
+        <div className="p-4 border-b border-white/[0.08] bg-[#121215]">
+          <span className="font-sans text-xs tracking-wider text-accent font-extrabold uppercase block mb-0.5">
+            Control Panel
           </span>
-          <span className="text-[9px] font-mono text-muted-foreground uppercase">
+          <span className="text-[10px] text-neutral-400 font-sans">
             Filter multi-service streams
           </span>
         </div>
 
         {/* REGEX & SEARCH INPUTS */}
-        <div className="p-4 border-b border-border/10 space-y-4">
+        <div className="p-4 border-b border-white/[0.08] space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-mono tracking-wider text-muted-foreground uppercase">
+            <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
               Message Substring
             </label>
-            <div className="flex items-center gap-2 bg-black border border-border/30 px-3 py-1.5 focus-within:border-accent transition-colors">
-              <Search size={12} className="text-muted-foreground/60" />
+            <div className="flex items-center gap-2 bg-[#141418] border border-white/10 rounded-xl px-3 py-1.5 focus-within:border-accent transition-colors">
+              <Search size={14} className="text-neutral-400" />
               <input
-                className="bg-transparent outline-none text-xs font-mono flex-1 placeholder:text-muted-foreground/30 text-accent"
-                placeholder="SEARCH_LOGS..."
+                className="bg-transparent outline-none text-xs font-mono flex-1 placeholder:text-neutral-500 text-emerald-400"
+                placeholder="Search logs..."
                 value={textSearch}
                 onChange={(e) => setTextSearch(e.target.value)}
               />
@@ -179,31 +176,31 @@ export default function UnifiedLogView() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-mono tracking-wider text-muted-foreground uppercase flex justify-between">
+            <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex justify-between">
               <span>Custom Regex</span>
-              {regexError && <span className="text-red-500 lowercase">Invalid regex</span>}
+              {regexError && <span className="text-rose-400 lowercase text-[10px]">Invalid regex</span>}
             </label>
-            <div className={`flex items-center gap-2 bg-black border px-3 py-1.5 focus-within:border-accent transition-colors ${regexError ? 'border-red-500/40' : 'border-border/30'}`}>
-              <span className="text-[10px] font-mono text-muted-foreground/50">/</span>
+            <div className={`flex items-center gap-2 bg-[#141418] border rounded-xl px-3 py-1.5 focus-within:border-accent transition-colors ${regexError ? 'border-rose-500/50' : 'border-white/10'}`}>
+              <span className="text-xs font-mono text-neutral-500">/</span>
               <input
-                className="bg-transparent outline-none text-xs font-mono flex-1 placeholder:text-muted-foreground/30 text-accent"
+                className="bg-transparent outline-none text-xs font-mono flex-1 placeholder:text-neutral-500 text-emerald-400"
                 placeholder="[LOG] or error|warn..."
                 value={customRegex}
                 onChange={(e) => setCustomRegex(e.target.value)}
               />
-              <span className="text-[10px] font-mono text-muted-foreground/50">/i</span>
+              <span className="text-xs font-mono text-neutral-500">/i</span>
             </div>
           </div>
 
           <button
             onClick={() => setShowHighlightedOnly(!showHighlightedOnly)}
-            className={`w-full py-1.5 border font-mono text-[10px] tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer
+            className={`w-full py-2 rounded-xl border font-sans text-xs font-semibold tracking-wide uppercase transition-all flex items-center justify-center gap-2 cursor-pointer
               ${showHighlightedOnly 
-                ? "bg-accent/10 border-accent text-accent" 
-                : "border-border/30 hover:border-accent/40 text-muted-foreground hover:text-foreground"
+                ? "bg-accent/15 border-accent text-accent shadow-[0_0_12px_rgba(45,212,191,0.2)]" 
+                : "border-white/10 hover:bg-white/[0.06] text-neutral-300 hover:text-white"
               }`}
           >
-            {showHighlightedOnly ? <Eye size={12} /> : <EyeOff size={12} />}
+            {showHighlightedOnly ? <Eye size={14} /> : <EyeOff size={14} />}
             {showHighlightedOnly ? "Showing rules only" : "Filter to rule matches"}
           </button>
         </div>

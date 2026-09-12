@@ -115,56 +115,54 @@ export default function ExecutionDashboard() {
           <LogPage />
         </div>
       </div>
-      {/* VIEW SWITCHER */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <div className="bg-black border border-border/40 shadow-[0_0_30px_-5px_rgba(0,0,0,0.8)] flex p-1 gap-1">
+      {/* VIEW SWITCHER DOCK */}
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-[#121215]/90 border border-white/10 rounded-none backdrop-blur-xl shadow-2xl flex items-center p-1 gap-1 font-sans">
           {/* TERMINAL TOGGLE */}
           <Button
             onClick={() => setView("terminal")}
             className={`
-        px-6 py-1 h-9 rounded-none font-mono text-[10px] tracking-[0.2em] uppercase transition-none
-        ${
-          view === "terminal"
-            ? "bg-accent text-background font-bold shadow-[0_0_10px_rgba(225,244,243,0.3)]"
-            : "bg-transparent text-muted-foreground hover:bg-card hover:text-foreground border border-transparent"
-        }
-      `}
+              px-5 py-1 h-8 rounded-none font-sans text-xs font-semibold tracking-wide transition-all cursor-pointer border
+              ${
+                view === "terminal"
+                  ? "bg-accent text-background border-accent font-bold shadow-[0_0_12px_rgba(45,212,191,0.25)]"
+                  : "bg-transparent text-neutral-400 border-transparent hover:text-white hover:bg-white/[0.06]"
+              }
+            `}
           >
             TERMINAL
           </Button>
 
-          {/* SEPARATOR (Visual "Hardware" Notch) */}
-          <div className="w-[1px] bg-border/20 my-2" />
+          <div className="w-[1px] h-4 bg-white/10 my-1" />
 
           {/* UNIFIED LOGS TOGGLE */}
           <Button
             onClick={() => setView("unified")}
             className={`
-        px-6 py-1 h-9 rounded-none font-mono text-[10px] tracking-[0.2em] uppercase transition-none
-        ${
-          view === "unified"
-            ? "bg-accent text-background font-bold shadow-[0_0_10px_rgba(225,244,243,0.3)]"
-            : "bg-transparent text-muted-foreground hover:bg-card hover:text-foreground border border-transparent"
-        }
-      `}
+              px-5 py-1 h-8 rounded-none font-sans text-xs font-semibold tracking-wide transition-all cursor-pointer border
+              ${
+                view === "unified"
+                  ? "bg-accent text-background border-accent font-bold shadow-[0_0_12px_rgba(45,212,191,0.25)]"
+                  : "bg-transparent text-neutral-400 border-transparent hover:text-white hover:bg-white/[0.06]"
+              }
+            `}
           >
             UNIFIED LOGS
           </Button>
 
-          {/* SEPARATOR (Visual "Hardware" Notch) */}
-          <div className="w-[1px] bg-border/20 my-2" />
+          <div className="w-[1px] h-4 bg-white/10 my-1" />
 
           {/* GRAPH TOGGLE */}
           <Button
             onClick={() => setView("graph")}
             className={`
-        px-6 py-1 h-9 rounded-none font-mono text-[10px] tracking-[0.2em] uppercase transition-none
-        ${
-          view === "graph"
-            ? "bg-accent text-background font-bold shadow-[0_0_10px_rgba(225,244,243,0.3)]"
-            : "bg-transparent text-muted-foreground hover:bg-card hover:text-foreground border border-transparent"
-        }
-      `}
+              px-5 py-1 h-8 rounded-none font-sans text-xs font-semibold tracking-wide transition-all cursor-pointer border
+              ${
+                view === "graph"
+                  ? "bg-accent text-background border-accent font-bold shadow-[0_0_12px_rgba(45,212,191,0.25)]"
+                  : "bg-transparent text-neutral-400 border-transparent hover:text-white hover:bg-white/[0.06]"
+              }
+            `}
           >
             GRAPH
           </Button>
@@ -172,7 +170,7 @@ export default function ExecutionDashboard() {
       </div>
       {showYamlModal && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card p-6 rounded-xl w-80">
+          <div className="bg-card p-6 rounded-none border border-white/10 w-80">
             <Input
               autoFocus
               value={tempName}

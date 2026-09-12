@@ -7,13 +7,8 @@ export const ReportPage = () => {
   const [status, setStatus] = useState<"idle" | "loading" | "stopped">("idle");
   const workflowName = useWorkflowStore((s) => s.workflowName);
 
-  const [showYamlModal, setShowYamlModal] = useState(false);
-  const [tempName, setTempName] = useState(workflowName || "");
   const handleYaml = async () => {
-    if (!workflowName || workflowName === "temp-workflow") {
-      setShowYamlModal(true);
-      return;
-    }
+    if (!workflowName) return;
 
     const res = await downloadYaml(workflowName);
 
@@ -29,11 +24,6 @@ export const ReportPage = () => {
 
     URL.revokeObjectURL(url);
   };
-  useEffect(() => {
-    if (showYamlModal) {
-      setTempName(workflowName === "temp-workflow" ? "" : workflowName);
-    }
-  }, [showYamlModal, workflowName]);
 
   useEffect(() => {
     execute();

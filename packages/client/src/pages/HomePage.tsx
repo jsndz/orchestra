@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UploadYaml from "@/components/workflow/UploadYaml";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Github, Terminal, Cpu, GitBranch, Bot, Sparkles } from "lucide-react";
+import { PlusCircle, Github, Terminal, Cpu, GitBranch, Bot } from "lucide-react";
 import McpSetupModal from "@/components/mcp/McpSetupModal";
 
 export default function HomePage() {
@@ -54,13 +54,13 @@ export default function HomePage() {
             <Button
               onClick={() => navigate("/tasks")}
               size="lg"
-              className="flex-[1.2] bg-accent text-background font-bold hover:bg-accent/90 rounded-none h-12 text-[10px] tracking-[0.2em] uppercase shadow-[0_0_20px_rgba(225,244,243,0.2)]"
+              className="flex-[1.2] bg-accent text-background font-bold hover:bg-accent/90 rounded-none h-12 text-xs tracking-wider uppercase shadow-[0_0_20px_rgba(225,244,243,0.15)] cursor-pointer active:scale-[0.98] transition-all"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
               New Workflow
             </Button>
 
-            <div className="flex-1 h-12 [&_button]:h-full [&_button]:rounded-none [&_button]:text-[10px] [&_button]:tracking-[0.2em] [&_button]:uppercase [&_button]:border-border/20">
+            <div className="flex-1 h-12 [&_button]:h-full [&_button]:rounded-none [&_button]:text-xs [&_button]:tracking-wider [&_button]:uppercase [&_button]:border-white/10 [&_button]:cursor-pointer [&_button]:active:scale-[0.98]">
               <UploadYaml onSuccess={() => navigate("/tasks")} />
             </div>
           </div>
@@ -69,7 +69,7 @@ export default function HomePage() {
             <Button
               onClick={() => setIsMcpOpen(true)}
               variant="outline"
-              className="flex-1 border-accent/30 bg-accent/10 hover:bg-accent hover:text-background font-mono text-[9px] font-bold tracking-[0.2em] uppercase rounded-none h-11 transition-all duration-300 text-accent"
+              className="flex-1 border-accent/40 bg-accent/10 hover:bg-accent hover:text-background font-sans text-xs font-semibold tracking-wider uppercase rounded-none h-11 transition-all duration-200 text-accent cursor-pointer active:scale-[0.98]"
             >
               <Bot className="mr-2 h-4 w-4" />
               Connect AI Assistant (MCP)
@@ -78,9 +78,9 @@ export default function HomePage() {
             <Button
               onClick={openGithub}
               variant="outline"
-              className="flex-1 border-border/10 bg-card/30 hover:bg-white hover:text-black font-mono text-[9px] tracking-[0.2em] uppercase rounded-none h-11 transition-all duration-300"
+              className="flex-1 border-white/10 bg-card/40 hover:bg-white/10 hover:text-white font-sans text-xs font-semibold tracking-wider uppercase rounded-none h-11 transition-all duration-200 cursor-pointer active:scale-[0.98]"
             >
-              <Github className="mr-2 h-3.5 w-3.5" />
+              <Github className="mr-2 h-4 w-4" />
               GitHub
             </Button>
           </div>

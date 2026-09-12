@@ -567,11 +567,11 @@ function DependencyGraphInner({
 
       {/* CREATE TASK SIDEBAR */}
       {addingTaskPosition && (
-        <div className="absolute right-0 top-0 h-full w-96 bg-background border-l border-border p-0 overflow-hidden z-50 flex flex-col shadow-2xl">
+        <div className="absolute right-0 top-0 h-full w-96 bg-[#0c0c0e] border-l border-white/[0.08] p-0 overflow-hidden z-50 flex flex-col shadow-2xl">
           {/* HEADER */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/20 bg-card/30">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#121215]">
             <div className="flex flex-col">
-              <h2 className="font-mono font-bold text-sm tracking-tighter uppercase text-accent flex items-center gap-2">
+              <h2 className="font-sans font-extrabold text-sm tracking-wide uppercase text-accent flex items-center gap-2">
                 <Plus size={14} />
                 Create Step
               </h2>
@@ -579,7 +579,7 @@ function DependencyGraphInner({
             <Button
               onClick={() => setAddingTaskPosition(null)}
               variant="ghost"
-              className="p-1 rounded-none hover:bg-accent hover:text-accent-foreground transition-colors h-8 w-8 border border-transparent hover:border-accent"
+              className="p-1 rounded-lg hover:bg-white/10 text-neutral-400 hover:text-white transition-colors h-8 w-8 cursor-pointer"
             >
               ✕
             </Button>
@@ -996,18 +996,18 @@ function DependencyGraphInner({
 
       {/* EDIT TASK SIDEBAR */}
       {editingTask && (
-        <div className="absolute right-0 top-0 h-full w-96 bg-background border-l border-border p-0 overflow-hidden z-50 flex flex-col shadow-2xl">
+        <div className="absolute right-0 top-0 h-full w-96 bg-[#0c0c0e] border-l border-white/[0.08] p-0 overflow-hidden z-50 flex flex-col shadow-2xl">
           {/* HEADER */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/20 bg-card/30">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#121215]">
             <div className="flex flex-col">
-              <h2 className="font-mono font-bold text-sm tracking-tighter uppercase text-accent">
+              <h2 className="font-sans font-extrabold text-sm tracking-wide uppercase text-accent">
                 Edit Step
               </h2>
             </div>
             <Button
               onClick={() => setEditingTask(null)}
               variant="ghost"
-              className="p-1 rounded-none hover:bg-accent hover:text-accent-foreground transition-colors h-8 w-8 border border-transparent hover:border-accent"
+              className="p-1 rounded-lg hover:bg-white/10 text-neutral-400 hover:text-white transition-colors h-8 w-8 cursor-pointer"
             >
               ✕
             </Button>

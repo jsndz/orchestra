@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { useWorkflowStore } from "@/store/useAppStore";
 import { Input } from "@/components/ui/input";
 import { useTerminalStore } from "@/store/useTerminalStore";
-import { stopExecution } from "@/api/tasks";
 import { Bot } from "lucide-react";
 import McpSetupModal from "@/components/mcp/McpSetupModal";
 
