@@ -1,7 +1,9 @@
 {
   "name": "@orchestra/client",
+  "version": "1.0.0",
+  "description": "React frontend desktop user interface for Orchestra",
+  "author": "Jaison D'souza",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

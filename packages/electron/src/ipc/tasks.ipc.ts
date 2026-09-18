@@ -1,4 +1,4 @@
-import { ipcMain, dialog, shell } from "electron";
+import { ipcMain, dialog, shell, app } from "electron";
 import fs from "fs";
 import path from "path";
 import {
@@ -18,6 +18,71 @@ import {
   checkPort,
   killProcess,
 } from "@orchestra/shared/node";
+
+export interface DiskRecentWorkflow {
+  id: string;
+  name: string;
+  path: string;
+  taskCount: number;
+  lastRun: string;
+  status: "success" | "failed" | "idle" | "running";
+}
+
+const DUMMY_WORKFLOW_NAMES = ["microservices-dev.yaml", "ci-test-pipeline.yaml", "data-etl-sync.yaml", "wf-1", "wf-2", "wf-3"];
+
+function getRecentWorkflowsFilePath(): string {
+  const userDataDir = app.getPath("userData");
+  return path.join(userDataDir, "recent-workflows.json");
+}
+
+export function readRecentWorkflowsFromDisk(): DiskRecentWorkflow[] {
+  try {
+    const filePath = getRecentWorkflowsFilePath();
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, "utf-8");
+      const list: DiskRecentWorkflow[] = JSON.parse(data);
+      if (Array.isArray(list)) {
+        const cleaned = list.filter((item) => !DUMMY_WORKFLOW_NAMES.includes(item.name) && !DUMMY_WORKFLOW_NAMES.includes(item.id));
+        if (cleaned.length !== list.length) {
+          writeRecentWorkflowsToDisk(cleaned);
+        }
+        return cleaned;
+      }
+    }
+  } catch (err) {
+    console.error("Failed to read recent workflows from disk:", err);
+  }
+  return [];
+}
+
+export function writeRecentWorkflowsToDisk(recents: DiskRecentWorkflow[]): void {
+  try {
+    const filePath = getRecentWorkflowsFilePath();
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(filePath, JSON.stringify(recents, null, 2), "utf-8");
+  } catch (err) {
+    console.error("Failed to write recent workflows to disk:", err);
+  }
+}
+
+export function addRecentWorkflowToDisk(item: Partial<DiskRecentWorkflow> & { name: string }): DiskRecentWorkflow[] {
+  const current = readRecentWorkflowsFromDisk();
+  const entry: DiskRecentWorkflow = {
+    id: `wf-${Date.now()}`,
+    name: item.name,
+    path: item.path || `./${item.name}`,
+    taskCount: item.taskCount || 1,
+    lastRun: item.lastRun || "Just now",
+    status: item.status || "idle",
+  };
+  const filtered = current.filter((r) => r.name !== item.name && !DUMMY_WORKFLOW_NAMES.includes(r.name));
+  const updated = [entry, ...filtered].slice(0, 10);
+  writeRecentWorkflowsToDisk(updated);
+  return updated;
+}
 
 /**
  * Registers main process IPC handlers related to task lifecycle, imports/exports, and OS metrics.
@@ -133,6 +198,17 @@ export function registerTaskIPC() {
     const dag = yamlToDag(yaml);
     const { tasks: newTasks, dependencies: newDeps } = dagToWorkflow(dag);
     workflowStore.setWorkflow(newTasks, newDeps);
+
+    const wfName = dag.name || "imported-workflow";
+    const fileName = wfName.endsWith(".yaml") || wfName.endsWith(".yml") ? wfName : `${wfName}.yaml`;
+    addRecentWorkflowToDisk({
+      name: fileName,
+      path: `./${fileName}`,
+      taskCount: newTasks.length,
+      status: "idle",
+      lastRun: "Just now",
+    });
+
     return { ok: true };
   });
 
@@ -142,7 +218,20 @@ export function registerTaskIPC() {
     const currentTasks = workflowStore.getTasks();
     const currentDeps = workflowStore.getDependencies();
     const dag = workflowToDag(currentTasks, currentDeps, workflow, 1);
-    return dagToYaml(dag);
+    const resultYaml = dagToYaml(dag);
+
+    if (currentTasks.length > 0) {
+      const fileName = workflow.endsWith(".yaml") || workflow.endsWith(".yml") ? workflow : `${workflow}.yaml`;
+      addRecentWorkflowToDisk({
+        name: fileName,
+        path: `./${fileName}`,
+        taskCount: currentTasks.length,
+        status: "idle",
+        lastRun: "Just now",
+      });
+    }
+
+    return resultYaml;
   });
 
   // Retrieves static CPU, memory, and OS stats
@@ -219,6 +308,15 @@ export function registerTaskIPC() {
     workflowRunner.handleTerminalInput(terminalId, data);
   });
 
+  // Recent Workflows Disk IPC
+  ipcMain.handle("workspace:recent-get", () => {
+    return readRecentWorkflowsFromDisk();
+  });
+
+  ipcMain.handle("workspace:recent-add", (_, wf: Partial<DiskRecentWorkflow> & { name: string }) => {
+    return addRecentWorkflowToDisk(wf);
+  });
+
   // Lists workflows in a workspace directory
   ipcMain.handle("workspace:list", async (_, dirPath: string) => {
     try {
@@ -256,6 +354,16 @@ export function registerTaskIPC() {
       const dag = yamlToDag(content);
       const { tasks: newTasks, dependencies: newDeps } = dagToWorkflow(dag);
       workflowStore.setWorkflow(newTasks, newDeps);
+
+      // Save to disk persistent recent workflows
+      addRecentWorkflowToDisk({
+        name: `${name}.yaml`,
+        path: filePath,
+        taskCount: newTasks.length,
+        status: "idle",
+        lastRun: "Just now",
+      });
+
       return { ok: true };
     } catch (e: any) {
       console.error(e);
@@ -272,6 +380,16 @@ export function registerTaskIPC() {
       const content = dagToYaml(dag);
       const filePath = path.join(dirPath, `${name}.yaml`);
       await fs.promises.writeFile(filePath, content, "utf-8");
+
+      // Save to disk persistent recent workflows
+      addRecentWorkflowToDisk({
+        name: `${name}.yaml`,
+        path: filePath,
+        taskCount: currentTasks.length,
+        status: "idle",
+        lastRun: "Just now",
+      });
+
       return { ok: true };
     } catch (e: any) {
       console.error(e);

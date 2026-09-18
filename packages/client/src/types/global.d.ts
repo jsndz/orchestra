@@ -70,6 +70,8 @@ declare global {
         dirPath: string,
         name: string,
       ) => Promise<{ ok: boolean; error?: string }>;
+      getRecentWorkflows: () => Promise<any[]>;
+      addRecentWorkflow: (wf: any) => Promise<any[]>;
 
       // ENV
       importEnv: () => Promise<string | null>;

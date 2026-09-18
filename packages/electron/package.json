@@ -1,6 +1,8 @@
 {
   "name": "@orchestra/electron",
   "version": "1.0.0",
+  "description": "Electron main process, IPC handlers, and process management for Orchestra",
+  "author": "Jaison D'souza",
   "private": true,
   "type": "module",
   "main": "dist/main.js",

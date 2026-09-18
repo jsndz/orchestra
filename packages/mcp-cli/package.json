@@ -1,13 +1,21 @@
 {
   "name": "@orchestra/mcp-cli",
   "version": "1.0.0",
+  "description": "Standalone stdio CLI transport for Orchestra Model Context Protocol (MCP)",
   "private": true,
   "type": "module",
   "bin": {
-    "orchestra-mcp": "./index.js"
+    "orchestra-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@orchestra/shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^6.0.2"
   }
 }

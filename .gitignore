@@ -1,5 +1,24 @@
-.vscode
+# Dependencies & Build Outputs
 node_modules
 dist
-todo.md
 .agent
+*.tsbuildinfo
+coverage/
+
+# IDE & OS Files
+.vscode
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+.orchestra-logs/
+
+# Environment Files
+.env
+.env.local
+.env.*.local

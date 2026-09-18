@@ -1,6 +1,8 @@
 {
   "name": "@orchestra/web",
-  "version": "0.0.1",
+  "version": "1.0.0",
+  "description": "Landing page showcase website for Orchestra local desktop tool",
+  "author": "Jaison D'souza",
   "type": "module",
   "private": true,
   "scripts": {

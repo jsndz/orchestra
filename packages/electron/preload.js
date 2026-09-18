@@ -98,6 +98,8 @@ contextBridge.exposeInMainWorld("api", {
   listWorkspace: (dirPath) => ipcRenderer.invoke("workspace:list", dirPath),
   loadWorkspaceWorkflow: (dirPath, name) => ipcRenderer.invoke("workspace:load", { dirPath, name }),
   saveWorkspaceWorkflow: (dirPath, name) => ipcRenderer.invoke("workspace:save", { dirPath, name }),
+  getRecentWorkflows: () => ipcRenderer.invoke("workspace:recent-get"),
+  addRecentWorkflow: (wf) => ipcRenderer.invoke("workspace:recent-add", wf),
   importEnv: () => ipcRenderer.invoke("env:import"),
   checkPort: (port) => ipcRenderer.invoke("port:check", port),
   killProcess: (pid) => ipcRenderer.invoke("port:kill", pid),

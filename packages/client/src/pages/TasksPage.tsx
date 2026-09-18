@@ -25,6 +25,7 @@ export default function TasksPage() {
 
   const workflowName = useWorkflowStore((s) => s.workflowName);
   const setWorkflowName = useWorkflowStore((s) => s.setWorkflowName);
+  const addRecentWorkflow = useWorkflowStore((s) => s.addRecentWorkflow);
 
   const [editingName, setEditingName] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -132,6 +133,25 @@ export default function TasksPage() {
       });
     }
   }, [tasks, dependencies, workflowName, yamlOpen]);
+
+  // Automatically sync generated or edited workflows to recent workflows
+  useEffect(() => {
+    if (tasks.length > 0) {
+      const name = workflowName || "untitled-workflow";
+      const fileName = name.endsWith(".yaml") || name.endsWith(".yml") ? name : `${name}.yaml`;
+      const entry = {
+        name: fileName,
+        path: workspaceDir ? `${workspaceDir}/${fileName}` : `./${fileName}`,
+        taskCount: tasks.length,
+        status: "idle" as const,
+        lastRun: "Just now",
+      };
+      addRecentWorkflow(entry);
+      if (window.api?.addRecentWorkflow) {
+        window.api.addRecentWorkflow(entry).catch(console.error);
+      }
+    }
+  }, [workflowName, tasks.length]);
 
   return (
     <div className="flex flex-col h-screen">

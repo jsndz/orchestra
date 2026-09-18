@@ -1,9 +1,28 @@
 {
   "name": "orchestra",
   "version": "1.0.0",
-  "description": "Local-first workflow orchestration tool",
+  "description": "Local-first workflow orchestration desktop tool",
   "license": "MIT",
-  "author": "",
+  "author": "Jaison D'souza",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jsndz/orchestra.git"
+  },
+  "homepage": "https://github.com/jsndz/orchestra#readme",
+  "bugs": {
+    "url": "https://github.com/jsndz/orchestra/issues"
+  },
+  "keywords": [
+    "orchestra",
+    "workflow",
+    "dag",
+    "local-first",
+    "mcp",
+    "model-context-protocol",
+    "electron",
+    "developer-tools",
+    "automation"
+  ],
   "type": "module",
   "main": "packages/electron/dist/main.js",
   "workspaces": [
@@ -11,6 +30,7 @@
   ],
   "scripts": {
     "shared:build": "tsc -p packages/shared",
+    "mcp-cli:build": "npm run shared:build && tsc -p packages/mcp-cli",
     "electron:build": "npm run shared:build && tsc -p packages/electron",
     "electron:watch": "tsc -w -p packages/electron",
     "client:dev": "npm run dev -w @orchestra/client",
@@ -18,10 +38,10 @@
     "web:dev": "npm run dev -w @orchestra/web",
     "web:build": "npm run build -w @orchestra/web",
     "dev": "npm run dev -w @orchestra/client",
-    "build": "npm run shared:build && npm run electron:build && npm run client:build",
+    "build": "npm run shared:build && npm run mcp-cli:build && npm run electron:build && npm run client:build",
     "start": "npm run electron:build && electron .",
     "dist": "npm run build && electron-builder",
-    "test": "npm run shared:build && npm run electron:build && node --experimental-strip-types --test tests/*.test.ts"
+    "test": "npm run shared:build && npm run mcp-cli:build && npm run electron:build && node --experimental-strip-types --test tests/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
@@ -50,6 +70,7 @@
     "files": [
       "packages/electron/dist/**/*",
       "packages/electron/preload.js",
+      "packages/mcp-cli/dist/**/*",
       "packages/client/dist/**/*",
       "assets/**/*",
       "node_modules/**/*",

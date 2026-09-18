@@ -1,6 +1,8 @@
 {
   "name": "@orchestra/shared",
   "version": "1.0.0",
+  "description": "Shared domain models, workflow DAG engine, stores, and MCP tools for Orchestra",
+  "author": "Jaison D'souza",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
