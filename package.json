@@ -67,7 +67,7 @@
     "appId": "com.orchestra.app",
     "asar": true,
     "productName": "Orchestra",
-    "artifactName": "${productName}.${ext}",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "buildResources": "assets"
     },
@@ -86,22 +86,50 @@
       "package.json"
     ],
     "win": {
-      "target": "nsis",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
       "icon": "assets/icon.ico"
     },
     "mac": {
       "target": [
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
       ],
       "category": "public.app-category.developer-tools",
       "icon": "assets/icon.icns"
     },
     "linux": {
       "target": [
-        "AppImage",
-        "deb",
-        "pacman",
-        "tar.gz"
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "pacman",
+          "arch": ["x64"]
+        },
+        {
+          "target": "tar.gz",
+          "arch": ["x64"]
+        }
       ],
       "icon": "assets/icon.png",
       "category": "Development"
