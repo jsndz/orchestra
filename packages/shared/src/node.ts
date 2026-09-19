@@ -6,6 +6,7 @@ export * from "./services/filewatcher.js";
 export * from "./services/logger.js";
 export * from "./services/report.js";
 export * from "./services/validation.js";
+export * from "./services/autoimport.js";
 export * from "./utils/graph.js";
 export * from "./utils/os.js";
 export * from "./utils/ports.js";

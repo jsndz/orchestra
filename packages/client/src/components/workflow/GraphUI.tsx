@@ -13,6 +13,7 @@ import ReactFlow, {
   ReactFlowProvider,
   useReactFlow,
 } from "reactflow";
+import { toast } from "@/components/common/Toast";
 import "reactflow/dist/style.css";
 
 import { Dependency, nodeTypes, ReadyWhen, Task } from "@/types";
@@ -304,7 +305,7 @@ function DependencyGraphInner({
       if (!params.source || !params.target) return;
 
       if (introducesCycle(params.source, params.target)) {
-        alert("Error: Connecting these nodes would introduce a dependency cycle/loop!");
+        toast.error("Error: Connecting these nodes would introduce a dependency cycle/loop!");
         return;
       }
 

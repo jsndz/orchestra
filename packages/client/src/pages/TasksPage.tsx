@@ -18,6 +18,7 @@ import { useWorkflowStore } from "@/store/useAppStore";
 import { Input } from "@base-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { downloadYaml } from "@/api/tasks";
+import { toast } from "@/components/common/Toast";
 
 export default function TasksPage() {
   const { data } = useTasks();
@@ -76,23 +77,24 @@ export default function TasksPage() {
     if (res.ok) {
       setWorkflowName(name);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success(`Loaded workflow "${name}"`);
     } else {
-      alert(`Load failed: ${res.error}`);
+      toast.error(`Load failed: ${res.error}`);
     }
   };
 
   const handleSaveWorkflow = async () => {
     if (!workspaceDir) {
-      alert("Please select a workspace directory first.");
+      toast.error("Please select a workspace directory first.");
       return;
     }
     const name = workflowName || "untitled";
     const res = await window.api.saveWorkspaceWorkflow(workspaceDir, name);
     if (res.ok) {
-      alert(`Workflow "${name}" saved successfully to workspace!`);
+      toast.success(`Workflow "${name}" saved successfully to workspace!`);
       loadWorkflows(workspaceDir);
     } else {
-      alert(`Save failed: ${res.error}`);
+      toast.error(`Save failed: ${res.error}`);
     }
   };
 

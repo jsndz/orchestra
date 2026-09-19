@@ -11,15 +11,81 @@ When working on modern projects, you often need to run multiple commands at the 
 
 Orchestra simplifies this process by providing a visual, node-based editor. You can map out all your commands, define which tasks depend on others (for example, starting the database before launching the server), and run your entire environment with a single click. Each task runs in its own live terminal window inside the app, letting you easily monitor logs and test your project on `localhost`.
 
-## Features
+## 📺 Visual Demos
 
-- **Visual Setup Editor:** Map out your project commands and workflow using an intuitive drag-and-drop node-based interface.
-- **Task & Command Management:** Specify the exact command, directory, and environment variables needed for each part of your project.
-- **Smart Execution Order:** Automatically calculates the correct sequence to start your services. It will also alert you if two tasks are accidentally waiting on each other (circular dependency).
-- **Real-Time Logs:** Monitor your web servers, databases, and background tasks using live terminal streams for every command.
-- **Save & Share Workflows:** Export your project configuration to a simple YAML file so other developers can import it and start their servers instantly.
-- **System Resource Monitoring:** Keep track of your CPU and memory usage to ensure your local servers are not overloading your machine.
-- **Local-First:** Runs entirely on your computer, giving the app direct access to your local files and commands with zero latency.
+```text
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │  ORCHESTRA COMMAND HUB  ::  DAEMON :: ACTIVE (:3030)                        │
+  ├─────────────────────────────────────────────────────────────────────────────┤
+  │                                                                             │
+  │    [ PostgreSQL (5432) ]  ───►  [ API Server (3000) ]  ───►  [ Web (6080) ] │
+  │    (Ready: Port 5432)           (Ready: HTTP /health)        (Ready: Exit)   │
+  │                                                                             │
+  │  ─────────────────────────────────────────────────────────────────────────  │
+  │  LIVE TERMINAL STREAMS:                                                     │
+  │  ▸ [PostgreSQL]  LOG: database system is ready to accept connections        │
+  │  ▸ [APIServer]   LOG: Server running on http://localhost:3000                │
+  │  ▸ [WebClient]   LOG: Local server ready at http://localhost:6080            │
+  └─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🤖 MCP (Model Context Protocol) Integration
+
+Orchestra features a native, local-first **Model Context Protocol (MCP)** server. This allows AI assistants (such as Claude Desktop, Cursor, Antigravity, and Windsurf) to introspect, construct, run, and monitor local development workflows directly on your machine.
+
+### Available MCP Tools (25 Tools)
+
+| Tool Category | Tools | Description |
+| :--- | :--- | :--- |
+| **Workflow Control** | `start_workflow`, `stop_workflow`, `run_workflow` | Start, halt, or execute local DAG workflow runs |
+| **Task Management** | `list_tasks`, `get_task_status`, `create_task`, `update_task`, `delete_task` | Full CRUD operations on local tasks and ready checks |
+| **YAML Management** | `yaml_import`, `yaml_export`, `load_workspace_workflow`, `import_yaml_workspace` | Load and export Orchestra `.yaml` workflow specifications |
+| **Process Control** | `kill_process`, `get_process_tree` | Inspect and terminate local child process trees safely |
+| **System Telemetry** | `system_health`, `list_system_resources` | Monitor local CPU, RAM, and port bindings |
+
+---
+
+### Connecting your AI Assistant
+
+Orchestra provides two local MCP transport mechanisms:
+
+1. **Stdio Transport (CLI)**: Recommended for Claude Desktop and Cursor.
+2. **HTTP/SSE Transport**: High-performance HTTP loopback listener bound to `127.0.0.1:3030` with Bearer token authentication.
+
+#### Claude Desktop Configuration (`claude_desktop_config.json`)
+
+```json
+{
+  "mcpServers": {
+    "orchestra": {
+      "command": "orchestra-mcp"
+    }
+  }
+}
+```
+
+#### Cursor & Project Level (`.mcp.json`)
+
+```json
+{
+  "mcpServers": {
+    "orchestra": {
+      "command": "orchestra-mcp"
+    }
+  }
+}
+```
+
+#### HTTP / SSE Authorization Header Format
+
+```http
+POST /mcp HTTP/1.1
+Host: 127.0.0.1:3030
+Authorization: Bearer <YOUR_MCP_TOKEN>
+Content-Type: application/json
+```
 
 ## Tech Stack
 

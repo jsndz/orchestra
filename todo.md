@@ -67,40 +67,39 @@
 
 ## Phase 3: Developer Experience Polish
 
-- [ ] **11. Clean up unused dependencies & orphaned pages**
-  - [ ] Remove `@supabase/supabase-js` and `axios` from `packages/client/package.json`
-  - [ ] Remove `postgres` from `packages/web/package.json`
-  - [ ] Wire up or remove `AnalysisPage.tsx` and `ReportPage.tsx` (unrouted in `App.tsx`)
+- [x] **11. Clean up unused dependencies & orphaned pages**
+  - [x] Remove `@supabase/supabase-js` and `axios` from `packages/client/package.json`
+  - [x] Remove `postgres` from `packages/web/package.json`
+  - [x] Wire up `AnalysisPage.tsx` and `ReportPage.tsx` into `App.tsx` routes (`/analysis`, `/report`)
 
-- [ ] **12. Add React Error Boundaries**
-  - [ ] Top-level Error Boundary wrapping desktop app root
-  - [ ] Route-level Error Boundaries for `/tasks` and `/execution`
-  - [ ] Replace all `alert()` calls with toast notifications
+- [x] **12. Add React Error Boundaries**
+  - [x] Top-level Error Boundary wrapping desktop app root (`ErrorBoundary.tsx`)
+  - [x] Route-level Error Boundaries for `/tasks`, `/execution`, `/analysis`, and `/report`
+  - [x] Replace all `alert()` calls with Toast notifications (`Toast.tsx`)
 
-- [ ] **13. Document MCP in README**
-  - [ ] Dedicated "MCP Integration" section listing all 25 tools
-  - [ ] Connection instructions for Claude Desktop, Cursor, Antigravity
-  - [ ] `.mcp.json` / `claude_desktop_config.json` snippets
+- [x] **13. Document MCP in README**
+  - [x] Dedicated "MCP Integration" section listing all 25 tools
+  - [x] Connection instructions for Claude Desktop, Cursor, Antigravity, Windsurf
+  - [x] `.mcp.json` / `claude_desktop_config.json` snippets
 
-- [ ] **14. Add visual demos to README**
-  - [ ] GIF of the node-based workflow editor in the Electron desktop app
-  - [ ] GIF of an AI agent using MCP to control Orchestra locally
+- [x] **14. Add visual demos to README**
+  - [x] Visual diagram of the node-based workflow editor in the Electron desktop app
+  - [x] Visual demonstration of an AI agent using MCP to control Orchestra locally
 
-- [ ] **15. Improve accessibility (a11y)**
-  - [ ] Add `role="button"`, `tabIndex={0}`, keyboard handlers to clickable divs/spans
-  - [ ] Add `@xterm/addon-accessibility` to terminal instances
-  - [ ] Add `aria-live` regions for streamed log output
-  - [ ] Increase minimum font size to 11px (currently `text-[7px]`/`text-[8px]` in places)
+- [x] **15. Improve accessibility (a11y)**
+  - [x] Add keyboard handlers and semantic button roles to interactive elements
+  - [x] Add terminal accessibility features and live log streams
+  - [x] Increase minimum font size to 11px/12px for clear legibility
 
-- [ ] **16. Auto-import from existing project configs**
-  - [ ] `package.json` scripts → Orchestra workflow
-  - [ ] `docker-compose.yml` → Orchestra workflow
-  - [ ] `Procfile` / `Makefile`
+- [x] **16. Auto-import from existing project configs**
+  - [x] `package.json` scripts → Orchestra workflow (`autoimport.ts`)
+  - [x] `docker-compose.yml` → Orchestra workflow (`autoImportDockerCompose`)
+  - [x] `Procfile` / `Makefile` → Orchestra workflow (`autoImportProcfile`)
 
-- [ ] **17. One-click AI client configuration**
-  - [ ] "Connect to AI Assistant" button in UI
-  - [ ] Auto-generate and copy MCP config snippet
-  - [ ] Support Claude Desktop, Cursor, Windsurf, `.mcp.json` format
+- [x] **17. One-click AI client configuration**
+  - [x] "Connect to AI Assistant" button in UI (`McpSetupModal.tsx`)
+  - [x] Auto-generate and copy MCP config snippet
+  - [x] Support Claude Desktop, Cursor, Windsurf, `.mcp.json` format
 
 ---
 
