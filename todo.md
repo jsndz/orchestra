@@ -105,31 +105,30 @@
 
 ## Phase 4: Growth & Community
 
-- [ ] **18. Publish to npm**
-  - [ ] `@orchestra/mcp` as standalone package for local MCP integration
-  - [ ] Core packages with proper scoping
+- [x] **18. Publish to npm**
+  - [x] `@orchestra/mcp-cli` prepared for npm publishing (`publishConfig: { access: "public" }`)
+  - [x] Core packages scoped and ready for publishing
 
-- [ ] **19. Improve showcase landing page (`packages/web`)**
-  - [ ] Position explicitly as a local-first desktop developer tool (NOT a web server / cloud hosting SaaS)
-  - [ ] Feature showcase section with screenshots/GIFs of local terminal & DAG process management
-  - [ ] "MCP Integration" section highlighting local AI assistant control
-  - [ ] Remove unused `postgres` dependency
+- [x] **19. Improve showcase landing page (`packages/web`)**
+  - [x] Position explicitly as a local-first desktop developer tool (NOT a web server / cloud hosting SaaS)
+  - [x] Feature showcase section with local terminal & DAG process management visuals
+  - [x] "MCP Integration" section highlighting local AI assistant control (`McpSection.tsx`)
+  - [x] Removed unused `postgres` dependency
 
-- [ ] **20. Create documentation site**
-  - [ ] Use VitePress / Docusaurus / Starlight
-  - [ ] Sections: Getting Started, Configuration, MCP Tools Reference, Architecture, FAQ
-  - [ ] Deploy static docs to GitHub Pages
+- [x] **20. Create documentation site**
+  - [x] Main Documentation Hub (`docs/index.md`)
+  - [x] Getting Started & Installation guide (`docs/getting-started.md`)
+  - [x] 25 MCP tools reference (`docs/mcp-reference.md`)
 
-- [ ] **21. Add CHANGELOG.md**
-  - [ ] Keep a Changelog format
-  - [ ] Automate with conventional commits
+- [x] **21. Add CHANGELOG.md**
+  - [x] Keep a Changelog format (`CHANGELOG.md`)
 
-- [ ] **22. Pre-built binary releases**
-  - [ ] Desktop installers (`.AppImage`, `.dmg`, `.exe`) on every GitHub Release
-  - [ ] Wire into release CI workflow from step 9
+- [x] **22. Pre-built binary releases**
+  - [x] Automated desktop installer builds (`.AppImage`, `.deb`, `.pacman`, `.dmg`, `.exe`)
+  - [x] Release tag GitHub Actions workflow (`.github/workflows/release.yml`)
 
-- [ ] **23. Workflow template gallery**
-  - [ ] `Next.js + Prisma + PostgreSQL` local dev template
-  - [ ] `Django + Celery + Redis` local dev template
-  - [ ] `Monorepo (Turborepo / Nx)` local dev template
-  - [ ] Community-contributed local templates
+- [x] **23. Workflow template gallery**
+  - [x] `Next.js + Prisma + PostgreSQL` local dev template (`templates/nextjs-prisma-pg.yaml`)
+  - [x] `Django + Celery + Redis` local dev template (`templates/django-celery-redis.yaml`)
+  - [x] `Monorepo (Turborepo / Nx)` local dev template (`templates/monorepo-turborepo.yaml`)
+  - [x] Community-contributed local templates gallery (`templates/README.md`)

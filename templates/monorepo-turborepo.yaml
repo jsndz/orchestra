@@ -1,0 +1,35 @@
+version: 1
+name: Turborepo_Monorepo
+tasks:
+  install_deps:
+    folder: .
+    command: npm install
+    type: job
+    ready:
+      kind: exit
+  build_packages:
+    folder: .
+    command: npx turbo run build --filter="./packages/*"
+    type: job
+    dependsOn:
+      - install_deps
+    ready:
+      kind: exit
+  api_service:
+    folder: apps/api
+    command: npm run dev
+    type: service
+    dependsOn:
+      - build_packages
+    ready:
+      kind: port
+      port: 4000
+  web_client:
+    folder: apps/web
+    command: npm run dev
+    type: service
+    dependsOn:
+      - api_service
+    ready:
+      kind: http
+      url: http://localhost:3000

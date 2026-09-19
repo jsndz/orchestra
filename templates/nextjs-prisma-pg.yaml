@@ -1,0 +1,27 @@
+version: 1
+name: NextJS_Prisma_PostgreSQL
+tasks:
+  postgres:
+    folder: .
+    command: docker run -p 5432:5432 -e POSTGRES_PASSWORD=secret postgres:16
+    type: service
+    ready:
+      kind: port
+      port: 5432
+  prisma_migrate:
+    folder: .
+    command: npx prisma db push
+    type: job
+    dependsOn:
+      - postgres
+    ready:
+      kind: exit
+  nextjs_dev:
+    folder: .
+    command: npm run dev
+    type: service
+    dependsOn:
+      - prisma_migrate
+    ready:
+      kind: http
+      url: http://localhost:3000

@@ -1,0 +1,35 @@
+version: 1
+name: Django_Celery_Redis
+tasks:
+  redis:
+    folder: .
+    command: docker run -p 6379:6379 redis:7-alpine
+    type: service
+    ready:
+      kind: port
+      port: 6379
+  django_migrate:
+    folder: .
+    command: python manage.py migrate
+    type: job
+    ready:
+      kind: exit
+  celery_worker:
+    folder: .
+    command: celery -A app worker -l info
+    type: service
+    dependsOn:
+      - redis
+      - django_migrate
+    ready:
+      kind: log
+      match: "celery@localhost ready"
+  django_server:
+    folder: .
+    command: python manage.py runserver 8000
+    type: service
+    dependsOn:
+      - django_migrate
+    ready:
+      kind: http
+      url: http://localhost:8000/admin/
