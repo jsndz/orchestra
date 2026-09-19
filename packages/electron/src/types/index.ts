@@ -1,1 +1,1 @@
-export * from "@orchestra/shared";
+export * from "../../../shared/dist/index.js";

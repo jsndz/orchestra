@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Local-first workflow orchestration desktop tool",
   "license": "MIT",
-  "author": "Jaison D'souza",
+  "author": {
+    "name": "Jaison D'souza",
+    "email": "jaison@orchestra.local"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/jsndz/orchestra.git"
@@ -44,7 +47,7 @@
     "test": "npm run shared:build && npm run mcp-cli:build && npm run electron:build && node --experimental-strip-types --test tests/*.test.ts"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.6.2",
     "electron": "^41.0.4",
     "electron-builder": "^26.8.1",
     "typescript": "^6.0.2"
@@ -64,14 +67,20 @@
     "appId": "com.orchestra.app",
     "asar": true,
     "productName": "Orchestra",
+    "artifactName": "${productName}.${ext}",
     "directories": {
       "buildResources": "assets"
     },
     "files": [
       "packages/electron/dist/**/*",
       "packages/electron/preload.js",
+      "packages/electron/package.json",
+      "packages/shared/dist/**/*",
+      "packages/shared/package.json",
       "packages/mcp-cli/dist/**/*",
+      "packages/mcp-cli/package.json",
       "packages/client/dist/**/*",
+      "packages/client/package.json",
       "assets/**/*",
       "node_modules/**/*",
       "package.json"
@@ -90,6 +99,8 @@
     "linux": {
       "target": [
         "AppImage",
+        "deb",
+        "pacman",
         "tar.gz"
       ],
       "icon": "assets/icon.png",

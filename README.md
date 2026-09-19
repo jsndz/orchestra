@@ -1,5 +1,10 @@
 # Orchestra
 
+[![CI](https://github.com/jsndz/orchestra/actions/workflows/ci.yml/badge.svg)](https://github.com/jsndz/orchestra/actions/workflows/ci.yml)
+[![Build Desktop Apps](https://github.com/jsndz/orchestra/actions/workflows/build.yml/badge.svg)](https://github.com/jsndz/orchestra/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Local First](https://img.shields.io/badge/Architecture-Local--First-emerald.svg)](#-local-first-architecture)
+
 Orchestra is a local-first desktop application designed for local development. **It is installed and executed entirely on your local machine.**
 
 When working on modern projects, you often need to run multiple commands at the same time—such as starting a backend database, spinning up an API server, running build steps, and launching a frontend web server. Managing multiple terminal tabs, running commands in the correct sequence, and troubleshooting startup errors can be tedious.

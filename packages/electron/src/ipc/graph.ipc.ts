@@ -8,7 +8,7 @@ import {
   shortestPath,
   terminalNodes,
   unreachableNodes,
-} from "@orchestra/shared/node";
+} from "../../../shared/dist/node.js";
 
 export function registerGraphIPC() {
   ipcMain.handle("graph:order", () => {

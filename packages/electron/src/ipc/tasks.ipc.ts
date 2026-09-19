@@ -17,7 +17,7 @@ import {
   executeWorkflow,
   checkPort,
   killProcess,
-} from "@orchestra/shared/node";
+} from "../../../shared/dist/node.js";
 
 export interface DiskRecentWorkflow {
   id: string;

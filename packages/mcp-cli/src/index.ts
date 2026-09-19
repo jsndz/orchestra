@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
+import process from "node:process";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { registerAllMcpTools } from "@orchestra/shared/node";
+import { registerAllMcpTools } from "../../shared/dist/node.js";
 
 async function main() {
   const server = new McpServer({

@@ -2,8 +2,9 @@ import { ipcMain } from "electron";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import crypto from "crypto";
 import { fileURLToPath } from "url";
-import { createMCPserver } from "@orchestra/shared/node";
+import { createMCPserver } from "../../../shared/dist/node.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,27 +12,36 @@ const __dirname = path.dirname(__filename);
 let httpMcpServer: ReturnType<typeof createMCPserver> | null = null;
 let currentServerPort = 3030;
 let isServerRunning = false;
+let currentAuthToken = crypto.randomBytes(16).toString("hex");
 
-export function getMcpServerStatus(): { running: boolean; port: number } {
-  return { running: isServerRunning, port: currentServerPort };
+export function getMcpAuthToken(): string {
+  if (!currentAuthToken) {
+    currentAuthToken = crypto.randomBytes(16).toString("hex");
+  }
+  return currentAuthToken;
 }
 
-export function startMcpServer(port: number = 3030): { success: boolean; port: number; error?: string } {
+export function getMcpServerStatus(): { running: boolean; port: number; token: string } {
+  return { running: isServerRunning, port: currentServerPort, token: getMcpAuthToken() };
+}
+
+export function startMcpServer(port: number = 3030): { success: boolean; port: number; token: string; error?: string } {
+  const token = getMcpAuthToken();
   if (isServerRunning && httpMcpServer) {
-    return { success: true, port: currentServerPort };
+    return { success: true, port: currentServerPort, token };
   }
 
   try {
     currentServerPort = port;
-    httpMcpServer = createMCPserver(port);
-    httpMcpServer.start();
+    httpMcpServer = createMCPserver(port, token);
+    httpMcpServer.start("127.0.0.1");
     isServerRunning = true;
-    return { success: true, port: currentServerPort };
+    return { success: true, port: currentServerPort, token };
   } catch (err: unknown) {
     isServerRunning = false;
     httpMcpServer = null;
     const message = err instanceof Error ? err.message : String(err);
-    return { success: false, port: currentServerPort, error: message };
+    return { success: false, port: currentServerPort, token, error: message };
   }
 }
 
@@ -52,16 +62,24 @@ export function stopMcpServer(): { success: boolean; error?: string } {
 }
 
 function getMcpCliEntrypoint(): string {
-  // Resolve path to packages/mcp-cli/index.ts
-  const candidateDevPath = path.resolve(__dirname, "../../../mcp-cli/index.ts");
-  if (fs.existsSync(candidateDevPath)) {
-    return candidateDevPath;
+  // Resolve path to packages/mcp-cli/dist/index.js or packages/mcp-cli/src/index.ts
+  const candidateDistPath = path.resolve(__dirname, "../../../mcp-cli/dist/index.js");
+  if (fs.existsSync(candidateDistPath)) {
+    return candidateDistPath;
   }
-  const candidateRootPath = path.resolve(process.cwd(), "packages/mcp-cli/index.ts");
-  if (fs.existsSync(candidateRootPath)) {
-    return candidateRootPath;
+  const candidateSrcPath = path.resolve(__dirname, "../../../mcp-cli/src/index.ts");
+  if (fs.existsSync(candidateSrcPath)) {
+    return candidateSrcPath;
   }
-  return candidateDevPath;
+  const candidateRootDist = path.resolve(process.cwd(), "packages/mcp-cli/dist/index.js");
+  if (fs.existsSync(candidateRootDist)) {
+    return candidateRootDist;
+  }
+  const candidateRootSrc = path.resolve(process.cwd(), "packages/mcp-cli/src/index.ts");
+  if (fs.existsSync(candidateRootSrc)) {
+    return candidateRootSrc;
+  }
+  return candidateDistPath;
 }
 
 function getCandidateInstallPaths(): string[] {
@@ -126,11 +144,14 @@ export function installMcpCli(): { success: boolean; path: string; error?: strin
       fs.mkdirSync(targetDir, { recursive: true });
     }
 
+    const isTs = entrypoint.endsWith(".ts");
+    const nodeFlags = isTs ? "--experimental-strip-types " : "";
+
     if (isWindows) {
-      const cmdContent = `@echo off\r\nnode --experimental-strip-types "${entrypoint}" %*\r\n`;
+      const cmdContent = `@echo off\r\nnode ${nodeFlags}"${entrypoint}" %*\r\n`;
       fs.writeFileSync(targetPath, cmdContent, "utf-8");
     } else {
-      const shContent = `#!/bin/sh\n# Orchestra MCP CLI Launcher\nNODE_BIN=$(command -v node 2>/dev/null || echo "node")\nexec "$NODE_BIN" --experimental-strip-types "${entrypoint}" "$@"\n`;
+      const shContent = `#!/bin/sh\n# Orchestra MCP CLI Launcher\nNODE_BIN=$(command -v node 2>/dev/null || echo "node")\nexec "$NODE_BIN" ${nodeFlags}"${entrypoint}" "$@"\n`;
       fs.writeFileSync(targetPath, shContent, { encoding: "utf-8", mode: 0o755 });
     }
 

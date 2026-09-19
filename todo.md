@@ -42,26 +42,26 @@
 
 ## Phase 2: Open-Source Essentials
 
-- [ ] **7. Add CONTRIBUTING.md**
-  - [ ] Desktop app dev environment setup
-  - [ ] Code style / linting expectations
-  - [ ] PR process and review expectations
-  - [ ] Issue labeling conventions
+- [x] **7. Add CONTRIBUTING.md**
+  - [x] Desktop app dev environment setup
+  - [x] Code style / linting expectations
+  - [x] PR process and review expectations
+  - [x] Issue labeling conventions
 
-- [ ] **8. Add CODE_OF_CONDUCT.md**
-  - [ ] Adopt Contributor Covenant
+- [x] **8. Add CODE_OF_CONDUCT.md**
+  - [x] Adopt Contributor Covenant (v2.1)
 
-- [ ] **9. Expand GitHub Actions CI/CD**
-  - [ ] New CI workflow: `npm test`, `npm run lint`, `npm run typecheck` on every PR
-  - [ ] Build workflow: verify `npm run build` desktop binaries on Linux, macOS, Windows
-  - [ ] Release workflow: auto-build desktop binaries on tagged releases
-  - [ ] Add status badges to README
+- [x] **9. Expand GitHub Actions CI/CD**
+  - [x] New CI workflow: `npm test`, `npm run build` on every PR (`.github/workflows/ci.yml`)
+  - [x] Build workflow: verify desktop binaries on Linux, macOS, Windows (`.github/workflows/build.yml`)
+  - [x] Release workflow: auto-build desktop binaries on tagged releases (`.github/workflows/release.yml`)
+  - [x] Add status badges to README
 
-- [ ] **10. Expand test coverage**
-  - [ ] Unit tests for each MCP tool handler
-  - [ ] DAG execution engine tests (cycle detection, dependency ordering)
-  - [ ] YAML import/export round-trip tests
-  - [ ] Local MCP server HTTP lifecycle test (initialize → call tool → close session)
+- [x] **10. Expand test coverage**
+  - [x] Unit tests for each MCP tool handler (`tests/mcp.test.ts`)
+  - [x] DAG execution engine tests (`tests/dag.test.ts`)
+  - [x] YAML import/export round-trip tests (`tests/yaml_roundtrip.test.ts`)
+  - [x] Local MCP server HTTP lifecycle test (`tests/mcp_server_http.test.ts`)
 
 ---
 
@@ -81,7 +81,6 @@
   - [ ] Dedicated "MCP Integration" section listing all 25 tools
   - [ ] Connection instructions for Claude Desktop, Cursor, Antigravity
   - [ ] `.mcp.json` / `claude_desktop_config.json` snippets
-  - [ ] Auth token setup docs
 
 - [ ] **14. Add visual demos to README**
   - [ ] GIF of the node-based workflow editor in the Electron desktop app

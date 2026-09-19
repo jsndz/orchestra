@@ -5,9 +5,35 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { randomUUID } from "node:crypto";
 import { registerAllMcpTools } from "./tools/index.js";
 
-export function createMCPserver(port = 3030) {
+export function createMCPserver(port = 3030, token?: string) {
   const app = express();
   app.use(express.json());
+
+  // Authentication Middleware for HTTP endpoints
+  if (token) {
+    app.use((req, res, next) => {
+      const authHeader = req.headers.authorization;
+      const customHeader = req.headers["x-mcp-token"];
+      const queryToken = req.query.token;
+
+      let requestToken: string | undefined;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        requestToken = authHeader.substring(7).trim();
+      } else if (typeof customHeader === "string") {
+        requestToken = customHeader.trim();
+      } else if (typeof queryToken === "string") {
+        requestToken = queryToken.trim();
+      }
+
+      if (!requestToken || requestToken !== token) {
+        res.status(401).json({
+          error: "Unauthorized: Invalid or missing authentication token",
+        });
+        return;
+      }
+      next();
+    });
+  }
 
   function createMcpInstance() {
     const mcp = new McpServer({
@@ -59,6 +85,7 @@ export function createMCPserver(port = 3030) {
       }
     }
   });
+
   app.get("/mcp", async (req, res) => {
     const sessionId = req.header("mcp-session-id");
     if (!sessionId) {
@@ -66,16 +93,16 @@ export function createMCPserver(port = 3030) {
       return;
     }
 
-    let transport : StreamableHTTPServerTransport
-    transport = transports.get(sessionId)!
+    const transport = transports.get(sessionId);
 
     if (!transport) {
       res.status(404).send("Unknown session");
       return;
     }
 
-    transport.handleRequest(req,res)
+    transport.handleRequest(req, res);
   });
+
   app.delete("/mcp", async (req, res) => {
     const sessionId = req.header("mcp-session-id");
 
@@ -93,15 +120,16 @@ export function createMCPserver(port = 3030) {
 
     await transport.handleRequest(req, res);
   });
-  let httpserver :ReturnType<typeof app.listen>
+
+  let httpserver: ReturnType<typeof app.listen>;
   return {
-    start(){
-      httpserver = app.listen(port,()=>{
-        console.log(`MCP server running in ${port}`)
-      })
+    start(host = "127.0.0.1") {
+      httpserver = app.listen(port, host, () => {
+        console.log(`MCP server running on ${host}:${port}`);
+      });
     },
-    stop(){
-      httpserver?.close()
-    }
-  }
+    stop() {
+      httpserver?.close();
+    },
+  };
 }
