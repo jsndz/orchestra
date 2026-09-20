@@ -5,8 +5,31 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: var(--font-sans), Inter, system-ui, sans-serif;
+  --font-mono: var(--font-mono), "JetBrains Mono", monospace;
+
+  --color-canvas: #0d0d0d;
+  --color-surface-dark: #0d0d0d;
+  --color-surface-card: #0d0d0d;
+  --color-surface-muted: #0d0d0d;
+  --color-surface-elevated: #141414;
+
+  --color-primary: #e1f4f3;
+  --color-on-primary: #0d0d0d;
+  --color-primary-dark: #c2d8d7;
+
+  --color-emerald-accent: #10b981;
+  --color-cyan-accent: #06b6d4;
+  --color-teal-accent: #14b8a6;
+  --color-violet-accent: #8b5cf6;
+
+  --color-hairline: rgba(255, 255, 255, 0.18);
+  --color-hairline-subtle: rgba(255, 255, 255, 0.1);
+
+  --color-ink: #ffffff;
+  --color-mute: #a3a3a3;
+  --color-stone: #737373;
+  --color-ash: #404040;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -14,68 +37,138 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent: var(--primary);
+  --color-accent-foreground: var(--on-primary);
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
   --color-border: var(--border);
   --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-ring: var(--primary);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-none: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 }
 
 :root {
   --background: #0d0d0d;
   --foreground: #ffffff;
 
-  --card: #1f1f1f;
+  --card: #0d0d0d;
   --card-foreground: #ffffff;
 
-  --popover: #1f1f1f;
+  --popover: #0d0d0d;
   --popover-foreground: #ffffff;
 
-  --muted: #1f1f1f;
-  --muted-foreground: #bfbfbf;
+  --muted: #0d0d0d;
+  --muted-foreground: #a3a3a3;
 
-  --secondary: #1f1f1f;
+  --secondary: #0d0d0d;
   --secondary-foreground: #ffffff;
 
   --accent: #e1f4f3;
   --accent-foreground: #0d0d0d;
 
-  --border: #BFBFBF;
-  --input: #bfbfbf;
+  --border: rgba(255, 255, 255, 0.18);
+  --input: rgba(255, 255, 255, 0.18);
   --ring: #e1f4f3;
 
   --radius: 0px;
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: #0d0d0d;
+    color: #ffffff;
+  }
   * {
-    @apply border-border outline-accent/20;
+    @apply border-hairline-subtle outline-primary/20;
+    border-radius: 0px !important;
   }
   body {
-    @apply font-sans bg-background text-foreground antialiased;
+    @apply font-sans bg-canvas text-ink antialiased selection:bg-[#e1f4f3] selection:text-[#0d0d0d];
+    background-color: #0d0d0d;
   }
 }
 
+/* Animations */
+@keyframes pulse-emerald {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(16, 185, 129, 0.2);
+  }
+}
+
+@keyframes pulse-cyan {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(6, 182, 212, 0.2);
+  }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes dash-flow {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
 @layer utilities {
-  .dot-grid {
-    background-image: radial-gradient(var(--border) 1px, transparent 1px);
-    background-size: 40px 40px;
+  .animate-pulse-emerald {
+    animation: pulse-emerald 3s ease-in-out infinite;
   }
-  
-  .glow-accent {
-    box-shadow: 0 0 20px rgba(225, 244, 243, 0.2);
+
+  .animate-pulse-cyan {
+    animation: pulse-cyan 3s ease-in-out infinite;
   }
+
+  .animate-float {
+    animation: float-gentle 4s ease-in-out infinite;
+  }
+
+  .cad-grid {
+    background-size: 32px 32px;
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  }
+
+  .card-hover-effect {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-hover-effect:hover {
+    transform: translateY(-2px);
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.8), 0 0 15px -3px rgba(16, 185, 129, 0.15);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0d0d0d;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #e1f4f3;
 }

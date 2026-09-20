@@ -6,8 +6,6 @@ import {
   Check, 
   Copy, 
   Terminal, 
-  Cpu, 
-  ShieldCheck, 
   Globe, 
   Zap,
   Info
@@ -45,7 +43,6 @@ export function McpSection() {
       )
     }
 
-    // HTTP
     return JSON.stringify(
       {
         mcpServers: {
@@ -91,146 +88,151 @@ export function McpSection() {
   }
 
   return (
-    <section className="relative z-10 w-full max-w-5xl mx-auto px-6 py-12 border-t border-border/10">
-      <div className="flex flex-col items-center gap-8">
+    <section id="mcp" className="py-16 relative z-10 border-b border-white/12 bg-[#0d0d0d]">
+      <div className="max-w-7xl mx-auto px-6">
         
         {/* Section Header */}
-        <div className="text-center space-y-2 max-w-xl">
-          <Badge variant="default" className="mb-2">
-            <Bot className="w-3.5 h-3.5 mr-1.5" />
-            Model Context Protocol (MCP)
+        <div className="text-center max-w-3xl mx-auto space-y-3 mb-12">
+          <Badge variant="violet">
+            <Bot className="w-3.5 h-3.5 mr-1.5 text-[#8b5cf6]" />
+            MODEL CONTEXT PROTOCOL (MCP)
           </Badge>
-          <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-foreground">
+          <h2 className="text-2xl sm:text-4xl font-extrabold uppercase tracking-tight text-white font-sans">
             CONNECT YOUR AI ASSISTANT
           </h2>
-          <p className="text-[10px] text-muted-foreground tracking-[0.2em] uppercase font-medium">
-            Control local DAG workflows directly from Antigravity, Cursor, and Claude Desktop.
+          <p className="text-white/70 font-sans text-sm sm:text-base leading-relaxed body-md">
+            Control local workflows directly from Google Antigravity, Cursor, Windsurf, 
+            and Claude Desktop using native Model Context Protocol tools.
           </p>
         </div>
 
-        {/* Card Container */}
-        <Card className="w-full max-w-3xl bg-card/40 border-border/20 backdrop-blur-md p-6 relative overflow-hidden space-y-6">
+        {/* Card Container (#0d0d0d canvas fill, clean borders) */}
+        <Card className="max-w-4xl mx-auto bg-[#0d0d0d] border border-white/15 p-6 sm:p-8 rounded-none space-y-8">
           
-          {/* Architecture & Offline Capability Banner */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-            <Card className="p-3 bg-accent/5 border-accent/20 space-y-1.5 font-mono">
-              <div className="flex items-center gap-2 text-accent text-[11px] font-bold uppercase tracking-wider">
-                <Zap className="w-3.5 h-3.5" />
-                <span>System CLI (`orchestra-mcp`)</span>
+          {/* Architecture Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-[#0d0d0d] border border-[#10b981]/50 space-y-2 font-mono text-xs rounded-none transition-all duration-200 hover:border-[#10b981]">
+              <div className="flex items-center gap-2 text-[#10b981] font-bold uppercase tracking-wider">
+                <Zap className="w-4 h-4" />
+                <span>SYSTEM PATH CLI (`orchestra-mcp`)</span>
               </div>
-              <p className="text-[10px] text-muted-foreground font-sans leading-relaxed">
-                Spawns a headless Node process on demand. <strong>Works even when the Orchestra desktop app is completely turned OFF!</strong>
+              <p className="text-white/70 font-sans text-xs leading-relaxed">
+                Spawns a headless Node process on demand. <strong>Works even when Orchestra desktop app is closed!</strong>
               </p>
-            </Card>
+            </div>
 
-            <Card className="p-3 bg-background/50 border-border/20 space-y-1.5 font-mono">
-              <div className="flex items-center gap-2 text-foreground text-[11px] font-bold uppercase tracking-wider">
-                <Globe className="w-3.5 h-3.5 text-accent" />
-                <span>Embedded HTTP Server</span>
+            <div className="p-4 bg-[#0d0d0d] border border-[#06b6d4]/50 space-y-2 font-mono text-xs rounded-none transition-all duration-200 hover:border-[#06b6d4]">
+              <div className="flex items-center gap-2 text-[#06b6d4] font-bold uppercase tracking-wider">
+                <Globe className="w-4 h-4" />
+                <span>EMBEDDED HTTP SERVER</span>
               </div>
-              <p className="text-[10px] text-muted-foreground font-sans leading-relaxed">
-                Connects over local HTTP/SSE (`http://localhost:3030/mcp`). Requires Orchestra app open with HTTP server started.
+              <p className="text-white/70 font-sans text-xs leading-relaxed">
+                Connects over local HTTP/SSE (`http://localhost:3030/mcp`). Active when Orchestra app is running.
               </p>
-            </Card>
+            </div>
           </div>
 
-          {/* Transport Connection Method Selector */}
-          <div className="space-y-2 font-mono">
-            <label className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-              Select Connection Method
+          {/* Connection Mode Selector */}
+          <div className="space-y-3 font-mono">
+            <label className="text-xs uppercase tracking-wider text-white/70 font-bold">
+              1. SELECT CONNECTION TRANSPORT
             </label>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setTransportMode("path")}
-                className={`p-3 border text-left flex flex-col gap-1 transition-all ${
+                className={`p-4 border text-left flex flex-col gap-1.5 transition-all duration-200 rounded-none cursor-pointer ${
                   transportMode === "path"
-                    ? "bg-accent/10 border-accent text-accent"
-                    : "bg-background/60 border-border/20 text-muted-foreground hover:border-border/50"
+                    ? "bg-[#0d0d0d] border-[#e1f4f3] text-[#e1f4f3] shadow-[0_0_15px_rgba(225,244,243,0.15)]"
+                    : "bg-[#0d0d0d] border-white/15 text-white/70 hover:border-white/35"
                 }`}
               >
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
-                  <span className="flex items-center gap-1.5">
-                    <Terminal className="w-3.5 h-3.5" />
-                    System PATH CLI (`orchestra-mcp`)
+                <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+                  <span className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-[#10b981]" />
+                    SYSTEM PATH CLI (`orchestra-mcp`)
                   </span>
-                  <Badge variant="outline" className="text-[7px] py-0 h-3 border-accent/40 text-accent">RECOMMENDED</Badge>
+                  <Badge variant="emerald">RECOMMENDED</Badge>
                 </div>
-                <span className="text-[8px] font-sans text-muted-foreground">
-                  command: "orchestra-mcp" (Offline Capable)
+                <span className="text-[11px] font-sans text-white/60">
+                  command: "orchestra-mcp" (Offline Capable Stdio)
                 </span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setTransportMode("http")}
-                className={`p-3 border text-left flex flex-col gap-1 transition-all ${
+                className={`p-4 border text-left flex flex-col gap-1.5 transition-all duration-200 rounded-none cursor-pointer ${
                   transportMode === "http"
-                    ? "bg-accent/10 border-accent text-accent"
-                    : "bg-background/60 border-border/20 text-muted-foreground hover:border-border/50"
+                    ? "bg-[#0d0d0d] border-[#e1f4f3] text-[#e1f4f3] shadow-[0_0_15px_rgba(225,244,243,0.15)]"
+                    : "bg-[#0d0d0d] border-white/15 text-white/70 hover:border-white/35"
                 }`}
               >
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
-                  <span className="flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5" />
-                    HTTP Server Endpoint
+                <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+                  <span className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-[#06b6d4]" />
+                    HTTP SSE ENDPOINT
                   </span>
                 </div>
-                <span className="text-[8px] font-sans text-muted-foreground">
-                  url: "http://localhost:3030/mcp" (Requires App Open)
+                <span className="text-[11px] font-sans text-white/60">
+                  url: "http://localhost:3030/mcp" (HTTP Server)
                 </span>
               </button>
             </div>
           </div>
 
           {/* AI Client Tabs */}
-          <div className="space-y-3">
-            <label className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold font-mono">
-              Select Your AI Client Config
+          <div className="space-y-4">
+            <label className="text-xs uppercase tracking-wider text-white/70 font-bold font-mono">
+              2. SELECT AI CLIENT & COPY CONFIG
             </label>
 
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ClientKey)}>
-              <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full h-auto gap-1 mb-4 bg-background/60 p-1 border-border/10">
+              <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full h-auto p-1 bg-[#0d0d0d] border border-white/15 rounded-none">
                 {(["claude", "cursor", "antigravity", "cli"] as ClientKey[]).map((tab) => (
-                  <TabsTrigger key={tab} value={tab} className="py-2 text-[10px]">
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    className="py-2.5 text-xs font-sans font-bold uppercase tracking-[0.05em] data-[state=active]:bg-[#0d0d0d] data-[state=active]:text-[#e1f4f3] data-[state=active]:border-[#10b981] rounded-none transition-all duration-200"
+                  >
                     {configs[tab].title}
                   </TabsTrigger>
                 ))}
               </TabsList>
 
               {(["claude", "cursor", "antigravity", "cli"] as ClientKey[]).map((tab) => (
-                <TabsContent key={tab} value={tab} className="space-y-4 font-mono">
-                  <p className="text-[10px] text-muted-foreground/80 leading-relaxed font-sans">
+                <TabsContent key={tab} value={tab} className="space-y-4 pt-2 font-mono">
+                  <p className="text-xs text-white/70 font-sans leading-relaxed">
                     {configs[tab].desc}
                   </p>
 
-                  <div className="relative bg-black border border-border/30 p-5 text-xs text-accent/90 group">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4 text-[9px] text-muted-foreground">
-                      <span className="tracking-widest uppercase">{configs[tab].filename}</span>
-                      <span className="text-[8px] text-accent/60 uppercase tracking-widest font-bold">
-                        {transportMode === "http" ? "HTTP / SSE" : "JSON-RPC / stdio"}
+                  <div className="relative bg-[#0d0d0d] border border-white/15 p-5 text-xs text-[#e1f4f3] rounded-none">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4 text-[10px] text-white/60">
+                      <span className="tracking-widest uppercase font-bold text-white">{configs[tab].filename}</span>
+                      <span className="text-[#10b981] uppercase tracking-widest font-bold">
+                        {transportMode === "http" ? "HTTP / SSE" : "JSON-RPC / STDIO"}
                       </span>
                     </div>
 
-                    <pre className="overflow-x-auto whitespace-pre leading-relaxed">
+                    <pre className="overflow-x-auto whitespace-pre leading-relaxed font-mono text-sm text-[#e1f4f3]">
                       <code>{currentCode}</code>
                     </pre>
 
                     <Button
                       onClick={handleCopy}
                       size="sm"
-                      className="absolute top-4 right-4 h-8 bg-white/10 hover:bg-accent hover:text-background text-foreground border border-white/20 rounded-none text-[9px] uppercase tracking-wider font-bold transition-all"
+                      className="absolute top-4 right-4 h-8 px-4 bg-[#e1f4f3] text-[#0d0d0d] hover:bg-[#c2d8d7] font-mono font-bold text-xs uppercase tracking-wider rounded-none transition-all duration-200 hover:-translate-y-0.5"
                     >
                       {copied ? (
                         <>
-                          <Check className="w-3.5 h-3.5 mr-1 text-emerald-400" />
-                          COPIED
+                          <Check className="w-3.5 h-3.5 mr-1 text-[#10b981]" />
+                          COPIED!
                         </>
                       ) : (
                         <>
                           <Copy className="w-3.5 h-3.5 mr-1" />
-                          COPY
+                          COPY CONFIG
                         </>
                       )}
                     </Button>
@@ -240,34 +242,19 @@ export function McpSection() {
             </Tabs>
           </div>
 
-          {/* Quick Setup Instructions */}
-          <Card className="p-4 bg-background/40 border-border/20 space-y-2.5 font-sans text-xs">
-            <div className="flex items-center gap-2 font-mono text-[10px] font-bold text-accent uppercase tracking-wider">
-              <Info className="w-4 h-4" />
-              <span>3-Step Quick Setup</span>
+          {/* Quick Setup Steps */}
+          <div className="p-5 bg-[#0d0d0d] border border-white/15 space-y-2 font-sans text-xs rounded-none">
+            <div className="flex items-center gap-2 font-mono text-xs font-bold text-[#e1f4f3] uppercase tracking-wider">
+              <Info className="w-4 h-4 text-[#10b981]" />
+              <span>3-STEP QUICK SETUP</span>
             </div>
-            <ol className="list-decimal list-inside space-y-1.5 text-[10px] text-muted-foreground leading-relaxed">
-              <li>Open Orchestra app → Click <strong>"Connect AI Assistant"</strong> → Click <strong>"Install CLI to PATH"</strong>.</li>
-              <li>Paste the generated JSON snippet above into your AI tool configuration file.</li>
-              <li>Ask your AI: <em>"Use Orchestra to inspect my workflow state"</em> — it will execute commands locally instantly!</li>
+            <ol className="list-decimal list-inside space-y-1 text-xs text-white/75 leading-relaxed body-md">
+              <li>Open Orchestra desktop app → Click <strong>"Connect AI Assistant"</strong> → Click <strong>"Install CLI to PATH"</strong>.</li>
+              <li>Paste the generated JSON configuration above into your AI tool setting file.</li>
+              <li>Ask your AI assistant: <em>"Use Orchestra to inspect my local workflow status"</em> — instant execution!</li>
             </ol>
-          </Card>
-
-          {/* Feature Badges */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border/10 font-mono text-[9px]">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Terminal className="w-4 h-4 text-accent" />
-              <span>Headless CLI & Stdio transport</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <ShieldCheck className="w-4 h-4 text-accent" />
-              <span>100% Local (Zero cloud transmission)</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Cpu className="w-4 h-4 text-accent" />
-              <span>25+ Local Workflow Control Tools</span>
-            </div>
           </div>
+
         </Card>
       </div>
     </section>

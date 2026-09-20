@@ -55,7 +55,7 @@ const TabsList = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center rounded-none bg-background p-1 text-muted-foreground border border-border/20",
+      "inline-flex items-center justify-center rounded-none bg-[#0d0d0d] p-1 text-white/70 border border-white/15",
       className
     )}
     {...props}
@@ -83,10 +83,10 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
           onClick?.(e)
         }}
         className={cn(
-          "inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border cursor-pointer",
+          "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-xs font-sans font-bold uppercase tracking-[0.05em] transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border rounded-none cursor-pointer",
           isSelected
-            ? "bg-accent text-background border-accent shadow-[0_0_15px_rgba(225,244,243,0.3)]"
-            : "bg-transparent text-muted-foreground border-transparent hover:text-foreground hover:border-border/20",
+            ? "bg-[#0d0d0d] text-[#e1f4f3] border-[#10b981] shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+            : "bg-transparent text-white/70 border-transparent hover:text-white hover:border-white/20",
           className
         )}
         {...props}
@@ -111,7 +111,7 @@ const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
       <div
         ref={ref}
         role="tabpanel"
-        className={cn("mt-2 focus-visible:outline-none animate-in fade-in-50 duration-200", className)}
+        className={cn("mt-4 focus-visible:outline-none animate-in fade-in-50 duration-200", className)}
         {...props}
       >
         {children}

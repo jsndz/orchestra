@@ -3,8 +3,7 @@ import assert from "node:assert";
 import fs from "node:fs/promises";
 import { join } from "node:path";
 import os from "node:os";
-import { FileWatcher } from "../packages/electron/dist/services/filewatcher.js";
-import { workflowRunner } from "../packages/electron/dist/services/execution/runner.js";
+import { FileWatcher, workflowRunner } from "../packages/shared/dist/node.js";
 import type { Task } from "@orchestra/shared";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

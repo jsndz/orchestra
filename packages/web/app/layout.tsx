@@ -1,23 +1,26 @@
 import { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google"
+import { Inter, JetBrains_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
-const fontSans = Geist({
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 })
 
-const jetbrainsMono = JetBrains_Mono({subsets:['latin'],variable:'--font-mono'})
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+})
 
 export const metadata: Metadata = {
   title: {
-    default: "Orchestra",
+    default: "Orchestra | Desktop Workflow Orchestrator",
     template: "%s | Orchestra",
   },
-  description: "Modern workflow orchestration for developers.",
+  description: "Engineering-grade desktop workflow orchestrator organized around visual workflow graphs, streaming terminal outputs, and MCP AI controls.",
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",
@@ -39,11 +42,12 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontSans.variable, "font-mono", jetbrainsMono.variable)}
+      className={cn("antialiased dark", inter.variable, jetbrainsMono.variable)}
     >
-      <body>
+      <body className="bg-[#0d0d0d] text-white font-sans selection:bg-[#e1f4f3] selection:text-[#0d0d0d]">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   )
 }
+
