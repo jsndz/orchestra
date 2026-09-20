@@ -135,7 +135,9 @@
         }
       ],
       "icon": "assets/icon.png",
-      "category": "Development"
+      "category": "Development",
+      "desktopName": "orchestra.desktop",
+      "syncDesktopName": true
     }
   },
   "allowScripts": {
