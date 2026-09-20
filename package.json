@@ -26,6 +26,9 @@
     "developer-tools",
     "automation"
   ],
+  "engines": {
+    "node": ">=22.6.0"
+  },
   "type": "module",
   "main": "packages/electron/dist/main.js",
   "workspaces": [
